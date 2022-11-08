@@ -8,7 +8,7 @@ https://learn.networkchuck.com/courses/take/ad-free-youtube-videos/lessons/26093
 https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/
 
 ## Step 1: Assemble the Board
-[[README]]
+
 ## Step 2: Flash the CM4's
 We are going to install Raspberry Pi OS to the CM4's using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
 

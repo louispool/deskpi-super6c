@@ -1,0 +1,13 @@
+---
+- name: List IPs and Hostnames
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - config.yml
+
+  tasks:
+    - debug:
+        msg: '{{ ip + "::" + gateway + ":" + subnet + ":" + inventory_hostname + ":eth0:off" }}'

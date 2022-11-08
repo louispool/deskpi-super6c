@@ -1,0 +1,80 @@
+# PLaybook for preparing the Deskpi Super6c cluster
+---
+
+  # See https://askubuntu.com/questions/1371732/what-is-the-purpose-of-cgroup-enable-cpuset-cgroup-enable-memory-cgroup-memory-1
+- name: Enable Control Groups for CPU and Memory
+  hosts: cluster
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - config.yml
+
+  tasks:
+    # Add  "cgroup_enable=cpu" if not already present
+    - include_tasks: cmdline.yml
+      vars:
+        key: cgroup_enable
+        value: cpu
+        update: false
+
+    # Add "cgroup_enable=memory" if not already present
+    - include_tasks: cmdline.yml
+      vars:
+        key: cgroup_enable
+        value: memory
+        update: false
+
+  # Set or update static ip configuration, for example: "ip=192.168.2.200::192.168.2.1:255.255.255.0:deskpi1:eth0:off"
+- name: Set Static IP and Hostname
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - config.yml
+
+  tasks:
+    - include_tasks: cmdline.yml
+      vars:
+        key: ip
+        value: '{{ ip + "::" + gateway + ":" + subnet + ":" + inventory_hostname + ":eth0:off" }}'
+        update: true
+
+  # Copy .bashrc, .vimrc etc.
+- name: Copy Bash Config Files
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - config.yml
+
+  tasks:
+    - name: "Copy .bashrc"
+      copy:
+        src: ./resources/.bashrc
+        dest: /home/{{ ansible_user }}
+    - name: "Copy .bash_functions"
+      copy:
+        src: ./resources/.bash_functions
+        dest: /home/{{ ansible_user }}
+    - name: "Copy .vimrc"
+      copy:
+        src: ./resources/.vimrc
+        dest: /home/{{ ansible_user }}
+      notify:
+        - Reboot PI
+
+  # Reboot the PI
+  handlers:
+    - name: Reboot PI
+      reboot:
+        msg: "Reboot initiated by Ansible"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: whoami
