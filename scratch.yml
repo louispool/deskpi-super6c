@@ -1,13 +1,22 @@
+# Playbook for testing out stuff
 ---
-- name: List IPs and Hostnames
+- name: Get IP Tables version
   hosts: cluster
 
   gather_facts: false
   become: true
 
-  vars_files:
-    - config.yml
-
   tasks:
-    - debug:
-        msg: '{{ ip + "::" + gateway + ":" + subnet + ":" + inventory_hostname + ":eth0:off" }}'
+    - name: Gather the package facts
+      package_facts:
+        manager: auto
+
+    - name: Check whether IP Tables >= v1.8.6 is installed
+      block:
+        - debug:
+            msg: "Unsupported version {{ ansible_facts.packages['iptables'][0].version }} of iptables is installed!"
+        - shell: |
+            iptables -F
+            update-alternatives --set iptables /usr/sbin/iptables-legacy
+            update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+      when: "'iptables' in ansible_facts.packages and ansible_facts.packages['iptables'][0].version is version('1.8.6', '<')"

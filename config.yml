@@ -1,5 +1,4 @@
-# config.yml
-# Variables used by the playbook
+# Variables used by the playbooks
 ---
 cmdline_txt_path: /boot/cmdline.txt
 

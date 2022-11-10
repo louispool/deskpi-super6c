@@ -1,11 +1,10 @@
 # DeskPI Super6c
 ### Useful Links
-https://github.com/DeskPi-Team/super6c
-https://github.com/geerlingguy/deskpi-super6c-cluster
-
-https://www.jeffgeerling.com/blog/2020/raspberry-pi-cluster-episode-2-setting-cluster
-https://learn.networkchuck.com/courses/take/ad-free-youtube-videos/lessons/26093614-i-built-a-raspberry-pi-super-computer-ft-kubernetes-k3s-cluster-w-rancher
-https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/
+- https://github.com/DeskPi-Team/super6c
+- https://github.com/geerlingguy/deskpi-super6c-cluster
+- https://www.jeffgeerling.com/blog/2020/raspberry-pi-cluster-episode-2-setting-cluster
+- https://learn.networkchuck.com/courses/take/ad-free-youtube-videos/lessons/26093614-i-built-a-raspberry-pi-super-computer-ft-kubernetes-k3s-cluster-w-rancher
+- https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/
 
 ## Step 1: Assemble the Board
 
@@ -28,8 +27,8 @@ Note that CM1's usb connector is on the back of the [board](https://github.com/D
 9. Select your preferred OS (for k3s you need a 64-bit OS). Typically the 64-bit lite version should be sufficient, unless you want full GUI support.
 10. Select the newly discovered raspberry mass storage device to write to.
 11. NOTE: In `Advanced options`, be sure to 
-	* set the **hostname** of your Pi to something unique and memorable 
-	* enable SSH and set your preferred authentication 
+	* set the **hostname** of your Pi to something unique and memorable (I chose `deskpi` followed by a number)  
+	* enable **passwordless** SSH 
 	* set a username and password (optional, but recommended) and 
 	* configure Wireless LAN, if it is supported by your CM (optional)
 12. Repeat this for all CMs - the headless versions do not need a desktop environment, so the 64-bit lite version of Raspberry Pi OS should be sufficient. Remember to change the hostname for every CM.
@@ -48,3 +47,24 @@ https://www.jeffgeerling.com/blog/2020/usb-20-ports-not-working-on-compute-modul
 
 ### Non-eMMC (CM4 Lite)
 Flash Raspberry Pi OS to the TF cards or SSD drives, insert them into the card slot, fix it with screws, connect the power supply, and press `PWR_BTN` button to power them on.
+
+## Step 3: Prepare the cluster
+
+1. Update the `hosts.ini` file
+   - with the hostnames of the Pi's in your cluster
+   - set the ip-addresses to a range that is unoccupied in your network
+2. In `config.yml` set the gateway to the ip-address of the gateway in your network
+3. Run the prepare.yml playbook
+
+```
+ansible-playbook prepare.yml
+```
+
+This playbook will, on every Pi:
+ - enable cpu and memory control groups 
+ - setup a static ip configuration (with the ip-address configured in the `hosts.ini`)
+ - add required software dependencies
+ - update all software packages
+ - switch to legacy ip-tables (if required)
+ - copy the rc files in the `resources` folder
+ - reboot the Pi 

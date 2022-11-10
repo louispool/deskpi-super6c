@@ -1,5 +1,5 @@
-# cmdline.yml
 # Defines tasks to that allow adding key-value pairs to the RPi cmdline.txt
+#
 # Shamelessly copied from https://stackoverflow.com/questions/61972815/ansible-modify-cmdline-txt-on-raspberry-pi
 ---
 - name: "Read cmdline.txt"
