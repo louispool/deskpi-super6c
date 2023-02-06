@@ -1,0 +1,11 @@
+# Reboots all the Pi's in the cluster
+---
+- name: Reboot Pi's
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Reboot the cluster
+      import_tasks: tasks/reboot.yml

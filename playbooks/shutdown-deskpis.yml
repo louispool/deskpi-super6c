@@ -1,0 +1,12 @@
+# Shuts down all the Pi's in the cluster
+---
+- name: Shutdown Pi's
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Shutdown
+      ansible.builtin.command: shutdown -h 1 min
+      ignore_errors: true

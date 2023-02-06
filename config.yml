@@ -1,8 +1,0 @@
-# Variables used by the playbooks
----
-cmdline_txt_path: /boot/cmdline.txt
-
-gateway: 192.168.2.1
-subnet: 255.255.255.0
-
-

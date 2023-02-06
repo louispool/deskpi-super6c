@@ -1,0 +1,31 @@
+# Uninstalls k3s from the cluster as described here: https://docs.k3s.io/installation#uninstalling
+#
+---
+- name: Uninstall k3s
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  vars:
+    k3s_server_script: /usr/local/bin/k3s-uninstall.sh
+    k3s_agent_script: /usr/local/bin/k3s-agent-uninstall.sh
+
+  tasks:
+    - name: Check if the k3s uninstallation script exists
+      ansible.builtin.stat:
+        path: "{{ k3s_server_script }}"
+      register: k3s_uninstall_script_available
+
+    - name: Running k3s uninstallation script
+      ansible.builtin.command: "{{ k3s_server_script }}"
+      when: k3s_uninstall_script_available.stat.exists
+
+    - name: Check if the k3s agent uninstallation script exists
+      ansible.builtin.stat:
+        path: "{{ k3s_agent_script }}"
+      register: k3s_agent_uninstall_script_available
+
+    - name: Running k3s uninstallation script
+      ansible.builtin.command: "{{ k3s_agent_script }}"
+      when: k3s_agent_uninstall_script_available.stat.exists

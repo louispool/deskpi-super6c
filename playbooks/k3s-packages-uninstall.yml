@@ -1,0 +1,25 @@
+# Playbook for installing various additional packages to k3s
+#
+# These include
+# - Prometheus & Grafana
+# - Cert Manager
+# - Rook & Ceph
+#
+# Packages are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
+#
+# Assumes 'k3s-install.yml' and 'k3s-post-install.yml' was run previously.
+---
+- name: Remove packages from k3s.
+  hosts: control_plane
+
+  gather_facts: true
+  become: true
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  roles:
+    - role: cert-manager-uninstall
+      tags: ['cert-manager']
+

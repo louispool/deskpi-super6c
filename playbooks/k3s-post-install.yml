@@ -1,0 +1,54 @@
+# Playbooks for certain operations after installing k3s on the DeskPi Super6c cluster
+#
+# - Sets up kubectl autocompletion
+# - Exposes the Traefik Dashboard
+# - Sets up HELM
+# = An NFS export on the control_plane and a k8s NFS Storage Class
+#
+# Assumes 'k3s-install.yml' was run previously.
+---
+
+  # Enables kubectl autocompletion and the alias 'kc'.
+  #
+  # See https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/#enable-kubectl-autocompletion
+- name: Enable kubectl autocompletion
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Source kubectl completion script
+      blockinfile:
+        path: /home/{{ ansible_user }}/.bashrc
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Source Kubectl Autocompletion"
+        block: |
+          source <(kubectl completion bash)
+          alias kc='kubectl'
+          complete -o default -F __start_kubectl kc
+
+- name: Expose Traefik Dashboard
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  environment:
+    # The location of the kubeconfig file on the master node
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  tasks:
+    - name: Apply Traefik k8s CRD IngressRoute to the Traefik Dashboard
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'kubernetes/manifests/traefik-dashboard-ingressroute.yml') | from_yaml }}"
+
+  tags: [ 'traefik-dashboard' ]
+
+- name: Set up Helm.
+  import_playbook: kubernetes/helm-install.yml
+  tags: [ 'helm' ]
+
+- name: Set up an NFS Storage Class
+  import_playbook: kubernetes/nfs-storage-class.yml
+  tags: [ 'nfs-storage-class' ]

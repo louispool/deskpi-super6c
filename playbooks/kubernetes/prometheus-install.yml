@@ -1,0 +1,72 @@
+# Sets up Prometheus, a systems monitoring and alerting toolkit, as well as Grafana, an analytics and interactive
+# visualization web app
+#
+# Inspired by: https://fabianlee.org/2022/07/02/prometheus-installing-kube-prometheus-stack-on-k3s-cluster/
+# Also see: https://github.com/k3s-io/k3s/issues/3619#issuecomment-973188304
+---
+- name: Configure k3s for Prometheus scraping.
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  tasks:
+    # Expose 0.0.0.0 address endpoint for the Kube Controller Manager, Kube Proxy, and Kube Scheduler,
+    # in order for their metrics can be pulled by Prometheus.
+    - name: Configure k3s to expose several of its components for scraping by Prometheus.
+      blockinfile:
+        path: /etc/rancher/k3s/config.yaml
+        create: true
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Expose metrics for Prometheus scraping"
+        block: |
+          kube-controller-manager-arg:
+          - "bind-address=0.0.0.0"
+          kube-proxy-arg:
+          - "metrics-bind-address=0.0.0.0"
+          kube-scheduler-arg:
+          - "bind-address=0.0.0.0"
+          # Controller Manager exposes etcd sqllite metrics
+          etcd-expose-metrics: true
+      notify:
+        - Restart k3s
+
+  handlers:
+    - name: Restart k3s
+      systemd:
+        state: restarted
+        name: k3s
+
+- name: Configure Prometheus + Grafana monitoring stack.
+  hosts: control_plane
+
+  vars:
+    kube_controller_mgr_ip: "{{ ip_subnet_prefix + '.' + ip_octet | string  }}"
+    kube_scheduler_ip: "{{ ip_subnet_prefix + '.' + ip_octet | string  }}"
+    kube_proxy_ip: "{{ ip_subnet_prefix + '.' + ip_octet | string  }}"
+
+    kube_controller_mgr_port: 10257
+    kube_scheduler_port: 10259
+    kube_proxy_port: 10249
+
+  gather_facts: true
+  become: true
+
+  environment:
+    # The location of the kubeconfig file on the master node
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  tasks:
+    - name: Add prometheus-community chart repo.
+      kubernetes.core.helm_repository:
+        name: prometheus-community
+        repo_url: "https://prometheus-community.github.io/helm-charts"
+
+    - name: Deploy Prometheus + Grafana.
+      kubernetes.core.helm:
+        name: deskpi-cluster
+        chart_ref: prometheus-community/kube-prometheus-stack
+        namespace: default
+        state: present
+        values:
+          alertmanager:
+            enabled: false

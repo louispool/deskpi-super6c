@@ -1,32 +1,39 @@
 # Defines tasks to that allow adding key-value pairs to the RPi cmdline.txt
 #
 # Shamelessly copied from https://stackoverflow.com/questions/61972815/ansible-modify-cmdline-txt-on-raspberry-pi
+#
+# Expects the following variables to be defined:
+#
+# cmdline_txt_path (string) - path to cmdline.txt (typically /boot/cmdline.txt)
+# key (string) - key part of the key-value pair that will be appended to the cmdline.txt
+# value (string) - value part of the key-value pair that will be appended to the cmdline.txt
+# update (boolean) - if true will replace the existing key-value pair if a matching key is found
 ---
 - name: "Read cmdline.txt"
   become: true
   # Slurp the contents of cmdline.txt into result_cmdline (base64 encoded)
-  slurp:
+  ansible.builtin.slurp:
     src: "{{ cmdline_txt_path }}"
   # Register the output of the task
   register: result_cmdline
 
   # Regular expression that will evaluate to true if the key-value pair is present in the text
 - name: "Regex expression for existing arguments"
-  set_fact:
+  ansible.builtin.set_fact:
     # Relies on three variables, `key` (string), `value` (string) and `update` (boolean)
-    # if update then `regex_existing=\bkey=[\w]*\b` else "\bkey=value\b"
-    regex_existing: '{{ "\b" + key|string + "=" + ("[\w]*" if update else value|string) + "\b" }}'
+    # if `update` then `regex_existing=\bkey=[\w.:,;\-+=]*\b` else "\bkey=value\b"
+    regex_existing: '{{ "\b" + key|string + "=" + ("[\w.:,;\-+=]*" if update else value|string) + "\b" }}'
     key_value_pair: '{{ key|string + "=" + value|string }}'
 
   # Regular expression that will evaluate to true if the key-value pair is NOT present in the text
 - name: "Regex expression for new arguments"
-  set_fact:
+  ansible.builtin.set_fact:
     regex_add_missing: '{{ "^((?!(?:.|\n)*" + regex_existing + ")((?:.|\n)*))$" }}'
 
   # Backup manually since backing up to `/boot` doesn't work (see https://github.com/ansible/ansible/issues/37673)
 - name: "Backup cmdline.txt"
   become: true
-  copy:
+  ansible.builtin.copy:
     content: '{{ result_cmdline.content | b64decode }}'
     dest: '{{ cmdline_txt_path + ".backup" }}'
     force: false
@@ -34,10 +41,11 @@
   # Write to cmdline.txt
 - name: "Update cmdline.txt"
   become: true
-  copy:
+  ansible.builtin.copy:
     content: '{{ result_cmdline.content
         | b64decode
+        | trim
         | regex_replace(regex_existing, key_value_pair)
-        | regex_replace(regex_add_missing, key_value_pair + " \1")
+        | regex_replace(regex_add_missing, "\1 " + key_value_pair)
       }}'
     dest: "{{ cmdline_txt_path }}"

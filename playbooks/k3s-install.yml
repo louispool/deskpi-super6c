@@ -1,0 +1,78 @@
+# Playbook for installing k3s on the DeskPi Super6c cluster: https://docs.k3s.io/quick-start
+#
+# Some of the contents were shamelessly copied from https://github.com/geerlingguy/turing-pi-2-cluster/blob/master/main.yml
+#
+# Assumes 'k3s-pre-install.yml' was run previously.
+---
+- name: Configure the master node
+  hosts: control_plane
+
+  gather_facts: true
+  become: true
+
+  tasks:
+    # Run the installation script downloaded from get.k3s.io
+    #
+    # We set environment variable `K3S_KUBECONFIG_MODE` to allow writing (mode=r+w) to the `kubeconfig` file which
+    # will allow us to later import the k3s cluster into Rancher.
+    - name: Install K3s on the control plane. This may take a while...
+      ansible.builtin.shell: |
+         curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" sh -s - > ~/k3s_install_log.txt
+      args:
+        chdir: "~"
+        creates: /var/lib/rancher/k3s/server/node-token
+
+    # We need the token when installing k3s on our worker nodes
+    - name: Get the node token
+      ansible.builtin.command: cat /var/lib/rancher/k3s/server/node-token
+      changed_when: false
+      register: node_token
+
+    - name: Set node_token fact.
+      set_fact:
+        node_token: "{{ node_token.stdout_lines[0] }}"
+
+    - name: Fetch the Kube Config file
+      ansible.builtin.fetch:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: /tmp/config
+        flat: true
+
+- name: Configure the worker nodes
+  hosts: nodes
+
+  gather_facts: true
+  become: true
+
+  vars:
+    k3s_url: https://{{ ip_subnet_prefix|string + "." + hostvars[groups['control_plane'][0]]['ip_octet']|string }}:6443
+    k3s_token: "{{ hostvars[groups['control_plane'][0]]['node_token'] }}"
+
+  tasks:
+    # Run the installation script for the worker nodes
+    - name: Install K3s on the worker nodes. This may take a while...
+      ansible.builtin.shell: |
+         curl -sfL https://get.k3s.io | K3S_TOKEN="{{ k3s_token }}" K3S_URL="{{ k3s_url }}" sh - > ~/k3s_install_log.txt
+      args:
+        chdir: "~"
+        creates: /var/lib/rancher/k3s/agent/kubelet.kubeconfig
+
+    # The next few tasks copy the kube config from the master node
+    # This allows us to execute kubectl commands while logged into one of the nodes
+    - name: Create `.kube` directory if it does not exist
+      ansible.builtin.file:
+        path: /home/{{ ansible_user }}/.kube
+        state: directory
+
+    - name: Copy the Kube Config
+      ansible.builtin.copy:
+        src: /tmp/config
+        dest: /home/{{ ansible_user }}/.kube
+
+    # Replace `server: 127.0.0.1:6443` in the kube config file with the ip address of the control plane
+    - name: Update Kube Config file
+      ansible.builtin.lineinfile:
+        path: /home/{{ ansible_user }}/.kube/config
+        regexp: '(^\s*server:\s*)https:\/\/127\.0\.0\.1:6443'
+        line: '\1{{ k3s_url }}'
+        backrefs: yes

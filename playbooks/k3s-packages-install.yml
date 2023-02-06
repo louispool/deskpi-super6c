@@ -1,0 +1,46 @@
+# Playbook for installing various additional packages to k3s
+#
+# These include
+# - Prometheus & Grafana
+# - Cert Manager
+# - Rook & Ceph
+#
+# Packages are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
+#
+# Assumes 'k3s-install.yml' and 'k3s-post-install.yml' was run previously.
+---
+- name: Install various packages to k3s.
+  hosts: control_plane
+
+  gather_facts: true
+  become: true
+
+  collections:
+    - kubernetes.core
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  pre_tasks:
+    # Install kubernetes core collection dependencies (kubernetes python package) using PIP.
+    - name: Ensure PIP is installed.
+      package:
+        name:
+          - python3-pip
+          - python3-setuptools
+        state: present
+      become: true
+      tags: ['always']
+
+    - name: Ensure kubernetes Python library is installed.
+      pip:
+        name: kubernetes
+        state: present
+      become: true
+      tags: ['always']
+
+  roles:
+    - role: cert-manager-install
+      tags: ['cert-manager']
+

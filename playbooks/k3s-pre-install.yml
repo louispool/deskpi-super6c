@@ -1,0 +1,213 @@
+# Playbook for preparing the Deskpi Super6c cluster
+#
+# Some of the contents were shamelessly copied from https://github.com/geerlingguy/turing-pi-2-cluster/blob/master/tasks/networking/static-networking.yml
+#
+# This playbook will, on every Pi:
+# - enable cpu and memory control groups
+# - set up a static ip configuration (with the ip-address configured in `hosts.ini`)
+# - add required software dependencies
+# - update all software packages
+# - switch to legacy ip-tables (if required)
+# - copy the rc files in the `resources` folder
+# - reboot the Pi
+---
+
+- name: Enable Control Groups and configure a Static IP
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - vars/config.yml
+
+
+
+  tasks:
+    # See https://askubuntu.com/questions/1371732/what-is-the-purpose-of-cgroup-enable-cpuset-cgroup-enable-memory-cgroup-memory-1
+    - name: Add "cgroup_enable=cpuset" to `/boot/cmdline.txt`, if not already present
+      import_tasks: tasks/cmdline.yml
+      vars:
+        key: cgroup_enable
+        value: cpuset
+        update: false
+      notify:
+        - Reboot Pi
+
+    - name: Add "cgroup_enable=memory" to `/boot/cmdline.txt`, if not already present
+      import_tasks: tasks/cmdline.yml
+      vars:
+        key: cgroup_enable
+        value: memory
+        update: false
+      notify:
+        - Reboot Pi
+
+     # Not necessary anymore, see https://github.com/raspberrypi/linux/issues/1950#issuecomment-347481182
+    - name: Add "cgroup_memory=1" to cmdline.txt, if not already present
+      import_tasks: tasks/cmdline.yml
+      vars:
+        key: cgroup_memory
+        value: 1
+        update: false
+      notify:
+        - Reboot Pi
+
+    # For example: "ip=192.168.2.200::192.168.2.1:255.255.255.0:deskpi1:eth0:off"
+    - name: Configure Static Networking in `/boot/cmdline.txt`
+      import_tasks: tasks/cmdline.yml
+      vars:
+        key: ip
+        value: '{{ ip_subnet_prefix|string + "." + ip_octet|string + "::" + gateway|string + ":" +
+                   ip_subnet_mask|string + ":" + inventory_hostname|string + ":eth0:off" }}'
+        update: true
+      notify:
+        - Reboot Pi
+
+  # Group the hosts slated for reboot
+  handlers:
+    - name: Reboot Pi
+      group_by:
+        key: hosts_to_reboot
+
+  # Since the use of /etc/network/interfaces has been deprecated in favour of /etc/dhcpcd.conf
+- name: Configure Static Networking in `/etc/dhcpcd.conf`
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Configure static IP address on each node.
+      blockinfile:
+        path: /etc/dhcpcd.conf
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Static IP Config"
+        block: |
+          interface eth0
+          static ip_address={{ ip_subnet_prefix }}.{{ ip_octet }}/24
+          static routers={{ gateway }}
+          static domain_name_servers={{ gateway }}
+      notify:
+        - Reboot Pi
+
+    - name: Configure `/etc/hosts` file so nodes can see each other by hostname.
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '{{ "^" + ip_subnet_prefix|string + "." + hostvars[item].ip_octet|string }}'
+        line: "{{ ip_subnet_prefix|string + '.' + hostvars[item].ip_octet|string + '\t' + hostvars[item].inventory_hostname }}"
+        state: present
+      loop: "{{ groups['cluster'] }}"
+      when: inventory_hostname != hostvars[item].inventory_hostname
+
+  # Group the hosts slated for reboot
+  handlers:
+    - name: Reboot Pi
+      group_by:
+        key: hosts_to_reboot
+
+  # Add required software dependencies
+- name: Add prerequisite software packages
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Ensure required dependencies are installed
+      package:
+        name:
+          - python3-pip
+          - python3-setuptools
+          - build-essential
+          - iptables
+          - net-tools
+          - netcat
+          - golang
+          - git
+          - podman
+          - lvm2
+          - nfs-common
+        state: present
+      notify:
+        - Reboot Pi
+
+    - name: Ensure required Python libraries are installed
+      pip:
+        name:
+          - openshift
+          - pyyaml
+        state: present
+      notify:
+        - Reboot Pi
+
+    - name: Update all software packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+      notify:
+        - Reboot Pi
+
+    - name: Gather the installed packages and their versions
+      package_facts:
+        manager: auto
+
+    # For IP Tables < v1.8.6 we need to switch to legacy (see https://docs.k3s.io/advanced#additional-preparation-for-debian-buster-based-distributions)
+    - name: Check whether IP Tables >= v1.8.6 is installed
+      block:
+        - debug:
+            msg: "Unsupported version {{ ansible_facts.packages['iptables'][0].version }} of iptables is installed - setting preferred to legacy"
+        - shell: |
+            iptables -F
+            update-alternatives --set iptables /usr/sbin/iptables-legacy
+            update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+      when: "'iptables' in ansible_facts.packages and ansible_facts.packages['iptables'][0].version is version('1.8.6', '<')"
+
+  # Group the hosts slated for reboot
+  handlers:
+    - name: Reboot Pi
+      group_by:
+        key: hosts_to_reboot
+
+  # Copy .bashrc, .vimrc etc.
+- name: Copy Bash Config Files
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: "Copy .bashrc"
+      copy:
+        src: files/.bashrc
+        dest: /home/{{ ansible_user }}
+      notify:
+        - Reboot Pi
+    - name: "Copy .bash_functions"
+      copy:
+        src: files/.bash_functions
+        dest: /home/{{ ansible_user }}
+      notify:
+        - Reboot Pi
+    - name: "Copy .vimrc"
+      copy:
+        src: files/.vimrc
+        dest: /home/{{ ansible_user }}
+      notify:
+        - Reboot Pi
+
+  # Group the hosts slated for reboot
+  handlers:
+    - name: Reboot Pi
+      group_by:
+        key: hosts_to_reboot
+
+  # Reboot the Pi's that were slated for reboot
+- name: Reboot Pi's
+  hosts: hosts_to_reboot
+
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Reboot the cluster
+      import_tasks: tasks/reboot.yml

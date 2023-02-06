@@ -1,0 +1,10 @@
+# Variables used by the cert-manager role
+---
+# Namespace for the Certificate Manager
+cert_manager_namespace: cert-manager
+
+# Enable `Let's Encrypt` ACME provider
+enable_letsencrypt: false
+
+# Valid E-mail address for registration with `Let's Encrypt`
+email: ""

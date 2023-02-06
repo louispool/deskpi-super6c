@@ -1,0 +1,103 @@
+# Unininstalls the cert-manager package.
+#
+# https://cert-manager.io/docs/installation/helm/#uninstalling
+---
+
+# First delete all Issuers, ClusterIssuers, Certificates, CertificateRequests, Orders and Challenges
+- name: Get a list of all Cluster Issuers
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ClusterIssuer
+  register: cluster_issuers
+
+- name: Delete Cluster Issuers
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: ClusterIssuer
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ cluster_issuers | json_query('resources[*].metadata.name') }}"
+
+- name: Get a list of all Issuers
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Issuer
+  register: issuers
+
+- name: Delete Issuers
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Issuer
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ issuers | json_query('resources[*].metadata.name') }}"
+
+- name: Get a list of all Certificates
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Certificate
+  register: certificates
+
+- name: Delete Certificates
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Certificate
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ certificates | json_query('resources[*].metadata.name') }}"
+
+- name: Get a list of all CertificateRequests
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: CertificateRequest
+  register: certificate_requests
+
+- name: Delete CertificateRequests
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: CertificateRequest
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ certificate_requests | json_query('resources[*].metadata.name') }}"
+
+- name: Get a list of all Orders
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Order
+  register: orders
+
+- name: Delete Orders
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Order
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ orders | json_query('resources[*].metadata.name') }}"
+
+- name: Get a list of all Challenges
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Challenge
+  register: challenges
+
+- name: Delete Challenges
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Challenge
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ challenges | json_query('resources[*].metadata.name') }}"
+
+- name: Uninstall cert-manager with Helm
+  kubernetes.core.helm:
+    name: cert-manager
+    namespace: cert-manager
+    state: absent
+    wait: true
+
+- name: Remove the cert-manager namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    name: cert-manager
+    kind: Namespace
+    state: absent

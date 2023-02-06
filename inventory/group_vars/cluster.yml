@@ -1,0 +1,7 @@
+# Set to a user defined during the setup of the Pi's
+ansible_user: deskpi
+
+ip_subnet_prefix: 192.168.2
+ip_subnet_mask: 255.255.255.0
+
+gateway: "{{ ip_subnet_prefix }}.1"

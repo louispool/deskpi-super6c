@@ -1,0 +1,51 @@
+# Tasks to install the cert-manager package, which adds certificates and certificate issuers as resource types
+# in Kubernetes clusters, and simplifies the process of obtaining, renewing and using those certificates.
+#
+# https://cert-manager.io/
+---
+
+# See https://artifacthub.io/packages/helm/cert-manager/cert-manager
+- name: Add cert-manager chart repo.
+  kubernetes.core.helm_repository:
+    name: jetstack
+    repo_url: "https://charts.jetstack.io"
+
+- name: Deploy cert-manager
+  kubernetes.core.helm:
+    name: cert-manager
+    chart_ref: jetstack/cert-manager
+    namespace: cert-manager
+    create_namespace: yes
+    state: present
+    values:
+      installCRDs: true
+      # Configure "Let's Encrypt" as the default certificate issuer
+      # which enables the use of the kube-lego: kubernetes.io/tls-acme: "true"
+#      ingressShim.defaultIssuerName: letsencrypt-prod
+#      ingressShim.defaultIssuerKind: ClusterIssuer
+#      ingressShim.defaultIssuerGroup: cert-manager.io
+
+- name: Verify the cert-manager installation
+  kubernetes.core.k8s_info:
+    kind: Pod
+    wait: yes
+    namespace: cert-manager
+    wait_sleep: 10
+    wait_timeout: 360
+    wait_condition:
+      type: Ready
+      status: "True"
+
+- name: Configure Cluster Issuers
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/' + item ) }}"
+    state: present
+  loop:
+    - self-signed-issuer.yml.j2
+    - ca-issuer.yml.j2
+
+- name: Create Lets-Encrypt ClusterIssuer
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', './templates/lets-encrypt-issuer.yml') | from_yaml }}"
+  when: enable_letsencrypt

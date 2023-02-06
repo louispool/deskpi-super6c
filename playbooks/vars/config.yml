@@ -1,0 +1,10 @@
+# Variables used by the playbooks
+---
+
+# Whether Ubuntu was installed as the OS on the Desk Pi's
+ubuntu_os: true
+
+# In Ubuntu cmdline.txt is located in a different location to Raspberry Pi OS
+cmdline_txt_path: "{{ '/boot/firmware/cmdline.txt' if ubuntu_os else '/boot/cmdline.txt' }}"
+
+email: louis.pool@outlook.com
