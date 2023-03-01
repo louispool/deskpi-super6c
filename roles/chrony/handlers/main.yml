@@ -1,0 +1,6 @@
+# Handlers for the tasks in the ntp-server role.
+---
+- name: Restart chrony
+  ansible.builtin.service:
+    name: chrony
+    state: restarted

@@ -30,39 +30,64 @@ From the **project root directory**, run:
 ansible-playbook playbooks/k3s-pre-install.yml
 ```
 
-This playbook will, on every Pi:
+This playbook will, on every DeskPi in the cluster:
 
-- Enable cpu and memory control groups
-- Configure a static ip (with the ip-address as configured in [hosts.yml](../inventory/hosts.yml))
+- Enable cpuset and memory control groups
+- Configure a static ip (with the ip-address as configured in the [inventory](../inventory/hosts.yml))
 - Add required software dependencies
 - Update all software packages
-- Switch to legacy ip-tables (if required)
-- Copy the `.*rc` files in the `resources` folder
+- Switch to legacy ip-tables **(if required)**
+- Copy over scripts and file resources
 - Reboot the Pi
 
-The reboot task may time out if the ip addresses of the Pi's were changed during the playbook run.
-Consequently, you may have to flush your dns cache before you will be able to connect to them again.
+The reboot task may time out if the ip addresses of the Pi's were changed during the playbook run. Consequently, you may have to flush your dns cache before you will be able to connect to them again.
+     
+On the Control Plane / Master Node this playbook will also install an 
+- [NTP Server](https://galaxy.ansible.com/ricsanfre/ntp) and  
+- [DNS Server](https://thekelleys.org.uk/dnsmasq/doc.html) 
+
 
 ### [k3s-install](k3s-install.yml)
 
-After running the preparation playbook it's time to install [k3s](https://k3s.io/).
+This playbook installs the [k3s](https://k3s.io/) cluster. 
 
-1. Run the [k3s-install.yml](playbooks/k3s-install.yml) playbook from the **project root directory**:
-   ```bash
-   ansible-playbook playbooks/k3s-install.yml
-   ```
-2. Once the play completes you can check whether the cluster was successfully installed by logging into the master node and running `kubectl get nodes`.
-   You should see something like the following:
-   ```bash   
-   deskpi@deskpi1:~ $ kubectl get nodes
-   NAME    STATUS   ROLES                  AGE VERSION
-   deskpi1 Ready    control-plane,master   33s v1.25.4+k3s1
-   deskpi4 Ready    <none>                 32s v1.25.4+k3s1
-   deskpi5 Ready    <none>                 32s v1.25.4+k3s1
-   deskpi2 Ready    <none>                 32s v1.25.4+k3s1
-   deskpi6 Ready    <none>                 32s v1.25.4+k3s1
-   deskpi3 Ready    <none>                 32s v1.25.4+k3s1
-   ```
+#### Configuration
+               
+The cluster configuration is largely contained within [k3s-config.yml](vars/k3s-config.yml) and consist of the following items:
+
+* A kubelet configuration that enables [Graceful Node Shutdown](https://kubernetes.io/blog/2021/04/21/graceful-node-shutdown-beta/)
+* Extra arguments for the k3s server installation (i.e. Control Plane / Master Node):
+  - `--write-kubeconfig-mode '0644'` gives read permissions to Kube Config file (located at /etc/rancher/k3s/k3s.yaml)
+  - `--disable servicelb` disables the default service load balancer installed by k3s (i.e. Klipper Load Balancer). Instead we'll install MetalLB in a later step.
+  - `--disable traefik` disables the default ingress controller installed by k3s (i.e. Traefik). Instead we'll install Traefik ourselves in a later step. 
+  - `--kubelet-arg 'config=/etc/rancher/k3s/kubelet.config'` points to the kubelet configuration (see above).
+  - `--kube-scheduler-arg 'bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Scheduler for metrics scraping.
+  - `--kube-proxy-arg 'metrics-bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Proxy for metrics scraping.
+  - `--kube-controller-manager-arg 'bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Controller Manager for metrics scraping.
+  - `--kube-controller-manager-arg 'terminated-pod-gc-threshold=10'` set a limit of 10 terminated pods that can exist before the [garbage collector starts deleting terminated pods](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-garbage-collection).
+* Extra arguments for k3s agent installation (i.e. Worker Nodes)
+  - `--node-label 'node_type=worker'`adds a custom label to the worker node.
+  - `--kubelet-arg 'config=/etc/rancher/k3s/kubelet.config'` points to the kubelet configuration (see above).
+  - `--kube-proxy-arg 'metrics-bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Proxy for metrics scraping.
+
+#### Installation
+
+Run the [k3s-install.yml](playbooks/k3s-install.yml) playbook from the **project root directory**:
+```bash
+ansible-playbook playbooks/k3s-install.yml
+```
+Once the play completes you can check whether the cluster was successfully installed by logging into the master node and running `kubectl get nodes`.
+You should see something like the following:
+```bash   
+deskpi@deskpi1:~ $ kubectl get nodes
+NAME    STATUS   ROLES                  AGE VERSION
+deskpi1 Ready    control-plane,master   33s v1.25.4+k3s1
+deskpi4 Ready    <none>                 32s v1.25.4+k3s1
+deskpi5 Ready    <none>                 32s v1.25.4+k3s1
+deskpi2 Ready    <none>                 32s v1.25.4+k3s1
+deskpi6 Ready    <none>                 32s v1.25.4+k3s1
+deskpi3 Ready    <none>                 32s v1.25.4+k3s1
+```
 
 If something went wrong during the installation you can check the installation log, which is saved to a file called `k3s_install_log.txt` in the home directory of root.
 
@@ -97,7 +122,7 @@ ansible-playbook playbooks/k3s-uninstall.yml
 
 ### [k3s-post-install](k3s-post-install)
 
-After k3s has been successfully set up on your cluster, you can run the post-install playbook from the **project root**:
+After k3s has been successfully set up on your cluster, you should run the post-install playbook from the **project root**:
 
 ```bash
 ansible-playbook playbooks/k3s-post-install.yml

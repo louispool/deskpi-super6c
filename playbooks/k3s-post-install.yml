@@ -8,9 +8,9 @@
 # Assumes 'k3s-install.yml' was run previously.
 ---
 
-  # Enables kubectl autocompletion and the alias 'kc'.
-  #
-  # See https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/#enable-kubectl-autocompletion
+# Enables kubectl autocompletion and the alias 'kc'.
+#
+# See https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/#enable-kubectl-autocompletion
 - name: Enable kubectl autocompletion
   hosts: cluster
 
@@ -45,10 +45,11 @@
 
   tags: [ 'traefik-dashboard' ]
 
-- name: Set up Helm.
-  import_playbook: kubernetes/helm-install.yml
-  tags: [ 'helm' ]
+- name: Operations after k3s cluster installation.
+  hosts: control_plane
 
-- name: Set up an NFS Storage Class
-  import_playbook: kubernetes/nfs-storage-class.yml
-  tags: [ 'nfs-storage-class' ]
+  roles:
+    - role: helm
+      tags: ['helm']
+    - role: nfs-storage
+      tags: ['nfs']

@@ -1,0 +1,17 @@
+# Tasks to install the Linkerd Control Plane (see https://linkerd.io/2.12/tasks/install/)
+---
+- name: Check if Linkerd CLI is available
+  ansible.builtin.stat:
+    path: "{{ linkerd_bin }}"
+  register: linkerd_cli
+
+- name: Remove Linkerd Viz
+  shell: >
+     linkerd viz uninstall | kubectl delete -f -
+  when: linkerd_cli.stat.exists
+
+- name: Remove Linkerd Control Plane
+  shell: >
+     linkerd uninstall | kubectl delete -f -
+  when: linkerd_cli.stat.exists
+

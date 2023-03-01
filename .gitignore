@@ -2,3 +2,4 @@
 /playbooks/scratch/
 /.idea/
 *.iml
+/roles/ricsanfre.ntp/

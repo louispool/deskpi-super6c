@@ -1,0 +1,109 @@
+# Tasks for preparing a DeskPi in the cluster (before k3s installation).
+#
+# Tasks include
+# - enabling cpuset and memory control groups
+# - setting up a static ip configuration (with the ip-address as configured in the ansible inventory)
+# - adding required software dependencies
+# - updating all software packages
+# - switching to legacy ip-tables (if required)
+# - copying scripts and resources from the `files` folder
+# - rebooting the DeskPi
+---
+
+# Since the DeskPis are headless and without GUI, we can lower the memory reserved for the GPU
+- name: Set GPU memory split to 16 MB
+  ansible.builtin.lineinfile:
+    path: "{{ config_txt_path }}"
+    line: "gpu_mem=16"
+    create: true
+    mode: 0755
+  notify:
+    - Reboot host
+
+# Set up the Linux Control Groups
+- name: Enable Control Groups
+  include_tasks: control_groups.yml
+
+# Configure the networking on the DeskPi
+- name: Configure Networking
+  include_tasks: networking.yml
+
+# Get a list of packages installed
+- name: Gather the installed packages and their versions
+  package_facts:
+    manager: auto
+
+# To save space we can remove Canonical's Snap Software and Package deployment system
+- name: Remove Snap package
+  include_tasks: remove_snap.yml
+  when: "'snapd' in ansible_facts.packages"
+
+# Install required software packages and Python libraries
+- name: Install prerequisite software packages
+  ansible.builtin.package:
+    name: "{{ software_packages }}"
+    state: present
+  notify:
+    - Reboot host
+
+- name: Install required Python libraries
+  ansible.builtin.pip:
+    name: "{{ python_libs }}"
+    state: present
+  notify:
+    - Reboot host
+
+- name: Install prerequisite software packages for Ubuntu
+  ansible.builtin.apt:
+    name: "{{ software_packages_ubuntu }}"
+    update_cache: true
+    state: present
+  when: ubuntu_os|bool
+  notify:
+    - Reboot host
+
+- name: Update all software packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+  notify:
+    - Reboot host
+
+- name: Gather the installed packages and their versions
+  package_facts:
+    manager: auto
+
+# For IP Tables < v1.8.6 we need to switch to legacy (see https://docs.k3s.io/advanced#additional-preparation-for-debian-buster-based-distributions)
+- name: Check whether IP Tables >= v1.8.6 is installed
+  block:
+    - debug:
+        msg: "Unsupported version {{ ansible_facts.packages['iptables'][0].version }} of iptables is installed - setting preferred to legacy"
+    - shell: |
+        iptables -F
+        update-alternatives --set iptables /usr/sbin/iptables-legacy
+        update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+  when: "'iptables' in ansible_facts.packages and ansible_facts.packages['iptables'][0].version is version('1.8.6', '<')"
+
+- name: Copy utility scripts
+  ansible.builtin.copy:
+    src: "files/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: "root"
+    group: "root"
+    mode: "u=rwx,g=rx,o=rx"
+  with_items:
+    - pi_temp.sh
+    - pi_throttling.sh
+
+- name: Copy Bash config files
+  ansible.builtin.copy:
+    src: "files/{{ item }}"
+    dest: "/home/{{ ansible_user }}"
+  with_items:
+    - .bash_functions
+    - .bashrc
+    - .vimrc
+  notify:
+    - Reboot host
+
+

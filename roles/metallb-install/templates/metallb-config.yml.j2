@@ -1,0 +1,21 @@
+# Defines the CRD for the Pool of IP Addresses MetalLB will use (see https://metallb.universe.tf/configuration/#defining-the-ips-to-assign-to-the-load-balancer-services)
+# as well as the CRD for the Layer 2 Configuration (see https://metallb.universe.tf/configuration/#layer-2-configuration)
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: cluster-ip-pool
+  namespace: "{{ k3s_metallb_namespace }}"
+spec:
+  addresses:
+  - "{{ k3s_external_ip_range }}"
+
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: cluster-l2-advertisement
+  namespace: "{{ k3s_metallb_namespace }}"
+spec:
+  ipAddressPools:
+  - cluster-ip-pool

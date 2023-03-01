@@ -1,0 +1,3 @@
+# Default variables used by the linkerd-install/linkerd-viz role
+---
+k3s_linkerd_viz_namespace: linkerd-viz

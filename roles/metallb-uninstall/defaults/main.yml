@@ -1,0 +1,4 @@
+# Default variables used by the MetalLB role
+---
+# Namespace for MetalLB
+k3s_metallb_namespace: metallb-system

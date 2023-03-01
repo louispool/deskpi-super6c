@@ -14,7 +14,7 @@
   kubernetes.core.helm:
     name: cert-manager
     chart_ref: jetstack/cert-manager
-    namespace: cert-manager
+    namespace: "{{ k3s_cert_manager_namespace }}"
     create_namespace: yes
     state: present
     values:
@@ -25,11 +25,11 @@
 #      ingressShim.defaultIssuerKind: ClusterIssuer
 #      ingressShim.defaultIssuerGroup: cert-manager.io
 
-- name: Verify the cert-manager installation
+- name: Wait for Pods to be ready
   kubernetes.core.k8s_info:
     kind: Pod
     wait: yes
-    namespace: cert-manager
+    namespace: "{{ k3s_cert_manager_namespace }}"
     wait_sleep: 10
     wait_timeout: 360
     wait_condition:

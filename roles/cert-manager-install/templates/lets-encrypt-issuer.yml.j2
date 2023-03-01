@@ -8,12 +8,14 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-prod
+  # Note the ClusterIssuer name should end with "-issuer"
+  name: letsencrypt-issuer
+  namespace: {{ k3s_certmanager_namespace }}
 spec:
   acme:
     # You must replace this email address with your own - see config.yml
     # Let's Encrypt will use this to contact you about expiring certificates and issues related to your account.
-    email: {{ email }}
+    email: {{ acme_email }}
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-prod

@@ -1,0 +1,24 @@
+# Tasks to install chrony, a versatile implementation of the Network Time Protocol (NTP).
+#
+# see https://chrony.tuxfamily.org/index.html
+---
+- name: Ensure chrony is installed.
+  ansible.builtin.package:
+    name: chrony
+    state: present
+
+- name:  Generate the chrony config file.
+  ansible.builtin.template:
+    src: templates/chrony.conf.j2
+    dest: "{{ chrony_conf_file }}"
+    mode: 0644
+    backup: true
+  notify: Restart chrony
+
+- name: Ensure chrony is running and enabled.
+  ansible.builtin.service:
+    name: chrony
+    state: started
+    enabled: true
+
+

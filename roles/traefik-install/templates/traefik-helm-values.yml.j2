@@ -1,0 +1,66 @@
+# Traefik Helm Chart values.
+#
+# Complete documentation on all available parameters is in the default file:
+# https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml.
+---
+
+# Additional arguments are described here: https://docs.traefik.io/reference/static-configuration/cli/
+additionalArguments:
+  - "--metrics.prometheus=true"
+  - "--accesslog"
+  - "--accesslog.format=json"
+  - "--accesslog.filepath=/data/access.log"
+
+deployment:
+
+{% if k3s_enable_service_mesh is sameas true %}
+  # Automatic proxy injection: https://linkerd.io/2.12/features/proxy-injection/
+  podAnnotations:
+    linkerd.io/inject: ingress
+    config.linkerd.io/skip-outbound-ports: "443"
+{% endif %}
+
+  # Sidecar container for access logging
+  additionalContainers:
+    - name: stream-accesslog
+      image: busybox
+      args:
+      - /bin/sh
+      - -c
+      - tail -n+1 -F /data/access.log
+      imagePullPolicy: Always
+      resources: {}
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /data
+        name: data
+
+# Set a specific load balancer ip address for the ingress service
+service:
+  spec:
+    loadBalancerIP: {{ k3s_ingress_external_ip }}
+
+# Enable cross namespace references
+providers:
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: true
+
+  kubernetesIngress:
+      publishedService:
+          enabled: true
+
+# Create a dedicated metrics service for use with ServiceMonitor
+metrics:
+  prometheus:
+    service:
+      enabled: true
+
+# Logs: https://docs.traefik.io/observability/logs/
+logs:
+  access:
+    # Enable access log
+    enabled: true
+    # Generate logs formatted in json
+    format: json

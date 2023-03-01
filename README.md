@@ -2,10 +2,12 @@
 
 ### Useful Links
 - https://github.com/DeskPi-Team/super6c
+- https://picluster.ricsanfre.com/
 - https://github.com/geerlingguy/deskpi-super6c-cluster
 - https://www.jeffgeerling.com/blog/2020/raspberry-pi-cluster-episode-2-setting-cluster
 - https://learn.networkchuck.com/courses/take/ad-free-youtube-videos/lessons/26093614-i-built-a-raspberry-pi-super-computer-ft-kubernetes-k3s-cluster-w-rancher
 - https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/
+
 
 ## Step 1: Assemble the Board
 
@@ -18,7 +20,7 @@ The DeskPi functions as an IO Board and has micro-usb connectors next to each Co
 Note that CM1's usb connector is on the back of the [board](https://github.com/DeskPi-Team/super6c/blob/main/assets/port_definitions.png).
 
 1. Install or compile [`rpiboot`](https://github.com/raspberrypi/usbboot) for your host OS. A windows installer is available here https://github.com/raspberrypi/usbboot/tree/master/win32. 
-2. Download and Install the [Raspberry PI Imager](https://www.raspberrypi.com/software/) for your host OS.
+2. Download and install the [Raspberry PI Imager](https://www.raspberrypi.com/software/) for your host OS.
 3. Bridge the [`nRPBOOT`](https://github.com/DeskPi-Team/super6c/blob/main/assets/CM4_Jumpers.png)  jumper next to the CM you want to flash.
 4. Plug in the Micro USB cable to the USB Connector of the CM you want to flash. 
 5. Apply power to the board
@@ -56,10 +58,11 @@ Flash Raspberry Pi OS to the TF cards or SSD drives, insert them into the card s
 - python (>= v3.6)
 - PyYAML (>= v3.11)
 - Ansible (>= v2.13) For detailed instructions on installing Ansible see the [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html).
-- The [Kubernetes modules](https://docs.ansible.com/ansible/latest/collections/kubernetes/core/docsite/kubernetes_scenarios/k8s_intro.html) for Ansible. To install it you can run: `ansible-galaxy collection install kubernetes.core`
-- The [Kubernetes Python client](https://pypi.org/project/kubernetes/) (>= v25.0.0) Installed on the host that will execute the modules.
 
-Furthermore, you will also need the `kubernetes-validate` python library. You can install this with [PyPi](https://pypi.org/project/kubernetes-validate/): `pip install kubernetes-validate`
+As well as the required Ansible Collections listed in the [requirements](requirements.yml) file. You can install these with the following command:
+```bash
+ansible-galaxy install -r requirements.yml
+```
 
 ### Check the configuration of the cluster  
 

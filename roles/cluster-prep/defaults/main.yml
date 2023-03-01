@@ -1,0 +1,34 @@
+# Default variables used by the Cluster Preparation role
+---
+# Whether Ubuntu was installed as the OS on the Desk Pi
+ubuntu_os: true
+
+# In Ubuntu cmdline.txt and config.txt is located in a different location to Raspberry Pi OS
+cmdline_txt_path: "{{ '/boot/firmware/cmdline.txt' if ubuntu_os else '/boot/cmdline.txt' }}"
+config_txt_path: "{{ '/boot/firmware/config.txt' if ubuntu_os else '/boot/config.txt' }}"
+
+# Software packages to install
+software_packages:
+  - python3-pip
+  - python3-setuptools
+  - build-essential
+  - iptables
+  - net-tools
+  - netcat
+  - golang
+  - git
+  - podman
+  - lvm2
+  - nfs-common
+  - fake-hwclock
+
+# Specific software packages required for Ubuntu installations
+software_packages_ubuntu:
+  - libraspberrypi-bin
+  - linux-modules-extra-raspi
+
+# Python libraries to install
+python_libs:
+  - pyyaml
+  - kubernetes
+  - kubernetes-validate

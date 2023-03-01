@@ -1,0 +1,6 @@
+# Handlers for the tasks in the dns-server role.
+---
+- name: Restart dnsmasq
+  ansible.builtin.service:
+    name: dnsmasq
+    state: restarted

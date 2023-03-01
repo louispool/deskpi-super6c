@@ -1,3 +1,5 @@
+# Cluster group variables
+---
 # Set to a user defined during the setup of the Pi's
 ansible_user: deskpi
 
@@ -5,3 +7,23 @@ ip_subnet_prefix: 192.168.2
 ip_subnet_mask: 255.255.255.0
 
 gateway: "{{ ip_subnet_prefix }}.1"
+
+# IP Address of the Control Plane in the Cluster
+master_node_ip: "{{ ip_subnet_prefix|string + '.' + hostvars[groups['control_plane'][0]].ip_octet|string }}"
+
+# IP Addresses of the Worker Nodes in the Cluster
+worker_node_ips: >-
+  {% set node_ips = [] %}
+  {%- for host in groups['nodes'] -%}
+    {%- set ip = ip_subnet_prefix|string + "." + hostvars[host].ip_octet|string -%}
+    {%- set _ = node_ips.append(ip) -%}
+  {%- endfor -%}
+  {{ node_ips }}
+
+# IP Addresses of all nodes in the Cluster
+cluster_ips: >-
+  {% set cluster_ips = [master_node_ip] %}
+  {%- for ip in worker_node_ips -%}
+    {%- set _ = cluster_ips.append(ip) -%}
+  {%- endfor -%}
+  {{ cluster_ips }}

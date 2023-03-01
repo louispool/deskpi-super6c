@@ -1,0 +1,23 @@
+# This defines the service enabling access to Traefik's metrics.
+#
+# The service is available at http://<traefik-dashboard-service>:9100/metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-metrics
+  namespace: {{ k3s_traefik_namespace }}
+  labels:
+    app.kubernetes.io/instance: traefik
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/component: traefik-metrics
+spec:
+  type: ClusterIP
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    app.kubernetes.io/instance: traefik
+    app.kubernetes.io/name: traefik

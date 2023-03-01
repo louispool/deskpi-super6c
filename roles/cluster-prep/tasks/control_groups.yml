@@ -1,0 +1,30 @@
+# Defines tasks to enable Linux Control Groups (see https://manpages.ubuntu.com/manpages/bionic/man7/cgroups.7.html)
+---
+# See https://askubuntu.com/questions/1371732/what-is-the-purpose-of-cgroup-enable-cpuset-cgroup-enable-memory-cgroup-memory-1
+- name: Add "cgroup_enable=cpuset" to `/boot/cmdline.txt`, if not already present
+  import_tasks: cmdline.yml
+  vars:
+    key: cgroup_enable
+    value: cpuset
+    update: false
+  notify:
+    - Reboot host
+
+- name: Add "cgroup_enable=memory" to `/boot/cmdline.txt`, if not already present
+  import_tasks: cmdline.yml
+  vars:
+    key: cgroup_enable
+    value: memory
+    update: false
+  notify:
+    - Reboot host
+
+# Not strictly necessary anymore, see https://github.com/raspberrypi/linux/issues/1950#issuecomment-347481182
+- name: Add "cgroup_memory=1" to cmdline.txt, if not already present
+  import_tasks: cmdline.yml
+  vars:
+    key: cgroup_memory
+    value: 1
+    update: false
+  notify:
+    - Reboot host

@@ -1,0 +1,76 @@
+# Tasks to install the Linkerd Control Plane (see https://linkerd.io/2.12/tasks/install/)
+---
+- name: Check if Linkerd CLI is available
+  ansible.builtin.stat:
+    path: "{{ linkerd_bin }}"
+  register: linkerd_cli
+
+- name: Install Linkerd CLI
+  include_tasks: install_cli.yml
+  args:
+    apply:
+      become: true
+  when:
+    - not linkerd_cli.stat.exists
+
+- name: Create Linkerd Control Plane namespace.
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/' + item ) }}"
+    state: present
+  with_items:
+    - linkerd-namespace.yml.j2
+
+- name: Create Linkerd Issuer
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/' + item ) }}"
+    state: present
+  with_items:
+    - linkerd-identity-issuer.yml.j2
+
+- name: Get the ca.crt from linkerd-identity-issuer
+  shell: |
+    set -o pipefail
+    kubectl get secret -n "{{ k3s_linkerd_namespace }}" linkerd-identity-issuer -o jsonpath="{.data.ca\.crt}" | base64 -d
+  args:
+    executable: /bin/bash
+  register: output_ca_crt
+  changed_when: false
+
+- name: Add Linkerd stable repo.
+  kubernetes.core.helm_repository:
+    name: linkerd
+    repo_url: "https://helm.linkerd.io/stable"
+
+- name: Deploy the Linkerd CRDs
+  kubernetes.core.helm:
+    name: linkerd-crds
+    chart_ref: linkerd/linkerd-crds
+    namespace: "{{ k3s_linkerd_namespace }}"
+    update_repo_cache: true
+    state: present
+
+- name: Deploy the Linkerd Control Plane.
+  kubernetes.core.helm:
+    name: linkerd-control-plane
+    chart_ref: linkerd/linkerd-control-plane
+    namespace: "{{ k3s_linkerd_namespace }}"
+    update_repo_cache: true
+    state: present
+    release_values:
+      installNamespace: false
+      identityTrustAnchorsPEM: "{{ output_ca_crt.stdout }}"
+      identity:
+        issuer:
+          scheme: kubernetes.io/tls
+
+- name: Wait for Pods to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    wait: yes
+    namespace: "{{ k3s_linkerd_namespace }}"
+    wait_sleep: 10
+    wait_timeout: 360
+    wait_condition:
+      type: Ready
+      status: "True"
+

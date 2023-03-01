@@ -41,6 +41,13 @@
       tags: ['always']
 
   roles:
+    - role: metallb-install
+      tags: ['metallb']
     - role: cert-manager-install
-      tags: ['cert-manager']
+      tags: ['certmanager']
+    - role: linkerd-install/control-plane
+      tags: ['linkerd']
+      when: k3s_enable_service_mesh | bool
+    - role: traefik-install
+      tags: ['traefik']
 

@@ -1,0 +1,58 @@
+# Network interface dnsmasq will listen on.
+interface={{ dnsmasq_interface }}
+
+# Static IP address dnsmasq will listen on.
+listen-address= {{ dnsmasq_listen_address }}
+
+# Range of IP Addresses the DHCP Server can use. Hosts in the inventory will, however, be statically configured.
+dhcp-range={{ dhcp_range }},24h
+
+# Upstream DNS Name Servers.
+{% for server in upstream_dns_servers %}
+server={{ server }}
+{% endfor %}
+
+# Forces dnsmasq to really bind only to the interfaces it is listening on (e.g. eth0).
+bind-interfaces
+
+# Never forward A or AAAA queries for plain names, without dots or domain parts, to upstream nameservers.
+domain-needed
+
+# All reverse lookups for private IP ranges (ie 192.168.x.x, etc) which are not found in /etc/hosts or the DHCP leases file are answered with
+# "no such domain" rather than being forwarded upstream
+bogus-priv
+
+# Allows reading `/etc/hosts` file and expanding the hostnames to FQDN as <hostname>.<domain>.
+# expand-hosts
+
+# Useful for debugging issues
+# log-queries
+# log-dhcp
+
+# Add custom domain to local network
+local=/{{ dns_domain }}/
+domain={{ dns_domain }}
+
+# DHCP configuration based on inventory
+{% for host in groups['all'] %}
+{% if hostvars[host].ip_octet is defined %}
+dhcp-host={{ hostvars[host].inventory_hostname }},{{ ip_subnet_prefix|string }}.{{ hostvars[host].ip_octet|string }}
+{% endif %}
+{% endfor %}
+
+# DNS configuration based on inventory
+{% for host in groups['all'] %}
+{% if hostvars[host].ip_octet is defined %}
+host-record={{ hostvars[host].inventory_hostname }}.{{ dns_domain }},{{ ip_subnet_prefix|string }}.{{ hostvars[host].ip_octet|string }}
+{% endif %}
+{% endfor %}
+
+# Additional DNS entries
+{% for host in additional_dns_hosts.values() %}
+{% if host.desc is defined %}
+# {{ host.desc }}
+{% endif %}
+{% if host.hostname is defined and host.ip is defined %}
+host-record={{ host.hostname }}.{{ dns_domain }},{{ host.ip }}
+{% endif %}
+{% endfor %}

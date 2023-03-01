@@ -1,4 +1,4 @@
-# Defines tasks to that allow adding key-value pairs to the RPi cmdline.txt
+# Defines tasks to that allow adding key-value pairs to the Raspberry Pi 'cmdline.txt' file
 #
 # Shamelessly copied from https://stackoverflow.com/questions/61972815/ansible-modify-cmdline-txt-on-raspberry-pi
 #

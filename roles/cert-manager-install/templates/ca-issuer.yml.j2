@@ -1,12 +1,13 @@
+# Defines the CRD for the Cluster CA and CA Issuer
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: picluster-ca
-  namespace: {{ cert_manager_namespace }}
+  name: cluster-ca
+  namespace: {{ k3s_cert_manager_namespace }}
 spec:
   isCA: true
-  commonName: picluster-ca
+  commonName: cluster-ca
   secretName: root-secret
   privateKey:
     algorithm: ECDSA
@@ -19,8 +20,9 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
+  # Note the ClusterIssuer name should end with "-issuer"
   name: ca-issuer
-  namespace: {{ cert_manager_namespace }}
+  namespace: {{ k3s_cert_manager_namespace }}
 spec:
   ca:
     secretName: root-secret

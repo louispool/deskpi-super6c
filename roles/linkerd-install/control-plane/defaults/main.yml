@@ -1,0 +1,19 @@
+# Default variables used by the linkerd-install/control-plane role
+---
+
+# Release Version (see https://linkerd.io/releases/)
+linkerd_version: "stable-2.12.4"
+# Architecture
+linkerd_arch: "arm64"
+
+# Package URL for manual download
+linkerd_releases_url: "https://github.com/linkerd/linkerd2/releases/download"
+linkerd_package_name: "linkerd2-cli-{{ linkerd_version }}-linux-{{ linkerd_arch }}"
+linkerd_package_url: "{{ linkerd_releases_url }}/{{ linkerd_version }}/{{ linkerd_package_name }}"
+
+# Linkerd install location
+linkerd_install_dir: "/usr/local/bin"
+linkerd_bin: "{{ linkerd_install_dir }}/linkerd"
+
+# Namespace for the Linkerd Control Plane
+k3s_linkerd_namespace: linkerd-control-plane

@@ -1,0 +1,41 @@
+# Tasks to install dnsmasq, lightweight DNS and DHCP server.
+#
+# see https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
+---
+
+# Set the network interface dnsmasq should listen on
+- name: Set 'dnsmasq_interface' variable.
+  ansible.builtin.set_fact:
+    # Get the default network interface for IPv4 using
+    # https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_vars_facts.html#ansible-facts
+    dnsmasq_interface: "{{ ansible_default_ipv4.interface }}"
+  when: dnsmasq_interface|length == 0
+
+# Set the IPv4 address dnsmasq should listen on
+- name: Set the 'dnsmasq_listen_address' variable
+  ansible.builtin.set_fact:
+    # Get the IPv4 address on the network interface obtained above
+    # https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_vars_facts.html#ansible-facts
+    dnsmasq_listen_address: "{{ vars['ansible_' + dnsmasq_interface].ipv4.address }}"
+  when: dnsmasq_listen_address|length == 0
+
+- name: Ensure the dnsmasq package is installed.
+  ansible.builtin.package:
+    name: dnsmasq
+    state: present
+
+- name: Generate the dnsmasq config file.
+  ansible.builtin.template:
+    src: templates/dnsmasq.conf.j2
+    dest: "{{ dnsmasq_conf_dir }}{{ dnsmasq_interface }}"
+    owner: root
+    group: root
+    mode: 0644
+    backup: true
+  notify: Restart dnsmasq
+
+- name: Ensure dnsmasq is running and enabled
+  ansible.builtin.service:
+    name: dnsmasq
+    state: started
+    enabled: true

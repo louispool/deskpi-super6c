@@ -1,0 +1,15 @@
+# Namespace definition for the Linkerd Viz Extension.
+#
+# Since we are manually creating the namespace we need to duplicate the annotations mentioned here:
+# https://github.com/linkerd/linkerd2/blob/main/viz/charts/linkerd-viz/templates/namespace.yaml
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: {{ k3s_linkerd_viz_namespace }}
+  annotations:
+    linkerd.io/inject: enabled
+    config.linkerd.io/proxy-await: "enabled"
+  labels:
+    linkerd.io/extension: viz
+    pod-security.kubernetes.io/enforce: "privileged"

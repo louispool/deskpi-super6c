@@ -20,6 +20,11 @@
     K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
   roles:
+    - role: metallb-uninstall
+      tags: ['metallb']
     - role: cert-manager-uninstall
-      tags: ['cert-manager']
+      tags: ['certmanager']
+    - role: linkerd-uninstall
+      tags: ['linkerd']
+      when: k3s_enable_service_mesh | bool
 

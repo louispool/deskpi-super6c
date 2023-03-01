@@ -4,20 +4,42 @@
 #
 # Assumes 'k3s-pre-install.yml' was run previously.
 ---
+
+- name: Copy the Kubelet config
+  hosts: cluster
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - vars/config.yml
+
+  tasks:
+    - name: Create K3S configuration directory
+      ansible.builtin.file:
+        path: "{{ k3s_config_dir }}"
+        state: directory
+
+    - name: Copy kubelet configuration file
+      ansible.builtin.copy:
+        dest: "{{ k3s_config_dir }}/kubelet.config"
+        content: "{{ k3s_kubelet_config }}"
+
+# Install the k3s server
 - name: Configure the master node
   hosts: control_plane
 
   gather_facts: true
   become: true
 
+  vars_files:
+    - vars/config.yml
+
   tasks:
     # Run the installation script downloaded from get.k3s.io
-    #
-    # We set environment variable `K3S_KUBECONFIG_MODE` to allow writing (mode=r+w) to the `kubeconfig` file which
-    # will allow us to later import the k3s cluster into Rancher.
     - name: Install K3s on the control plane. This may take a while...
       ansible.builtin.shell: |
-         curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" sh -s - > ~/k3s_install_log.txt
+         curl -sfL https://get.k3s.io | sh -s - server {{ k3s_server_extra_args }} > ~/k3s_install_log.txt
       args:
         chdir: "~"
         creates: /var/lib/rancher/k3s/server/node-token
@@ -29,45 +51,74 @@
       register: node_token
 
     - name: Set node_token fact.
-      set_fact:
+      ansible.builtin.set_fact:
         node_token: "{{ node_token.stdout_lines[0] }}"
 
+    # The next few tasks copy the Kube Config
+    - name: Create `.kube` directory if it does not exist
+      ansible.builtin.file:
+        path: /home/{{ ansible_user }}/.kube
+        state: directory
+        owner: "{{ ansible_user }}"
+        mode: "u=rwx,g=rx,o="
+
+    - name: Copy the Kube Config
+      ansible.builtin.copy:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: /home/{{ ansible_user }}/.kube/config
+        remote_src: true
+        owner: "{{ ansible_user }}"
+        mode: "u=rw,g=,o="
+
+    # Fetch the Kube Config and store it locally
     - name: Fetch the Kube Config file
       ansible.builtin.fetch:
         src: /etc/rancher/k3s/k3s.yaml
         dest: /tmp/config
         flat: true
 
+# Install the k3s agents
 - name: Configure the worker nodes
   hosts: nodes
 
   gather_facts: true
   become: true
 
+  vars_files:
+    - vars/config.yml
+
   vars:
-    k3s_url: https://{{ ip_subnet_prefix|string + "." + hostvars[groups['control_plane'][0]]['ip_octet']|string }}:6443
+    k3s_url: https://{{ master_node_ip }}:6443
     k3s_token: "{{ hostvars[groups['control_plane'][0]]['node_token'] }}"
 
   tasks:
     # Run the installation script for the worker nodes
     - name: Install K3s on the worker nodes. This may take a while...
       ansible.builtin.shell: |
-         curl -sfL https://get.k3s.io | K3S_TOKEN="{{ k3s_token }}" K3S_URL="{{ k3s_url }}" sh - > ~/k3s_install_log.txt
+         curl -sfL https://get.k3s.io | sh -s - {{ k3s_worker_extra_args }} > ~/k3s_install_log.txt
+      environment:
+        K3S_TOKEN: "{{ k3s_token }}"
+        K3S_URL: "{{ k3s_url }}"
       args:
         chdir: "~"
         creates: /var/lib/rancher/k3s/agent/kubelet.kubeconfig
 
-    # The next few tasks copy the kube config from the master node
+    # The next few tasks copy the Kube Config from the master node
     # This allows us to execute kubectl commands while logged into one of the nodes
     - name: Create `.kube` directory if it does not exist
       ansible.builtin.file:
         path: /home/{{ ansible_user }}/.kube
         state: directory
+        owner: "{{ ansible_user }}"
+        mode: "u=rwx,g=rx,o="
 
+    # Copy the Kube Config stored locally earlier
     - name: Copy the Kube Config
       ansible.builtin.copy:
         src: /tmp/config
         dest: /home/{{ ansible_user }}/.kube
+        owner: "{{ ansible_user }}"
+        mode: "u=rw,g=,o="
 
     # Replace `server: 127.0.0.1:6443` in the kube config file with the ip address of the control plane
     - name: Update Kube Config file
@@ -76,3 +127,35 @@
         regexp: '(^\s*server:\s*)https:\/\/127\.0\.0\.1:6443'
         line: '\1{{ k3s_url }}'
         backrefs: yes
+
+# Label the worker nodes
+- name: Label the worker nodes
+  hosts: control_plane
+
+  gather_facts: true
+  become: true
+
+  collections:
+    - kubernetes.core
+
+  environment:
+    # kubernetes.core requires this environment variable be set to the location of the Kube Config
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  tasks:
+    - name: Wait for the Worker Nodes
+      kubernetes.core.k8s_info:
+        kind: Node
+        name: "{{ item }}"
+        wait: yes
+        wait_condition:
+          type: Ready
+          status: "True"
+        wait_sleep: 10
+        wait_timeout: 360
+      with_items: "{{ groups['nodes'] }}"
+
+    - name: Label the Worker Nodes
+      ansible.builtin.command:
+        cmd: "kubectl label nodes {{ item }} kubernetes.io/role=worker"
+      with_items: "{{ groups['nodes'] }}"

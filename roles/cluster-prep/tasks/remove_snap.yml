@@ -1,0 +1,13 @@
+# Removes the Canonical Snap Software and Package deployment system (see https://snapcraft.io/)
+#
+# Shamelessly copied from https://github.com/ricsanfre/pi-cluster/blob/master/ansible/roles/basic_setup/tasks/remove_snap_packages.yml
+---
+- name: Remove all Snap Packages
+  include_tasks: remove_snap_packages.yml
+
+- name: Remove Snap
+  ansible.builtin.apt:
+    name: snapd
+    update_cache: true
+    autoremove: true
+    state: absent

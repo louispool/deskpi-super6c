@@ -1,10 +1,107 @@
 # Variables used by the playbooks
 ---
+# Whether Ubuntu was installed as the OS on the Desk Pi
+ubuntu_os: false
 
-# Whether Ubuntu was installed as the OS on the Desk Pi's
-ubuntu_os: true
+# k3s config directory
+k3s_config_dir: /etc/rancher/k3s
 
-# In Ubuntu cmdline.txt is located in a different location to Raspberry Pi OS
-cmdline_txt_path: "{{ '/boot/firmware/cmdline.txt' if ubuntu_os else '/boot/cmdline.txt' }}"
+# Kubelet configuration - enables Graceful Node Shutdown (see https://kubernetes.io/blog/2021/04/21/graceful-node-shutdown-beta/)
+k3s_kubelet_config: |
+  apiVersion: kubelet.config.k8s.io/v1beta1
+  kind: KubeletConfiguration
+  shutdownGracePeriod: 30s
+  shutdownGracePeriodCriticalPods: 10s
 
-email: louis.pool@outlook.com
+# Extra arguments for k3s server installation
+#
+# `--write-kubeconfig-mode '0644'` gives read permissions to kubeconfig file (located at /etc/rancher/k3s/k3s.yaml)
+# `--disable servicelb` disables the default service load balancer installed by k3s (i.e. Klipper Load Balancer)
+# `--disable traefik` disables the default ingress controller installed by k3s (i.e. Traefik)
+# `--kubelet-arg 'config=/etc/rancher/k3s/kubelet.config'` points to the kubelet configuration (see above).
+# `--kube-scheduler-arg 'bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Scheduler for metrics scraping.
+# `--kube-proxy-arg 'metrics-bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Proxy for metrics scraping.
+# `--kube-controller-manager-arg 'bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Controller Manager for metrics scraping.
+# `--kube-controller-manager-arg 'terminated-pod-gc-threshold=10'` set a limit of 10 terminated pods that can exist before the garbage collector starts deleting terminated pods
+#                                                                  (see https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-garbage-collection)
+k3s_server_extra_args: >-
+  --write-kubeconfig-mode '0644'
+  --disable 'servicelb'
+  --disable 'traefik'
+  --kubelet-arg 'config=/etc/rancher/k3s/kubelet.config'
+  --kube-proxy-arg 'metrics-bind-address=0.0.0.0'
+  --kube-scheduler-arg 'bind-address=0.0.0.0'
+  --kube-controller-manager-arg 'bind-address=0.0.0.0'
+  --kube-controller-manager-arg 'terminated-pod-gc-threshold=10'
+
+# Extra arguments for k3s agent installation
+#
+# `--node-label 'node_type=worker'`adds a custom label to the worker node.
+# `--kubelet-arg 'config=/etc/rancher/k3s/kubelet.config'` points to the kubelet configuration (see above).
+# `--kube-proxy-arg 'metrics-bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Proxy for metrics scraping.
+k3s_worker_extra_args: >-
+  --node-label 'node_type=worker'
+  --kubelet-arg 'config=/etc/rancher/k3s/kubelet.config'
+  --kube-proxy-arg 'metrics-bind-address=0.0.0.0'
+
+# Namespaces
+k3s_metallb_namespace: metallb-system
+k3s_traefik_namespace: traefik-system
+k3s_cert_manager_namespace: cert-manager-system
+k3s_logging_namespace: k3s-logging
+k3s_monitoring_namespace: k3s-monitoring
+k3s_linkerd_namespace: linkerd-control-plane
+k3s_linkerd_viz_namespace: linkerd-viz
+
+# Range of IP addresses that MetalLB can use to assign IPs to services
+k3s_external_min_ip_octet: 210
+k3s_external_max_ip_octet: 255
+# In either CIDR notation (e.g. 192.168.10.0/24) or a start and an end IP address separated by a hyphen (192.168.9.1-192.168.9.5)
+k3s_external_ip_range: "{{ ip_subnet_prefix|string + '.' + k3s_external_min_ip_octet|string + '-' + ip_subnet_prefix|string +  '.' + k3s_external_max_ip_octet|string }}"
+
+# External IP for Kubernetes Ingress (used by Traefik)
+k3s_ingress_external_ip: "{{ ip_subnet_prefix|string + '.210' }}"
+
+# Whether to install Linkerd and inject proxy annotations into deployments
+k3s_enable_service_mesh: true
+
+# IP address of the NTP Server
+ntp_server: "{{ master_node_ip }}"
+
+# IP Address of the DNS Server
+dns_server: "{{ master_node_ip }}"
+dns_domain: deskpi.local.com
+
+# Additional DNS entries for dnsmasq
+additional_dns_hosts:
+  ntp_server:
+    desc: "NTP Server"
+    hostname: ntp
+    ip: "{{ ntp_server }}"
+  dns_server:
+    desc: "DNS Server"
+    hostname: dns
+    ip: "{{ dns_server }}"
+
+# DHCP range used by dnsmasq (should not overlap range of IP addresses used by MetalLB)
+dhcp_range_min_ip_octet: 200
+dhcp_range_max_ip_octet: 209
+dhcp_range: "{{ ip_subnet_prefix|string +  '.' + dhcp_range_min_ip_octet|string + ',' + ip_subnet_prefix|string + '.' + dhcp_range_max_ip_octet|string  }}"
+
+# DNS service end-points
+traefik_dashboard_dns: "traefik.{{ dns_domain }}"
+longhorn_dashboard_dns: "storage.{{ dns_domain }}"
+kibana_dashboard_dns: "kibana.{{ dns_domain }}"
+elasticsearch_dns: "elasticsearch.{{ dns_domain }}"
+fluentd_dns: "fluentd.{{ dns_domain }}"
+monitoring_dns: "monitoring.{{ dns_domain }}"
+linkerd_dashboard_dns: "linkerd.{{ dns_domain }}"
+
+# TLS certificates are CA selfsigned
+tls_issuer: ca
+# TLS certificates are signed by `Let's Encrypt`
+#tls_issuer: letsencrypt
+
+# Valid E-mail address for registration with `Let's Encrypt`
+acme_email:
+

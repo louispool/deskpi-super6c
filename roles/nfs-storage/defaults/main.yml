@@ -1,0 +1,3 @@
+# Default variables used by the NFS Storage role
+---
+nfs_dir: /data/nfs1

@@ -26,6 +26,6 @@
         path: "{{ k3s_agent_script }}"
       register: k3s_agent_uninstall_script_available
 
-    - name: Running k3s uninstallation script
+    - name: Running k3s agent uninstallation script
       ansible.builtin.command: "{{ k3s_agent_script }}"
       when: k3s_agent_uninstall_script_available.stat.exists

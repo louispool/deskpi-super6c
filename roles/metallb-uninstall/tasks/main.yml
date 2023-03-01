@@ -1,0 +1,45 @@
+# Uninstalls MetalLB
+---
+# First delete the IP Address Pool and L2 Advertisement
+- name: Get the IP Address Pool(s)
+  kubernetes.core.k8s_info:
+    api_version: "metallb.io/v1beta1"
+    kind: IPAddressPool
+  register: ip_address_pool
+
+- name: Delete the IP Address Pool
+  kubernetes.core.k8s:
+    api_version: "metallb.io/v1beta1"
+    kind: IPAddressPool
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ ip_address_pool | json_query('resources[*].metadata.name') }}"
+
+- name: Get the L2 Advertisement(s)
+  kubernetes.core.k8s_info:
+    api_version: "metallb.io/v1beta1"
+    kind: L2Advertisement
+  register: l2_advertisement
+
+- name: Delete the L2 Advertisement(s)
+  kubernetes.core.k8s:
+    api_version: "metallb.io/v1beta1"
+    kind: L2Advertisement
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ l2_advertisement | json_query('resources[*].metadata.name') }}"
+
+- name: Uninstall MetalLB with Helm
+  kubernetes.core.helm:
+    name: metallb
+    namespace: "{{ k3s_metallb_namespace }}"
+    state: absent
+    wait: true
+
+- name: Remove the MetalLB namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    name: "{{ k3s_metallb_namespace }}"
+    kind: Namespace
+    state: absent
+

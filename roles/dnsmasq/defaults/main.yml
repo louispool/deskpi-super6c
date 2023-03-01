@@ -1,0 +1,32 @@
+# Default variables used by the dns-server role.
+---
+
+# Name of the network interface dnsmasq should listen on (leave empty to infer from host)
+dnsmasq_interface: ''
+
+# IP address dnsmasq should listen on (leave empty to infer from host)
+dnsmasq_listen_address: ''
+
+# Path to the main configuration file
+dnsmasq_conf_dir: '/etc/dnsmasq.d/'
+
+# Defines the Google public name servers as upstream name servers to dnsmasq.
+upstream_dns_servers:
+  - 8.8.8.8
+  - 8.8.4.4
+
+# Additional DNS entries
+# For Example:
+# additional_dns_hosts:
+#   ntp_server:
+#     desc: "NTP Server"
+#     hostname: ntp
+#     ip: 10.0.0.1
+#   dns_server:
+#     desc: "DNS Server"
+#     hostname: dns
+#     ip: 10.0.0.1
+additional_dns_hosts: {}
+
+
+

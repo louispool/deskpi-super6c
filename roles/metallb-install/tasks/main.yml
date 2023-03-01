@@ -1,0 +1,39 @@
+# Tasks for the installation of MetalLB
+---
+- name: Create the namespace for MetalLB.
+  kubernetes.core.k8s:
+    name: "{{ k3s_metallb_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Add MetalLB chart repo.
+  kubernetes.core.helm_repository:
+    name: metallb
+    repo_url: "https://metallb.github.io/metallb"
+
+- name: Deploy MetalLB Helm chart.
+  kubernetes.core.helm:
+    name: metallb
+    chart_ref: metallb/metallb
+    namespace: "{{ k3s_metallb_namespace }}"
+    update_repo_cache: true
+    state: present
+
+- name: Wait for Pods to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ k3s_metallb_namespace }}"
+    wait: yes
+    wait_sleep: 10
+    wait_timeout: 360
+    wait_condition:
+      type: Ready
+      status: "True"
+
+- name: Configure IP address pool
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/' + item ) }}"
+    state: present
+  with_items:
+    - metallb-config.yml.j2

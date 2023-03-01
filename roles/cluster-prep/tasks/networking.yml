@@ -1,0 +1,53 @@
+# Defines various tasks to configure networking in the DeskPi
+#
+# Refers to the hosts variables in '../inventory/hosts.yml and group variables in '../inventory/group_vars/'
+---
+# Configure a Static IP
+#
+# For example: "ip=192.168.2.200::192.168.2.1:255.255.255.0:deskpi1:eth0:off"
+- name: Configure Static Networking in `cmdline.txt`
+  import_tasks: cmdline.yml
+  vars:
+    key: ip
+    value: '{{ ip_subnet_prefix|string + "." + ip_octet|string + "::" + gateway|string + ":" +
+               ip_subnet_mask|string + ":" + inventory_hostname|string + ":eth0:off" }}'
+    update: true
+  notify:
+    - Reboot host
+
+# Note the use of '/etc/network/interfaces' has been deprecated in favour of '/etc/dhcpcd.conf'
+- name: Configure a static IP address
+  ansible.builtin.blockinfile:
+    path: /etc/dhcpcd.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Static IP Config"
+    block: |
+      interface eth0
+      static ip_address={{ ip_subnet_prefix }}.{{ ip_octet }}/24
+      static routers={{ gateway }}
+      static domain_name_servers={{ dns_server }}
+  notify:
+    - Reboot host
+
+- name: Configure `/etc/hosts` file so DeskPis can see each other by hostname.
+  ansible.builtin.lineinfile:
+    dest: /etc/hosts
+    regexp: '{{ "^" + ip_subnet_prefix|string + "." + hostvars[item].ip_octet|string }}'
+    line: "{{ ip_subnet_prefix|string + '.' + hostvars[item].ip_octet|string + '\t' + hostvars[item].inventory_hostname }}"
+    state: present
+  loop: "{{ groups['cluster'] }}"
+  when: inventory_hostname != hostvars[item].inventory_hostname
+
+- name: Set the DNS Server on the `systemd-resolved` service.
+  lineinfile:
+    dest: /etc/systemd/resolved.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    mode: 0644
+    backup: true
+  with_items:
+    - regexp: "^DNS="
+      line: "DNS={{ dns_server }}"
+    - regexp: "^Domains"
+      line: "Domains={{ dns_domain }}"
+  notify: Restart systemd-resolved
