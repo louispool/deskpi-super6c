@@ -1,4 +1,4 @@
-# Updates all software packages on the Pi's in the cluster.
+# Updates all software packages on the DeskPi's in the cluster.
 #
 # Shamelessly copied from https://github.com/geerlingguy/deskpi-super6c-cluster/blob/master/upgrade.yml
 ---

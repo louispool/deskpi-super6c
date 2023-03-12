@@ -1,0 +1,36 @@
+# Tasks for preparing a disk for use by Longhorn
+#
+# These include
+# - wiping the disk
+# - formatting the disk to ext4
+# - creating a mount point
+#
+# Note that these tasks will WIPE THE DISK!
+# Be extra careful before executing these tasks and make sure that you have set the variables properly.
+---
+- name: Wipe the disk
+  block:
+    - debug:
+        msg: Wiping {{ longhorn_disk_device }} on {{ inventory_hostname }}
+    - shell: |
+        wipefs -a /dev/{{ longhorn_disk_device }}
+
+- name: Format the disk to `ext4`
+  community.general.filesystem:
+    dev: "/dev/{{ longhorn_disk_device }}"
+    fstype: ext4
+    state: present
+
+- name: Mount the disk
+  ansible.posix.mount:
+    src: "/dev/{{ longhorn_disk_device }}"
+    path: "{{ longhorn_storage_path }}"
+    fstype: ext4
+    state: mounted
+
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-# Default variables used by the MetalLB role
+# Default variables used by the role uninstallation of MetalLB
 ---
-# Namespace for MetalLB
+# MetalLB namespace
 k3s_metallb_namespace: metallb-system

@@ -6,8 +6,8 @@ k3s_traefik_namespace: traefik-system
 traefik_dashboard_dns: dashboard.traefik.local.com
 
 # Basic auth user/passwd
-traefik_basic_auth_user: admin
-traefik_basic_auth_passwd: !s3cr3t
+traefik_basic_auth_user: 'admin'
+traefik_basic_auth_passwd: '!s3cr3t'
 
 traefik_auth_htpasswd_pair:
 

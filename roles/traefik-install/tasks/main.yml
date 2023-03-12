@@ -1,4 +1,4 @@
-# Tasks for the installation of MetalLB (see https://github.com/traefik/traefik-helm-chart#installing)
+# Tasks for the installation of Traefik (see https://github.com/traefik/traefik-helm-chart#installing)
 ---
 - name: Create the namespace for Traefik.
   kubernetes.core.k8s:
@@ -19,7 +19,7 @@
     release_namespace: "{{ k3s_traefik_namespace }}"
     update_repo_cache: true
     state: present
-    values: "{{ lookup('template', 'templates/traefik_helm_values.yml.j2') | from_yaml }}"
+    values: "{{ lookup('template', 'templates/traefik-helm-values.yml.j2') | from_yaml }}"
 
 - name: Wait for Pods to be ready
   kubernetes.core.k8s_info:
@@ -40,8 +40,7 @@
     definition: "{{ lookup('template', 'templates/' + item ) }}"
     state: present
   with_items:
-    - redirect-middleware.yml.j2
     - basic-auth-middleware.yml.j2
+    - http-redirect-middleware.yml.j2
     - traefik-dashboard.yml.j2
-    - traefik-metrics-service.yml.j2
 

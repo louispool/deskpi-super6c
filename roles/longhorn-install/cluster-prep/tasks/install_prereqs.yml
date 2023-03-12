@@ -1,0 +1,28 @@
+# Installs the prerequisite software packages for Longhorn
+---
+- name: Install prerequisite software packages
+  ansible.builtin.package:
+    name:
+      - open-iscsi
+      - nfs-common
+    state: present
+
+- name: Start iscsid
+  ansible.builtin.service:
+    name: iscsid
+    enabled: yes
+    state: started
+
+- name: Load required modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - iscsi_tcp
+    - nfs
+
+
+
+
+
+

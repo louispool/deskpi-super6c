@@ -1,4 +1,4 @@
-# Tasks to install the Linkerd Control Plane (see https://linkerd.io/2.12/tasks/install/)
+# Tasks to uninstall the Linkerd Viz & Control Plane (see https://linkerd.io/2.12/tasks/uninstall/)
 ---
 - name: Check if Linkerd CLI is available
   ansible.builtin.stat:

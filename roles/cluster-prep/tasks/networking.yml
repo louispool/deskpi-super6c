@@ -15,8 +15,8 @@
   notify:
     - Reboot host
 
-# Note the use of '/etc/network/interfaces' has been deprecated in favour of '/etc/dhcpcd.conf'
-- name: Configure a static IP address
+# Note the use of '/etc/network/interfaces' has been deprecated in favour of '/etc/dhcpcd.conf' on Raspberry Pi OS
+- name: Configure a static IP address (with dhcpcd)
   ansible.builtin.blockinfile:
     path: /etc/dhcpcd.conf
     marker: "# {mark} ANSIBLE MANAGED BLOCK - Static IP Config"
@@ -25,8 +25,91 @@
       static ip_address={{ ip_subnet_prefix }}.{{ ip_octet }}/24
       static routers={{ gateway }}
       static domain_name_servers={{ dns_server }}
+  when: not ubuntu_os|bool
   notify:
     - Reboot host
+
+# Ubuntu uses NetPlan for Network Management
+- name: Disable Cloud Init
+  ansible.builtin.copy:
+    content: 'network: {config: disabled}'
+    dest: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+    force: yes
+  when: ubuntu_os|bool
+  notify:
+    - Reboot host
+
+- name: Remove Cloud Init file
+  ansible.builtin.file:
+    path: /etc/netplan/50-cloud-init.yaml
+    state: absent
+
+- name: Configure a static IP address (with Netplan)
+  ansible.builtin.copy:
+    content: |
+      network:
+        version: 2
+        renderer: networkd
+        ethernets:
+          eth0:
+            dhcp4: false
+            dhcp6: false
+            addresses:
+              - {{ ip_subnet_prefix }}.{{ ip_octet }}/24
+            routes:
+             - to: default
+               via: {{ gateway }}
+            nameservers:
+                addresses:
+                - {{ dns_server }}
+    dest: /etc/netplan/01-netcfg.yaml
+    force: yes
+  when: ubuntu_os|bool
+  notify:
+    - Apply netplan
+
+# To allow changes to `etc/hosts` to persist on Ubuntu Server we need to adapt the Cloud Config
+- name: Configure Cloud Config (comment conflicting lines)
+  ansible.builtin.lineinfile:
+    path: /etc/cloud/cloud.cfg
+    regexp: "(^{{ item }}.*)"
+    line: '# \1'
+    backrefs: yes
+  with_items:
+    - "manage_etc_hosts:"
+    - "preserve_hostname:"
+    - "fqdn:"
+    - "hostname:"
+    - "prefer_fqdn_over_hostname:"
+  when: ubuntu_os|bool
+
+- name: Configure Cloud Config (allow setting of host names)
+  ansible.builtin.blockinfile:
+    path: /etc/cloud/cloud.cfg
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Hostname Configuration"
+    block: |
+      # Do not update or manage /etc/hosts. User changes will not be overwritten.
+      manage_etc_hosts: false
+
+      # Prevent cloud-init from updating `/etc/hostname`
+      preserve_hostname: true
+
+      # Set hostname
+      fqdn: {{ inventory_hostname }}.{{ dns_domain }}
+      hostname: {{ inventory_hostname }}
+      prefer_fqdn_over_hostname: false
+  when: ubuntu_os|bool
+  notify:
+    - Reboot host
+
+- name: Configure `/etc/cloud/templates/hosts.debian.tmpl` on Ubuntu so DeskPis can see each other by hostname.
+  ansible.builtin.lineinfile:
+    dest: /etc/cloud/templates/hosts.debian.tmpl
+    regexp: '{{ "^" + ip_subnet_prefix|string + "." + hostvars[item].ip_octet|string }}'
+    line: "{{ ip_subnet_prefix|string + '.' + hostvars[item].ip_octet|string + '\t' + hostvars[item].inventory_hostname }}"
+    state: present
+  loop: "{{ groups['cluster'] }}"
+  when: ubuntu_os|bool and inventory_hostname != hostvars[item].inventory_hostname
 
 - name: Configure `/etc/hosts` file so DeskPis can see each other by hostname.
   ansible.builtin.lineinfile:
@@ -38,7 +121,7 @@
   when: inventory_hostname != hostvars[item].inventory_hostname
 
 - name: Set the DNS Server on the `systemd-resolved` service.
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/systemd/resolved.conf
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"

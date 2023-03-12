@@ -1,9 +1,8 @@
-# Playbooks for certain operations after installing k3s on the DeskPi Super6c cluster
+# Playbook for certain operations after installing k3s on the DeskPi Super6c cluster:
 #
 # - Sets up kubectl autocompletion
-# - Exposes the Traefik Dashboard
 # - Sets up HELM
-# = An NFS export on the control_plane and a k8s NFS Storage Class
+# - Creates an NFS export and NFS Storage Class on the Control Plane.
 #
 # Assumes 'k3s-install.yml' was run previously.
 ---
@@ -27,26 +26,36 @@
           alias kc='kubectl'
           complete -o default -F __start_kubectl kc
 
-- name: Expose Traefik Dashboard
-  hosts: control_plane
-
-  gather_facts: false
-  become: true
-
-  environment:
-    # The location of the kubeconfig file on the master node
-    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-  tasks:
-    - name: Apply Traefik k8s CRD IngressRoute to the Traefik Dashboard
-      kubernetes.core.k8s:
-        state: present
-        definition: "{{ lookup('file', 'kubernetes/manifests/traefik-dashboard-ingressroute.yml') | from_yaml }}"
-
-  tags: [ 'traefik-dashboard' ]
-
 - name: Operations after k3s cluster installation.
   hosts: control_plane
+
+  gather_facts: true
+  become: true
+
+  collections:
+    - kubernetes.core
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  pre_tasks:
+    # Install kubernetes core collection dependencies (kubernetes python package) using PIP.
+    - name: Ensure PIP is installed.
+      package:
+        name:
+          - python3-pip
+          - python3-setuptools
+        state: present
+      become: true
+      tags: ['always']
+
+    - name: Ensure kubernetes Python library is installed.
+      pip:
+        name: kubernetes
+        state: present
+      become: true
+      tags: ['always']
 
   roles:
     - role: helm

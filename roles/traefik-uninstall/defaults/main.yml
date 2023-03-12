@@ -1,0 +1,4 @@
+# Default variables used by the role for uninstallation of Traefik
+---
+# Traefik namespace
+k3s_traefik_namespace: traefik-system

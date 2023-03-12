@@ -1,4 +1,4 @@
-# Tasks to install dnsmasq, lightweight DNS and DHCP server.
+# Tasks to install dnsmasq, a lightweight DNS and DHCP server.
 #
 # see https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
 ---

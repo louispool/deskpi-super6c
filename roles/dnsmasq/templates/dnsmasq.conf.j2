@@ -2,7 +2,7 @@
 interface={{ dnsmasq_interface }}
 
 # Static IP address dnsmasq will listen on.
-listen-address= {{ dnsmasq_listen_address }}
+listen-address={{ dnsmasq_listen_address }}
 
 # Range of IP Addresses the DHCP Server can use. Hosts in the inventory will, however, be statically configured.
 dhcp-range={{ dhcp_range }},24h
@@ -32,6 +32,9 @@ bogus-priv
 # Add custom domain to local network
 local=/{{ dns_domain }}/
 domain={{ dns_domain }}
+
+# Resolve sub-domains via a DNS wildcard
+address=/{{ dns_domain }}/{{ k3s_ingress_external_ip }}
 
 # DHCP configuration based on inventory
 {% for host in groups['all'] %}

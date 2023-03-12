@@ -14,7 +14,8 @@
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for installing [Linkerd](https://linkerd.io/), a service mesh for Kubernetes. It makes running services easier and safer by giving you runtime debugging, observability, reliability, and security.
-
+   
+### Synopsis
 This role contains tasks that will 
 
 1. Install the [Linkerd CLI](https://linkerd.io/2.12/getting-started/#step-1-install-the-cli)
@@ -32,6 +33,11 @@ This role contains tasks that will
    
 4. Install the [Linkerd CRDs](https://linkerd.io/2.12/tasks/install-helm/#linkerd-crds) using Helm.
 5. Install the [Linkerd Control Plane](https://linkerd.io/2.12/tasks/install-helm/#linkerd-crds) using Helm.
+
+### References
+
+https://linkerd.io/2.12/getting-started/
+https://picluster.ricsanfre.com/docs/service-mesh/
 
 
 

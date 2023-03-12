@@ -1,4 +1,4 @@
-# Uninstalls MetalLB
+# Tasks for unninstallation of MetalLB
 ---
 # First delete the IP Address Pool and L2 Advertisement
 - name: Get the IP Address Pool(s)
@@ -29,6 +29,7 @@
     name: "{{ item }}"
   loop: "{{ l2_advertisement | json_query('resources[*].metadata.name') }}"
 
+# Remove the MetalLB deployment
 - name: Uninstall MetalLB with Helm
   kubernetes.core.helm:
     name: metallb

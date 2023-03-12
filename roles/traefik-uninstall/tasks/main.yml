@@ -1,0 +1,65 @@
+# Tasks for the removal of Traefik
+---
+# First delete all IngressRoutes and Middlewares
+- name: Get a list of all Ingress Routes
+  kubernetes.core.k8s_info:
+    api_version: "traefik.containo.us/v1alpha1"
+    kind: IngressRoute
+  register: ingress_routes
+
+- name: Delete Ingress Routes
+  kubernetes.core.k8s:
+    api_version: "traefik.containo.us/v1alpha1"
+    kind: IngressRoute
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ ingress_routes | json_query('resources[*].metadata.name') }}"
+
+- name: Get a list of all Middleware
+  kubernetes.core.k8s_info:
+    api_version: "traefik.containo.us/v1alpha1"
+    kind: Middleware
+  register: middle_wares
+
+- name: Delete Middleware
+  kubernetes.core.k8s:
+    api_version: "traefik.containo.us/v1alpha1"
+    kind: Middleware
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ middle_wares | json_query('resources[*].metadata.name') }}"
+
+# Delete any Service Monitors
+- name: Get a list of Traefik Service Monitors
+  kubernetes.core.k8s_info:
+    api_version: "monitoring.coreos.com/v1"
+    kind: ServiceMonitor
+    label_selectors:
+      - app = traefik
+  register: service_monitors
+
+- name: Delete Traefik Service Monitors
+  kubernetes.core.k8s:
+    api_version: "monitoring.coreos.com/v1"
+    kind: ServiceMonitor
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ service_monitors | json_query('resources[*].metadata.name') }}"
+
+- name: Uninstall Traefik with Helm
+  kubernetes.core.helm:
+    name: traefik
+    namespace: "{{ k3s_traefik_namespace }}"
+    state: absent
+    wait: true
+
+- name: Remove the Traefik namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    name: "{{ k3s_traefik_namespace }}"
+    kind: Namespace
+    state: absent
+
+
+
+

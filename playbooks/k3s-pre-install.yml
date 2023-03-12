@@ -21,15 +21,15 @@
   roles:
     # Cluster Preparation
     - role: cluster-prep
-      tags: [prep]
+      tags: ['prep']
 
     # NTP Server Configuration
     - role: chrony
-      tags: [ntp, chrony]
+      tags: ['ntp', 'chrony']
 
     # DNS Server Configuration
     - role: dnsmasq
-      tags: [dns, dnsmasq]
+      tags: ['dns', 'dnsmasq']
 
 
 - name: Prepare the cluster
@@ -49,8 +49,8 @@
   roles:
     # Cluster Preparation
     - role: cluster-prep
-      tags: [prep]
+      tags: ['prep']
 
     # NTP Client Configuration
     - role: chrony
-      tags: [ntp, chrony]
+      tags: ['ntp', 'chrony']

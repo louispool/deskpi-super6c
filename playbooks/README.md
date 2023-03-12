@@ -3,10 +3,7 @@
 ```
 ├── playbooks
 │ ├── tasks
-| |  ├── cmdline.yml
 | |  ├── reboot.yml
-│ ├── tests
-| |  ├── ...
 │ ├── vars
 | |  ├── config.yml
 | ├── k3s-pre-install.yml
@@ -23,28 +20,23 @@ This structure houses the Ansible Playbooks.
 
 ### [k3s-pre-install](k3s-pre-install.yml)
 
-Playbook prepares the cluster for k3s installation.   
+This playbook prepares the cluster for k3s installation.   
                                                    
 From the **project root directory**, run:
 ```bash
 ansible-playbook playbooks/k3s-pre-install.yml
 ```
+                
+#### Synopsis
 
-This playbook will, on every DeskPi in the cluster:
+This playbook will, on every host in the cluster:
 
-- Enable cpuset and memory control groups
-- Configure a static ip (with the ip-address as configured in the [inventory](../inventory/hosts.yml))
-- Add required software dependencies
-- Update all software packages
-- Switch to legacy ip-tables **(if required)**
-- Copy over scripts and file resources
-- Reboot the Pi
-
-The reboot task may time out if the ip addresses of the Pi's were changed during the playbook run. Consequently, you may have to flush your dns cache before you will be able to connect to them again.
+- Execute the [Cluster Preparation](../roles/cluster-prep/README.md) role
+- Configure an [NTP Client](../roles/chrony/README.md)  
      
-On the Control Plane / Master Node this playbook will also install an 
-- [NTP Server](https://galaxy.ansible.com/ricsanfre/ntp) and  
-- [DNS Server](https://thekelleys.org.uk/dnsmasq/doc.html) 
+On the Control Plane / Master Node this playbook will also:
+- Configure an [NTP Server](../roles/chrony/README.md)  
+- Set up a [DNS Server](../roles/dnsmasq/README.md) 
 
 
 ### [k3s-install](k3s-install.yml)
@@ -53,13 +45,13 @@ This playbook installs the [k3s](https://k3s.io/) cluster.
 
 #### Configuration
                
-The cluster configuration is largely contained within [k3s-config.yml](vars/k3s-config.yml) and consist of the following items:
+The cluster configuration is largely contained within [config.yml](vars/config.yml) and consists of the following items:
 
 * A kubelet configuration that enables [Graceful Node Shutdown](https://kubernetes.io/blog/2021/04/21/graceful-node-shutdown-beta/)
 * Extra arguments for the k3s server installation (i.e. Control Plane / Master Node):
   - `--write-kubeconfig-mode '0644'` gives read permissions to Kube Config file (located at /etc/rancher/k3s/k3s.yaml)
-  - `--disable servicelb` disables the default service load balancer installed by k3s (i.e. Klipper Load Balancer). Instead we'll install MetalLB in a later step.
-  - `--disable traefik` disables the default ingress controller installed by k3s (i.e. Traefik). Instead we'll install Traefik ourselves in a later step. 
+  - `--disable servicelb` disables the default service load balancer installed by k3s (i.e. Klipper Load Balancer), instead we'll install MetalLB in a later step.
+  - `--disable traefik` disables the default ingress controller installed by k3s (i.e. Traefik), instead we'll install Traefik ourselves in a later step. 
   - `--kubelet-arg 'config=/etc/rancher/k3s/kubelet.config'` points to the kubelet configuration (see above).
   - `--kube-scheduler-arg 'bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Scheduler for metrics scraping.
   - `--kube-proxy-arg 'metrics-bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Proxy for metrics scraping.
@@ -78,29 +70,29 @@ ansible-playbook playbooks/k3s-install.yml
 ```
 Once the play completes you can check whether the cluster was successfully installed by logging into the master node and running `kubectl get nodes`.
 You should see something like the following:
-```bash   
+```bash 
 deskpi@deskpi1:~ $ kubectl get nodes
-NAME    STATUS   ROLES                  AGE VERSION
-deskpi1 Ready    control-plane,master   33s v1.25.4+k3s1
-deskpi4 Ready    <none>                 32s v1.25.4+k3s1
-deskpi5 Ready    <none>                 32s v1.25.4+k3s1
-deskpi2 Ready    <none>                 32s v1.25.4+k3s1
-deskpi6 Ready    <none>                 32s v1.25.4+k3s1
-deskpi3 Ready    <none>                 32s v1.25.4+k3s1
+NAME      STATUS   ROLES                  AGE VERSION
+deskpi1   Ready    control-plane,master   33s v1.25.6+k3s1
+deskpi2   Ready    worker                 32s v1.25.6+k3s1
+deskpi3   Ready    worker                 32s v1.25.6+k3s1
+deskpi4   Ready    worker                 32s v1.25.6+k3s1
+deskpi5   Ready    worker                 32s v1.25.6+k3s1
+deskpi6   Ready    worker                 32s v1.25.6+k3s1
 ```
 
 If something went wrong during the installation you can check the installation log, which is saved to a file called `k3s_install_log.txt` in the home directory of root.
 
 ```bash
 deskpi@deskpi1:~ $ sudo -i
-root@deskpi1:~ # cat k3s_install_log.txt
-
+root@deskpi1:~# cat k3s_install_log.txt
 [INFO]  Finding release for channel stable
-[INFO]  Using v1.25.4+k3s1 as release
-[INFO]  Downloading hash https://github.com/k3s-io/k3s/releases/download/v1.25.4+k3s1/sha256sum-arm64.txt
-[INFO]  Downloading binary https://github.com/k3s-io/k3s/releases/download/v1.25.4+k3s1/k3s-arm64
+[INFO]  Using v1.25.6+k3s1 as release
+[INFO]  Downloading hash https://github.com/k3s-io/k3s/releases/download/v1.25.6+k3s1/sha256sum-arm64.txt
+[INFO]  Downloading binary https://github.com/k3s-io/k3s/releases/download/v1.25.6+k3s1/k3s-arm64
 [INFO]  Verifying binary download
 [INFO]  Installing k3s to /usr/local/bin/k3s
+[INFO]  Skipping installation of SELinux RPM
 [INFO]  Creating /usr/local/bin/kubectl symlink to k3s
 [INFO]  Creating /usr/local/bin/crictl symlink to k3s
 [INFO]  Creating /usr/local/bin/ctr symlink to k3s
@@ -122,20 +114,27 @@ ansible-playbook playbooks/k3s-uninstall.yml
 
 ### [k3s-post-install](k3s-post-install)
 
-After k3s has been successfully set up on your cluster, you should run the post-install playbook from the **project root**:
+This playbook executes several operations and installs several packages after k3s has been successfully installed to the deskpi cluster. 
+
+ 
+#### Installation
+
+After k3s has been successfully set up on your cluster, you can run the post-install playbook from the **project root**:
 
 ```bash
 ansible-playbook playbooks/k3s-post-install.yml
 ```
+
+#### Synopsis
+
 This playbook will do the following:   
 
-- [Helm](https://helm.sh/), the package manager for kubernetes, is installed, and we will use it to install other packages.
-- [kubectl autocompletion](https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/) and the alias `kc` is created for [`kubectl`](https://kubernetes.io/docs/reference/kubectl/), which is automatically installed by the k3s installation script, on every Pi in the cluster.
-- Creates an Ingress Route to the [Traefik Dashboard](https://doc.traefik.io/traefik/operations/dashboard/) and exposes the dashboard at `<your-deskpi-ip>/dashboard/`. [Traefik](https://traefik.io/) is the default Ingress Controller installed for kubernetes by k3s. 
+- Configures [kubectl autocompletion](https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/) and the alias `kc` is created
+  for [`kubectl`](https://kubernetes.io/docs/reference/kubectl/), which is automatically installed by the k3s installation script, on every host in the cluster.
+- Installs [Helm](https://helm.sh/), the package manager for kubernetes, which will be used to install other k8s packages.
+- Creates an [NFS Storage Class](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner), based on an NFS export, on the Control Plane.
 
-- An [NFS Storage Class](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner), based on an NFS export, is created on the `control_plane` host.
-
-These playbooks are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
+These tasks are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
 
 For example, to install specifically only **Helm** you can run the playbook as follows:
 

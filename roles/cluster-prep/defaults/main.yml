@@ -3,6 +3,9 @@
 # Whether Ubuntu was installed as the OS on the Desk Pi
 ubuntu_os: true
 
+# Whether to reduce the memory allocated to the GPU
+reduce_gpu_mem: false
+
 # In Ubuntu cmdline.txt and config.txt is located in a different location to Raspberry Pi OS
 cmdline_txt_path: "{{ '/boot/firmware/cmdline.txt' if ubuntu_os else '/boot/cmdline.txt' }}"
 config_txt_path: "{{ '/boot/firmware/config.txt' if ubuntu_os else '/boot/config.txt' }}"

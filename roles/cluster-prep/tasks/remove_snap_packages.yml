@@ -14,7 +14,7 @@
       changed_when: false
       register: snap_packages
 
-    - name: Remove snap packages
+    - name: Remove snap packages (this might fail - will retry)
       ansible.builtin.command: snap remove {{ item }}
       register: snap_remove_output
       with_items: "{{ snap_packages.stdout_lines }}"

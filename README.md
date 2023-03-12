@@ -1,12 +1,13 @@
 # DeskPI Super6c
 
 ### Useful Links
-- https://github.com/DeskPi-Team/super6c
-- https://picluster.ricsanfre.com/
-- https://github.com/geerlingguy/deskpi-super6c-cluster
-- https://www.jeffgeerling.com/blog/2020/raspberry-pi-cluster-episode-2-setting-cluster
-- https://learn.networkchuck.com/courses/take/ad-free-youtube-videos/lessons/26093614-i-built-a-raspberry-pi-super-computer-ft-kubernetes-k3s-cluster-w-rancher
-- https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/
+- [DeskPi Super6c](https://github.com/DeskPi-Team/super6c)
+- [Ricsanfre's Pi Cluster](https://picluster.ricsanfre.com/)
+- [rpi4cluster.com](https://rpi4cluster.com/)
+- [Jeff Geerling's DeskPi Super6c Cluster](https://github.com/geerlingguy/deskpi-super6c-cluster)
+- [Jeff Geerling's Raspberry Pi Cluster Ep. 2](https://www.jeffgeerling.com/blog/2020/raspberry-pi-cluster-episode-2-setting-cluster)
+- [Network Chuck's Raspberry Pi k3s Cluster](https://learn.networkchuck.com/courses/take/ad-free-youtube-videos/lessons/26093614-i-built-a-raspberry-pi-super-computer-ft-kubernetes-k3s-cluster-w-rancher)
+- [The DIY Life: Turing Pi 2 Cluster](https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/)
 
 
 ## Step 1: Assemble the Board

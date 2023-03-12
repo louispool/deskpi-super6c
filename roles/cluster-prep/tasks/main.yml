@@ -17,16 +17,9 @@
     line: "gpu_mem=16"
     create: true
     mode: 0755
+  when: reduce_gpu_mem|bool
   notify:
     - Reboot host
-
-# Set up the Linux Control Groups
-- name: Enable Control Groups
-  include_tasks: control_groups.yml
-
-# Configure the networking on the DeskPi
-- name: Configure Networking
-  include_tasks: networking.yml
 
 # Get a list of packages installed
 - name: Gather the installed packages and their versions
@@ -73,7 +66,7 @@
   package_facts:
     manager: auto
 
-# For IP Tables < v1.8.6 we need to switch to legacy (see https://docs.k3s.io/advanced#additional-preparation-for-debian-buster-based-distributions)
+# For IP Tables < v1.8.6 we need to switch to legacy (see https://github.com/k3s-io/k3s/issues/3117)
 - name: Check whether IP Tables >= v1.8.6 is installed
   block:
     - debug:
@@ -84,6 +77,7 @@
         update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
   when: "'iptables' in ansible_facts.packages and ansible_facts.packages['iptables'][0].version is version('1.8.6', '<')"
 
+# Copy over resource files
 - name: Copy utility scripts
   ansible.builtin.copy:
     src: "files/{{ item }}"
@@ -106,4 +100,11 @@
   notify:
     - Reboot host
 
+# Set up the Linux Control Groups
+- name: Enable Control Groups
+  include_tasks: control_groups.yml
+
+# Configure the networking on the DeskPi
+- name: Configure Networking
+  include_tasks: networking.yml
 

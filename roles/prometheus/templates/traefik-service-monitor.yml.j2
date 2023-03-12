@@ -1,0 +1,22 @@
+# This defines the Prometheus ServiceMonitor for scraping Traefik's metrics service.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: traefik
+    release: monitoring
+  name: traefik-prometheus-service-monitor
+  namespace: {{ k3s_traefik_namespace }}
+spec:
+  jobLabel: app.kubernetes.io/name
+  endpoints:
+    - port: metrics
+      path: /metrics
+  namespaceSelector:
+    matchNames:
+      - {{ k3s_traefik_namespace }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+      app.kubernetes.io/component: metrics

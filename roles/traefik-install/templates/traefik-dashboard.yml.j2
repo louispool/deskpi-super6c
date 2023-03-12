@@ -1,6 +1,5 @@
 # Exposes the Traefik dashboard (see https://doc.traefik.io/traefik/operations/api/#dashboard)
 ---
-
 # Create a certificate for the TLS secret using cert-manager
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -12,13 +11,12 @@ spec:
   issuerRef:
     name: {{ tls_issuer }}-issuer
     kind: ClusterIssuer
-  commonName: "{{ traefik_dashboard_dns }}"
+  commonName: {{ traefik_dashboard_dns }}
   dnsNames:
-    - "{{ traefik_dashboard_dns }}"
+    - {{ traefik_dashboard_dns }}
   privateKey:
     algorithm: ECDSA
 ---
-
 # Traefik v2 IngressRoute CRD
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -34,5 +32,8 @@ spec:
       services:
         - kind: TraefikService
           name: api@internal
+  middlewares:
+    - name: basic-auth
+      namespace: {{ k3s_traefik_namespace }}
   tls:
     secretName: traefik-secret

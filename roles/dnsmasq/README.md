@@ -17,8 +17,9 @@
 
 ### References
 
-https://thekelleys.org.uk/dnsmasq/doc.html
-https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
-https://www.linux.com/topic/networking/advanced-dnsmasq-tips-and-tricks
+- https://thekelleys.org.uk/dnsmasq/doc.html
+- https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
+- https://wiki.archlinux.org/title/dnsmasq
+- https://www.linux.com/topic/networking/advanced-dnsmasq-tips-and-tricks
 
 

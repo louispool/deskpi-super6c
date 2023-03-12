@@ -1,0 +1,12 @@
+# Tasks for preparing every host in the cluster for the installation of Longhorn.
+#
+# Note that these tasks will WIPE THE DISK!
+# Be extra careful before executing these tasks and make sure that you have set the variables properly.
+---
+# Install prerequisite software and modules
+- name: Install prerequisites
+  include_tasks: install_prereqs.yml
+
+- name: Prepare the disk
+  include_tasks: prepare_disk.yml
+  when: ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'ext4') | list | length <= 0

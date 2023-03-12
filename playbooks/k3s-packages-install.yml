@@ -1,15 +1,34 @@
 # Playbook for installing various additional packages to k3s
 #
 # These include
-# - Prometheus & Grafana
-# - Cert Manager
-# - Rook & Ceph
+# - MetalLB (Load Balancer)
+# - Cert-Manager (Certificate Management)
+# - Linkerd (Service Mesh)
+# - Traefik (Ingress Controller)
+# = Longhorn (Storage Controller)
 #
 # Packages are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
 #
 # Assumes 'k3s-install.yml' and 'k3s-post-install.yml' was run previously.
 ---
-- name: Install various packages to k3s.
+- name: Install various packages to k3s (affects all hosts in the cluster)
+  hosts: cluster
+
+  gather_facts: true
+  become: true
+
+  vars_files:
+    - vars/config.yml
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  roles:
+    - role: longhorn-install/cluster-prep
+      tags: ['longhorn']
+
+- name: Install various packages to k3s (via the control plane).
   hosts: control_plane
 
   gather_facts: true
@@ -18,36 +37,34 @@
   collections:
     - kubernetes.core
 
+  vars_files:
+    - vars/config.yml
+
   environment:
     # The location of the kubeconfig file on the master.
     K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
   pre_tasks:
-    # Install kubernetes core collection dependencies (kubernetes python package) using PIP.
-    - name: Ensure PIP is installed.
-      package:
-        name:
-          - python3-pip
-          - python3-setuptools
+    - name: Ensure Helm Diff Plugin is installed
+      kubernetes.core.helm_plugin:
+        plugin_path: https://github.com/databus23/helm-diff
         state: present
-      become: true
-      tags: ['always']
-
-    - name: Ensure kubernetes Python library is installed.
-      pip:
-        name: kubernetes
-        state: present
-      become: true
       tags: ['always']
 
   roles:
     - role: metallb-install
       tags: ['metallb']
+
     - role: cert-manager-install
       tags: ['certmanager']
+
     - role: linkerd-install/control-plane
       tags: ['linkerd']
       when: k3s_enable_service_mesh | bool
+
     - role: traefik-install
       tags: ['traefik']
+
+    - role: longhorn-install/control-plane
+      tags: ['longhorn']
 

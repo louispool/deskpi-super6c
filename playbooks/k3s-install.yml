@@ -37,7 +37,7 @@
 
   tasks:
     # Run the installation script downloaded from get.k3s.io
-    - name: Install K3s on the control plane. This may take a while...
+    - name: Installs the k3s server on the master-node/control-plane. This may take a while...
       ansible.builtin.shell: |
          curl -sfL https://get.k3s.io | sh -s - server {{ k3s_server_extra_args }} > ~/k3s_install_log.txt
       args:
@@ -93,7 +93,7 @@
 
   tasks:
     # Run the installation script for the worker nodes
-    - name: Install K3s on the worker nodes. This may take a while...
+    - name: Install k3s agents on the worker-nodes. This may take a while...
       ansible.builtin.shell: |
          curl -sfL https://get.k3s.io | sh -s - {{ k3s_worker_extra_args }} > ~/k3s_install_log.txt
       environment:
