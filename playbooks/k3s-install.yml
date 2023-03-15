@@ -4,7 +4,7 @@
 #
 # Assumes 'k3s-pre-install.yml' was run previously.
 ---
-
+# Copy Kubelet configuration that enables Graceful Node Shutdown
 - name: Copy the Kubelet config
   hosts: cluster
 

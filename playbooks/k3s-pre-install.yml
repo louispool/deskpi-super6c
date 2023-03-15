@@ -1,9 +1,9 @@
 # Playbook for preparing the DeskPi Super6c cluster
 #
 # Invokes the roles
-# - cluster-prep
-# - ricsanfre.ntp (see https://galaxy.ansible.com/ricsanfre/ntp)
-# - dnsmasq
+# - cluster-prep (Cluster Preparation)
+# - chrony (NTP Server/Client)
+# - dnsmasq (DNS Server)
 ---
 - name: Prepare control plane
   hosts: control_plane
