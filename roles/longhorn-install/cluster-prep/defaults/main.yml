@@ -1,7 +1,13 @@
 # Default variables used by the longhorn-install/cluster-prep role
 ---
+# Whether to allow wiping and formatting the disk device
+longhorn_prepare_disk: false
+
 # Name of the disk device to use (check with `lsblk -f`)
-longhorn_disk_device: nvme0n1
+longhorn_disk_device:
+
+# Filesystem to format the disk to (must be either 'ext4' or 'xfs')
+longhorn_fstype: ext4
 
 # Path to mount the disk to (and subsequently used by Longhorn)
 longhorn_storage_path: /mnt/storage

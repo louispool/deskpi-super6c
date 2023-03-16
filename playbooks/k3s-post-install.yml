@@ -6,7 +6,6 @@
 #
 # Assumes 'k3s-install.yml' was run previously.
 ---
-
 # Enables kubectl autocompletion and the alias 'kc'.
 #
 # See https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/#enable-kubectl-autocompletion

@@ -1,4 +1,4 @@
-# Ansible Playbooks
+# [Ansible Playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html)
 
 ```
 ├── playbooks
@@ -16,7 +16,15 @@
 | ├── reboot-deskpis.yml
 | ├── shutdown-deskpis.yml
 ```
-This structure houses the Ansible Playbooks.
+This structure houses the [Ansible Playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html) for my [DeskPi Super6c Cluster Homelab](https://github.com/louispool/deskpi-super6c).
+
+Before running these playbooks, ensure that the
+
+- the hosts have been properly configured in [inventory/hosts.yml](../inventory/hosts.yml),
+- the [cluster variables](../inventory/group_vars/cluster.yml) are correct, and
+- the [cluster configuration](./vars/config.yml) is up-to-date.
+
+## Playbooks
 
 ### [k3s-pre-install](k3s-pre-install.yml)
 
@@ -64,7 +72,7 @@ The cluster configuration is largely contained within [config.yml](vars/config.y
 
 #### Installation
 
-Run the [k3s-install.yml](playbooks/k3s-install.yml) playbook from the **project root directory**:
+Run the [k3s-install.yml](k3s-install.yml) playbook from the **project root directory**:
 ```bash
 ansible-playbook playbooks/k3s-install.yml
 ```
@@ -106,15 +114,15 @@ root@deskpi1:~# cat k3s_install_log.txt
 
 ### [k3s-uninstall](k3s-uninstall.yml)
 
-You can uninstall k3s by running the [`k3s-uninstall.yml`](playbooks/k3s-uninstall.yml) playbook from the **project root**:
+You can uninstall k3s by running the [`k3s-uninstall.yml`](k3s-uninstall.yml) playbook from the **project root**:
 
 ```bash
 ansible-playbook playbooks/k3s-uninstall.yml
 ```
 
-### [k3s-post-install](k3s-post-install)
+### [k3s-post-install](k3s-post-install.yml)
 
-This playbook executes several operations and installs several packages after k3s has been successfully installed to the deskpi cluster. 
+This playbook executes several operations and installs several packages after k3s has been successfully installed to the DeskPi cluster. 
 
  
 #### Installation
@@ -127,7 +135,7 @@ ansible-playbook playbooks/k3s-post-install.yml
 
 #### Synopsis
 
-This playbook will do the following:   
+This playbook does the following:   
 
 - Configures [kubectl autocompletion](https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/) and the alias `kc` is created
   for [`kubectl`](https://kubernetes.io/docs/reference/kubectl/), which is automatically installed by the k3s installation script, on every host in the cluster.
@@ -141,8 +149,83 @@ For example, to install specifically only **Helm** you can run the playbook as f
 ```bash
 ansible-playbook playbooks/k3s-post-install.yml --tags "helm" 
 ```
-     
+
 ### [k3s-packages-install](k3s-packages-install.yml)
+
+This playbook installs various additional packages to the k3s cluster.
+
+#### Configuration
+
+Certain packages are gated by specific flags in the [configuration](./vars/config.yml):
+
+- `k3s_enable_service_mesh` Whether to install [Linkerd](https://linkerd.io/) and inject proxy annotations into deployments.
+- `k3s_enable_block_storage` Whether to install [Longhorn](https://longhorn.io/).
+
+Certain variables affect the configuration of some of the packages:
+
+- `k3s_external_ip_range` The IP Address Pool used by the Load Balancer. In either CIDR notation (e.g. `192.168.10.0/24`) or a start and an end IP address separated by a hyphen (
+  e.g. `192.168.9.1-192.168.9.5`)
+- `k3s_ingress_external_ip` External IP for Kubernetes Ingress (used by Traefik).
+- `tls_issuer` The TLS certificate issuer.
+- `longhorn_storage_path` Path to mount the disk to (and subsequently used by Longhorn).
+- `longhorn_disk_device` Name of the disk device to use.
+- `longhorn_prepare_disk` Whether to allow wiping and formatting of the disk device.
+
+#### Installation
+
+Run the [k3s-packages-install.yml](k3s-packages-install.yml) playbook from the **project root directory**:
+
+```bash
+ansible-playbook playbooks/k3s-packages-install.yml
+```
+
+#### Synopsis
+
+The playbook includes the roles:
+
+- [Install MetalLB](../roles/metallb-install/README.md) (Load Balancer)
+- [Install Cert-Manager](../roles/cert-manager-install/README.md) (Certificate Management)
+- [Install Linkerd](../roles/linkerd-install/README.md) (Service Mesh)
+- [Install Traefik](../roles/traefik-install/README.md) (Ingress Controller)
+- [Install Longhorn](../roles/longhorn-install/README.md)  (Storage Controller)
+
+Packages are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
+
+For example, to install specifically only **Traefik** you can run the playbook as follows:
+
+```bash
+ansible-playbook playbooks/k3s-packages-install.yml --tags "traefik" 
+```
+
+### [k3s-packages-uninstall](k3s-packages-uninstall.yml)
+
+This playbook removes the additional packages added to the k3s cluster during [k3s-packages-install](#k3s-packages-install).
+
+#### Installation
+
+Run the [k3s-packages-uninstall.yml](k3s-packages-uninstall.yml) playbook from the **project root directory**:
+
+```bash
+ansible-playbook playbooks/k3s-packages-uninstall.yml
+```
+
+#### Synopsis
+
+The playbook includes the roles:
+
+- [Uninstall MetalLB](../roles/metallb-uninstall/README.md) (Load Balancer)
+- [Uninstall Cert-Manager](../roles/cert-manager-uninstall/README.md) (Certificate Management)
+- [Uninstall Linkerd](../roles/linkerd-uninstall/README.md) (Service Mesh)
+- [Uninstall Traefik](../roles/traefik-uninstall/README.md) (Ingress Controller)
+- [Uninstall Longhorn](../roles/longhorn-uninstall/README.md)  (Storage Controller)
+
+Packages are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
+
+For example, to uninstall specifically only **Traefik** you can run the playbook as follows:
+
+```bash
+ansible-playbook playbooks/k3s-packages-uninstall.yml --tags "traefik" 
+```
 
 ## Additional Playbooks
 

@@ -9,4 +9,7 @@
 
 - name: Prepare the disk
   include_tasks: prepare_disk.yml
-  when: ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'ext4') | list | length <= 0
+  when:
+    - longhorn_prepare_disk | bool
+    - (ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'ext4') | list | length <= 0)
+    - (ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'xfs')  | list | length <= 0)

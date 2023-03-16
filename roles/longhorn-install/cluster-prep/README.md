@@ -22,7 +22,7 @@ This role does the following:
 1. Installs and loads the modules [required by Longhorn](https://longhorn.io/docs/1.4.0/deploy/install/#installation-requirements) (i.e. 'iscsi' and 'nfs')
 2. If the mount defined by `longhorn_storage_path` is not mounted, prepares the disk device (defined by the variable`longhorn_disk_device`) on a host in the cluster by:
    - wiping it
-   - formatting it to ext4
+   - formatting it to ext4/xfs
    - setting a mount point
 
 **Note** that these tasks will **WIPE THE DISK!** Be extra careful before executing this role and make sure that you have set all the variables properly.

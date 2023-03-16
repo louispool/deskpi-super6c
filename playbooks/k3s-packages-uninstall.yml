@@ -1,9 +1,11 @@
-# Playbook for installing various additional packages to k3s
+# Playbook for uninstalling various packages from k3s.
 #
 # These include
-# - Prometheus & Grafana
-# - Cert Manager
-# - Rook & Ceph
+# - MetalLB
+# - Cert-Manager
+# - Traefik
+# - Linkerd
+# - Longhorn
 #
 # Packages are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
 #
@@ -22,9 +24,17 @@
   roles:
     - role: metallb-uninstall
       tags: ['metallb']
+
     - role: cert-manager-uninstall
       tags: ['certmanager']
+
     - role: linkerd-uninstall
       tags: ['linkerd']
       when: k3s_enable_service_mesh | bool
 
+    - role: traefik-uninstall
+      tags: ['traefik']
+
+    - role: longhorn-uninstall
+      tags: ['longhorn']
+      when: k3s_enable_block_storage | bool

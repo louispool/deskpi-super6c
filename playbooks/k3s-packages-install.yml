@@ -67,4 +67,5 @@
 
     - role: longhorn-install/control-plane
       tags: ['longhorn']
+      when: k3s_enable_block_storage | bool
 
