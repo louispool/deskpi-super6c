@@ -19,5 +19,20 @@
 
 This structure houses the roles used by the [Ansible Playbooks](../playbooks/README.md).
 
-## cert-manager-install
+### Role Definitions
 
+- [DNS Server installation](./dnsmasq/README.md)
+- [NTP Server/Client installation](./chrony/README.md) 
+- [HELM installation](./helm/README.md)
+- [Cluster Preparation](./cluster-prep/README.md) (for k3s installation)
+- [Installation of Cert-Manager](./cert-manager-install/README.md)
+- [Uninstallation of Cert-Manager](./cert-manager-uninstall/README.md)
+- [Installation of Linkerd](./linkerd-install/README.md) (Service Mesh)
+- [Uninstallation of Linkerd](./linkerd-uninstall/README.md) (Service Mesh)
+- [Installation of MetalLB](./metallb-install/README.md) (Load Balancer)
+- [Uninstallation of MetalLB](./metallb-uninstall/README.md) (Load Balancer)
+- [Installation of Traefik](./traefik-install/README.md) (Ingress Controller)
+- [Uninstallation of Traefik](./traefik-uninstall/README.md) (Ingress Controller)
+- [Installation of Longhorn](./longhorn-install/README.md) (Storage Controller)
+- [Uninstallation of Longhorn](./longhorn-uninstall/README.md) (Storage Controller)
+ 

@@ -14,3 +14,7 @@
 ```
 
 [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) definition for setting NTP servers and NTP clients using [*chrony*](https://chrony.tuxfamily.org/), a versatile implementation of the Network Time Protocol (NTP).
+
+### References
+- https://chrony.tuxfamily.org/
+- https://galaxy.ansible.com/ricsanfre/ntp
