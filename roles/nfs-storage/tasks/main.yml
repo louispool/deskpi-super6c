@@ -13,39 +13,24 @@
 # executed on the node that will act as the NFS Server (typically the master node).
 #
 ---
-
 # Ensure required software packages are installed
-- name: Install requisite software packages.
+- name: Ensure requisite software packages are installed.
   ansible.builtin.package:
     name:
       - nfs-common
-      - nfs-kernel-server
     state: present
   become: true
 
-- name: Create the directory to share.
-  file:
-    path: "{{ nfs_dir }}"
-    state: directory
-    owner: nobody
-    group: nogroup
-    mode: g+rwxs
+- name: Configure a Local NFS Server
+  include_tasks: configure_local_nfs_server.yml
+  when:
+    - local_nfs_server | bool
 
-- name: Configure `/etc/exports` defining the share, and limiting access to clients in the cluster network.
-  blockinfile:
-    path: /etc/exports
-    # This uses CIDR notation (e.g. 192.168.0.0/24) and assumes the subnet mask is 255.255.255.0 (i.e. '24' in CIDR Notation)
-    block: "{{ nfs_dir + '\t' + ip_subnet_prefix + '.0/24' + '(rw,sync,no_subtree_check,no_root_squash)' }}"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - Export NFS share"
-
-- name: Export all directories listed in `/etc/exports` for NFS.
-  shell:
-    cmd: exportfs -a
-
-- name: Restart the NFS Kernel Server
-  systemd:
-    state: restarted
-    name: nfs-kernel-server
+- name: Set NFS Server to Host (if not defined)
+  ansible.builtin.set_fact:
+    nfs_server: "{{ ip_subnet_prefix|string + '.' + ip_octet|string }}"
+  when:
+    - local_nfs_server | bool
 
 - name: Add the Kubernetes NFS Subdir External Provisioner chart repository.
   kubernetes.core.helm_repository:
@@ -54,13 +39,13 @@
 
 - name: Deploy the NFS Subdir External Provisioner chart.
   kubernetes.core.helm:
-    name: nfs-subdir-external-provisioner
+    name: nfs-provisioner
     chart_ref: nfs-subdir-external-provisioner/nfs-subdir-external-provisioner
-    namespace: default
+    namespace: "{{ nfs_provisioner_namespace }}"
     state: present
     values:
       nfs:
-        server: "{{ ip_subnet_prefix|string + '.' + ip_octet|string }}"
+        server: "{{ nfs_server }}"
         path: "{{ nfs_dir }}"
       storageClass:
         onDelete: delete

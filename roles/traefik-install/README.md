@@ -34,5 +34,5 @@ This role does the following:
 
 ### References
 
-https://github.com/traefik/traefik-helm-chart#installing
-https://picluster.ricsanfre.com/docs/traefik/
+- https://github.com/traefik/traefik-helm-chart#installing
+- https://picluster.ricsanfre.com/docs/traefik/

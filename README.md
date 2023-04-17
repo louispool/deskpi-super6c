@@ -10,15 +10,15 @@
 - [The DIY Life: Turing Pi 2 Cluster](https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/)
 
 
-## Step 1: Assemble the Board
+# Step 1: Assemble the Board
 
-## Step 2: Install the OS
-We are going to install Raspberry Pi OS to the CM4's using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
+# Step 2: Install the OS
+We are going to install Raspberry Pi OS to the CM4's using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
 
-### eMMC 
+## eMMC 
 
 The DeskPi functions as an IO Board and has micro-usb connectors next to each Compute Module. 
-Note that CM1's usb connector is on the back of the [board](https://github.com/DeskPi-Team/super6c/blob/main/assets/port_definitions.png).
+Note that CM4#1's usb connector is on the back of the [board  where the IO ports are located](https://github.com/DeskPi-Team/super6c/blob/main/assets/port_definitions.png).
 
 1. Install or compile [`rpiboot`](https://github.com/raspberrypi/usbboot) for your host OS. A windows installer is available here https://github.com/raspberrypi/usbboot/tree/master/win32. 
 2. Download and install the [Raspberry PI Imager](https://www.raspberrypi.com/software/) for your host OS.
@@ -44,17 +44,74 @@ Note that CM1's usb connector is on the back of the [board](https://github.com/D
 4. You **cannot** mount an [SD Card to a CM with eMMC](https://www.reddit.com/r/retroflag_gpi/comments/snesyy/is_it_impossible_to_mount_the_sd_card_with_an/). Even though it's not explicitly stated, and the documentation on the Super6c github misleadingly states in the [TroubleShooting Section](https://github.com/DeskPi-Team/super6c#troubleshooting) that
 	> "If your CM4 module has eMMC on board, the SSD drive and **TF card** can be external mass storage." 
 	
-#### References
+### References
 - https://github.com/raspberrypi/usbboot
 - https://www.raspberrypi.com/documentation/computers/compute-module.html#flashing-the-compute-module-emmc
 - https://www.jeffgeerling.com/blog/2020/usb-20-ports-not-working-on-compute-module-4-check-your-overlays
 
-### Non-eMMC (CM4 Lite)
+## Non-eMMC (CM4 Lite)
 Flash Raspberry Pi OS to the TF cards or SSD drives, insert them into the card slot, fix it with screws, connect the power supply, and press `PWR_BTN` button to power them on.
 
-## Step 3: Prepare the cluster
+## Installing the OS to the NVMe SSD
 
-### Installation requirements
+You should ensure that you have enough disk space to accommodate the OS as well as the Kubernetes installation on the CM4. If you only have, say, 8GB of free space on the eMMC (or SD Card) of the CM4, the Kubernetes node may issue disk pressure warnings and may evict pods deployed on that node.
+
+If your CM4s have inadequate disk storage on the eMMC (or SD Card) you may consider installing the OS to an NVMe SSD with sufficient storage. To do this we have to install the OS to the NVMe drive and update the boot order according to the [NVMe boot documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#nvme-ssd-boot).
+
+### Installing the OS to the NVMe SSD
+
+There are a number of ways to accomplish this, unfortunately, they are a bit more complicated than just using the Raspberry Pi Imager tool to burn the OS to the eMMC or SD Card of the CM4. 
+
+1. If you have a USB NVMe adapter, you can mount the SSD as a USB device and use the RPi Imager tool to burn the OS image to the SSD.
+2. If you do not have an adapter, you could install Raspberry Pi Desktop to the CM4 (as described above), log onto the CM4 and use the _SD Card Copier_ app to clone the eMMC (or SD Card) of the CM4 to the SSD.
+3. If you do not have access to a GUI desktop (as would be the case for all the RPi's apart from the one located in CM4#1 on the board), you could try one of the following methods to copy the image to the SSD:
+   - Clone the image with [rpi-clone](https://github.com/billw2/rpi-clone)
+   - Use the [RPi Imager CLI](https://github.com/raspberrypi/rpi-imager/issues/460#issuecomment-1180525160)<br> 
+     `rpi-imager --cli <image file to write> <destination drive device>`    
+   - Use [SDM](https://github.com/gitbls/sdm), a Raspberry Pi SSD/SD Card Image Manager utility.
+
+### Updating the Boot Order
+
+To update the boot order, we have to use Raspberry Pi's [usbboot/rpiboot](https://github.com/raspberrypi/usbboot) utility.
+
+We will have to make/compile the utility, so ensure that you have the correct build packages installed:
+```bash
+sudo apt install git libusb-1.0-0-dev pkg-config build-essential
+```
+
+Clone the [rpiboot](https://github.com/raspberrypi/usbboot) repository:
+```bash
+git clone --depth=1 https://github.com/raspberrypi/usbboot
+```
+
+Build the `usbboot` tool from source:
+```bash
+cd usbboot
+make
+```
+
+Open the `recovery/boot.conf` file and update the `BOOT_ORDER` and run `./update-pieeprom.sh` to update the `pieeprom.bin` file with the new settings
+```bash
+cd recovery
+sed -i -e '/^BOOT_ORDER=/ s/=.*$/=0xf25416/' boot.conf
+./update-pieeprom.sh
+```
+The boot type for NVMe is `6`, so that should be your first type, which means it should be the number at the end of the string.
+
+We can now run the `rpiboot` utility and use it to flash the new bootloader configuration and firmware to the CM4 by connecting it in USB boot mode (as described above) and running:
+```bash
+cd ..
+sudo ./rpiboot -d recovery
+```
+                                                                                  
+#### References
+
+- https://www.jeffgeerling.com/blog/2021/raspberry-pi-can-boot-nvme-ssds-now
+- https://notenoughtech.com/raspberry-pi/it-took-me-2-months-to-boot-cm4-from-nvme
+
+# Step 3: Prepare the cluster
+
+## Installation requirements
 
 - python (>= v3.6)
 - PyYAML (>= v3.11)
@@ -65,13 +122,13 @@ As well as the required Ansible Collections listed in the [requirements](require
 ansible-galaxy install -r requirements.yml
 ```
 
-### Check the configuration of the cluster  
+## Check the configuration of the cluster  
 
-1. Update the [`hosts.ini`](hosts.ini) file
+1. Update the [`inventory/hosts.yml`](inventory/hosts.yml) file
    - with the hostnames of the Pi's in your cluster
    - set the IP address octets (the last group of numbers in the IP address) to a range that is unoccupied in your network
-   - set `ansible_user` to the username you defined for your Pi's during [Step 2](#step-3-prepare-the-cluster)  
-2. In the [`config.yml`](playbooks/vars/config.yml) 
+2. In the [`inventory/group_vars/cluster.yml`](inventory/group_vars/cluster.yml)
+   - set `ansible_user` to the username you defined for your Pi's during [Step 2](#step-2--install-the-os)  
    - set `ip_subnet_prefix` to the IP subnet prefix of your network
    - set `gateway` to the IP address of the gateway in your network
 	                                                            
@@ -80,73 +137,122 @@ For example, if `ip_subnet_prefix` in the `config.yml` is defined as follows:
 ip_subnet_prefix: 192.168.1   
 ```
 and the `hosts.ini` has the following content:
-```ini
-[control_plane]
-deskpi1 ip_octet=200
-
-[nodes]
-deskpi2 ip_octet=201
-deskpi3 ip_octet=202
-deskpi4 ip_octet=203
-deskpi5 ip_octet=204
-deskpi6 ip_octet=205
+```yml
+all:
+  children:
+    cluster:
+      children:
+        control_plane:
+          hosts:
+            deskpi1:
+              ip_octet: 200
+        nodes:
+          hosts:
+            deskpi2:
+              ip_octet: 201
+            deskpi3:
+              ip_octet: 202
+            deskpi4:
+              ip_octet: 203
+            deskpi5:
+              ip_octet: 204
+            deskpi6:
+              ip_octet: 205
 ```
 Then the server / master node has the hostname `deskpi1` and the ip address: `192.168.1.200` and the last node in the cluster has the hostname `deskpi6` and ip address `192.168.1.205`.
 
-### Execute the Preparation Playbook
+### Consider assigning the Static IPs in your DHCP server directly
 
-Run the [prepare.yml](playbooks/prepare.yml) playbook
+#### TODO
+
+# Step 4: [Provision the cluster](playbooks/README.md) 
+
+## Prepare the cluster
+
+It might be prudent to **manually** update and upgrade all software packages on each DeskPi after installation of the OS, at least once, before running the playbooks:
 
 ```bash
-ansible-playbook playbooks/prepare.yml
+sudo apt update
+sudo apt upgrade
 ```
 
-This playbook will, on every Pi:
- - Enable cpu and memory control groups 
- - Configure a static ip (with the ip-address configured in `hosts.ini`)
- - Add required software dependencies
- - Update all software packages
- - Switch to legacy ip-tables (if required)
- - Copy the `.*rc` files in the `resources` folder
- - Reboot the Pi
+to ensure that the DeskPi can communicate with the package repositories, and to respond to interactive input that is occasionally required (for example, for kernel updates or processor microcode upgrades). 
 
-The reboot task may time out if the ip addresses of the Pi's were changed during the playbook run. 
+After which, from the **project root directory**, run the [preparation playbook](playbooks/k3s-pre-install.yml):
+
+```bash
+ansible-playbook playbooks/k3s-pre-install.yml
+```
+
+This playbook will, on every host in the cluster:
+
+- Execute the [Cluster Preparation](roles/cluster-prep/README.md) role
+- Configure an [NTP Client](roles/chrony/README.md)
+
+On the Control Plane / Master Node this playbook will also:
+
+- Configure an [NTP Server](roles/chrony/README.md)
+- Set up a [DNS Server](roles/dnsmasq/README.md)
+
+The reboot task may time out if the ip addresses of the CM4's were changed during the playbook run. 
 Consequently, you may have to flush your dns cache before you will be able to connect to them again. 
 
-## Step 4: Build the Cluster
-                                                                                  
-### Installing [k3s](https://k3s.io/)
+## Install [k3s](https://k3s.io/)
 
-After running the preparation playbook it's time to install [k3s](https://k3s.io/).
+### Configuration
 
-1. Run the [k3s-install.yml](playbooks/k3s-install.yml) playbook
-	```bash
-	ansible-playbook playbooks/k3s-install.yml
-	```
-2. Once the play completes you can check whether the cluster was successfully installed by logging into the master node and running `kubectl get nodes`.
-   You should see something like the following:
-	```bash   
-	deskpi@deskpi1:~ $ kubectl get nodes
-	NAME    STATUS   ROLES                  AGE VERSION
-	deskpi1 Ready    control-plane,master   33s v1.25.4+k3s1
-	deskpi4 Ready    <none>                 32s v1.25.4+k3s1
-	deskpi5 Ready    <none>                 32s v1.25.4+k3s1
-	deskpi2 Ready    <none>                 32s v1.25.4+k3s1
-	deskpi6 Ready    <none>                 32s v1.25.4+k3s1
-	deskpi3 Ready    <none>                 32s v1.25.4+k3s1
-	```
+The cluster configuration is largely contained within [config.yml](playbooks/vars/config.yml) and consists of the following items:
+
+* A kubelet configuration that enables [Graceful Node Shutdown](https://kubernetes.io/blog/2021/04/21/graceful-node-shutdown-beta/)
+* Extra arguments for the k3s server installation (i.e. Control Plane / Master Node):
+    - `--write-kubeconfig-mode '0644'` gives read permissions to Kube Config file (located at /etc/rancher/k3s/k3s.yaml)
+    - `--disable servicelb` disables the default service load balancer installed by k3s (i.e. Klipper Load Balancer), instead we'll install MetalLB in a later step.
+    - `--disable traefik` disables the default ingress controller installed by k3s (i.e. Traefik), instead we'll install Traefik ourselves in a later step.
+    - `--kubelet-arg 'config=/etc/rancher/k3s/kubelet.config'` points to the kubelet configuration (see above).
+    - `--kube-scheduler-arg 'bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Scheduler for metrics scraping.
+    - `--kube-proxy-arg 'metrics-bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Proxy for metrics scraping.
+    - `--kube-controller-manager-arg 'bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Controller Manager for metrics scraping.
+    - `--kube-controller-manager-arg 'terminated-pod-gc-threshold=10'` set a limit of 10 terminated pods that can exist before
+      the [garbage collector starts deleting terminated pods](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-garbage-collection).
+* Extra arguments for k3s agent installation (i.e. Worker Nodes)
+    - `--node-label 'node_type=worker'`adds a custom label to the worker node.
+    - `--kubelet-arg 'config=/etc/rancher/k3s/kubelet.config'` points to the kubelet configuration (see above).
+    - `--kube-proxy-arg 'metrics-bind-address=0.0.0.0'` exposes the 0.0.0.0 address endpoint on the Kube Proxy for metrics scraping.
+
+### Installation
+
+Run the [k3s-install](playbooks/README.md#k3s-install) playbook from the **project root directory**:
+
+```bash
+ansible-playbook playbooks/k3s-install.yml
+```
+
+Once the play completes you can check whether the cluster was successfully installed by logging into the master node and running `kubectl get nodes`.
+You should see something like the following:
+
+```bash 
+deskpi@deskpi1:~ $ kubectl get nodes
+NAME      STATUS   ROLES                  AGE VERSION
+deskpi1   Ready    control-plane,master   33s v1.25.6+k3s1
+deskpi2   Ready    worker                 32s v1.25.6+k3s1
+deskpi3   Ready    worker                 32s v1.25.6+k3s1
+deskpi4   Ready    worker                 32s v1.25.6+k3s1
+deskpi5   Ready    worker                 32s v1.25.6+k3s1
+deskpi6   Ready    worker                 32s v1.25.6+k3s1
+```
+
 If something went wrong during the installation you can check the installation log, which is saved to a file called `k3s_install_log.txt` in the home directory of root.
 
 ```bash
 deskpi@deskpi1:~ $ sudo -i
-root@deskpi1:~ # cat k3s_install_log.txt
-
+root@deskpi1:~# cat k3s_install_log.txt
 [INFO]  Finding release for channel stable
-[INFO]  Using v1.25.4+k3s1 as release
-[INFO]  Downloading hash https://github.com/k3s-io/k3s/releases/download/v1.25.4+k3s1/sha256sum-arm64.txt
-[INFO]  Downloading binary https://github.com/k3s-io/k3s/releases/download/v1.25.4+k3s1/k3s-arm64
+[INFO]  Using v1.25.6+k3s1 as release
+[INFO]  Downloading hash https://github.com/k3s-io/k3s/releases/download/v1.25.6+k3s1/sha256sum-arm64.txt
+[INFO]  Downloading binary https://github.com/k3s-io/k3s/releases/download/v1.25.6+k3s1/k3s-arm64
 [INFO]  Verifying binary download
 [INFO]  Installing k3s to /usr/local/bin/k3s
+[INFO]  Skipping installation of SELinux RPM
 [INFO]  Creating /usr/local/bin/kubectl symlink to k3s
 [INFO]  Creating /usr/local/bin/crictl symlink to k3s
 [INFO]  Creating /usr/local/bin/ctr symlink to k3s
@@ -160,37 +266,88 @@ root@deskpi1:~ # cat k3s_install_log.txt
 
 ### Uninstalling k3s
 
-You can uninstall k3s by running the [`k3s-uninstall.yml`](playbooks/k3s-uninstall.yml) playbook:
+You can uninstall k3s by running the [k3s-uninstall](playbooks/README.md#k3s-uninstall) playbook:
 
 ```bash
 ansible-playbook playbooks/k3s-uninstall.yml
 ```
 
-## Step 5: Run Post Ops after k3s Install
+## Install additional packages 
 
-After k3s has been successfully set up on your cluster, you should run the post-install playbook:
+### Post installation playbook
+
+After k3s has been successfully set up on your cluster, you can run the [k3s post-install](playbooks/README.md#k3s-post-install) playbook.
+
+#### Synopsis
+
+This playbook does the following:
+
+- Configures [kubectl autocompletion](https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/) and creates the alias `kc`
+  for [`kubectl`](https://kubernetes.io/docs/reference/kubectl/), which is automatically installed by the k3s installation script, on every host in the cluster.
+- Installs [Helm](https://helm.sh/), the package manager for kubernetes, which will be used to install other k8s packages.
+- Creates an [NFS Storage Class](../roles/nfs-storage/README.md), based on an NFS export, on the Control Plane.
+
+#### Configuration
+
+Configuration variables can be found in the [vars/config.yml](vars/config.yml).
+To configure the host as a local NFS Server, set the fact:
+
+```
+local_nfs_server: true
+```
+
+Alternatively, to set the location of a **remote** NFS Server, set the facts:
+
+```
+local_nfs_server: false
+nfs_server: <ip_address_of_nfs>
+```
+
+In both cases ensure the path to the share is correct:
+
+```
+nfs_path: <path_to_share>
+```
+
+#### Installation
+
+You can run the post-install playbook from the **project root** as follows:
 
 ```bash
 ansible-playbook playbooks/k3s-post-install.yml
 ```
-                                                                   
-- [`kubectl`](https://kubernetes.io/docs/reference/kubectl/) is automatically installed by the k3s installation
-script - [kubectl autocompletion](https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/) and the alias `kc` is enabled by this playbook.
 
-- [Traefik](https://traefik.io/) is the default Ingress Controller installed for kubernetes by k3s, this playbook creates an Ingress Route to the [Traefik Dashboard](https://doc.traefik.io/traefik/operations/dashboard/) and exposes the dashboard at `<your-deskpi-ip>/dashboard/`.
-- [Helm](https://helm.sh/) the package manager for kubernetes, and we will use it to install other packages.
-- An [NFS Storage Class](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) based on an NFS export created on the `control_plane` host.
+The tasks are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
 
-These playbooks are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
- 
 For example, to install specifically only **Helm** you can run the playbook as follows:
+
 ```bash
 ansible-playbook playbooks/k3s-post-install.yml --tags "helm" 
 ```
+### Install additional packages
 
-## Step 6: Install additional Packages
+Packages for k3s are declared in the [`k3s-packages-install`](playbooks/README.md#k3s-packages-install) playbook, they are tagged and can be played individually via the `--tags` argument for `ansible-playbook`.
 
-Packages for k3s are declared in the playbook [`k3s-packages.yml`](playbooks/k3s-packages.yml), they are tagged and can be played individually via the `--tags` argument for `ansible-playbook`.
+| Package                                         |Tag|
+|-------------------------------------------------|---|
+| [MetalLB](roles/metallb-install/README.md)      | `metallb`|
+| [Cert-Manager](roles/cert-manager-install/README.md) | `certmanager`|
+| [Traefik](roles/traefik-install/README.md)      | `traefik`|
+| [Linkerd](roles/linkerd-install/control-plane/README.md) | `linkerd`|
+| [Longhorn](roles/longhorn-install/README.md)    |`longhorn`|
+
+
+#### Installation
+
+```bash
+ansible-playbook playbooks/k3s-packages-install.yml 
+```
+
+Packages can be individually installed with the corresponding `tag`, for example:
+
+```bash
+ansible-playbook playbooks/k3s-packages-install.yml --tags "metallb,certmanager,traefik" 
+```
 
 ### [Prometheus](https://prometheus.io/)
                  

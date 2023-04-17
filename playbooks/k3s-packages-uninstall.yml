@@ -1,11 +1,9 @@
-# Playbook for uninstalling various packages from k3s.
+# Playbook for installing various additional packages to k3s
 #
 # These include
-# - MetalLB
-# - Cert-Manager
-# - Traefik
-# - Linkerd
-# - Longhorn
+# - Prometheus & Grafana
+# - Cert Manager
+# - Rook & Ceph
 #
 # Packages are tagged and can be played individually via the `--tags` argument for `ansible-playbook`
 #
@@ -17,24 +15,27 @@
   gather_facts: true
   become: true
 
+  vars_files:
+    - vars/config.yml
+
   environment:
     # The location of the kubeconfig file on the master.
     K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
   roles:
-    - role: metallb-uninstall
-      tags: ['metallb']
+    - role: longhorn-uninstall
+      tags: ['longhorn']
+      when: k3s_enable_block_storage | bool
 
-    - role: cert-manager-uninstall
-      tags: ['certmanager']
+    - role: traefik-uninstall
+      tags: ['traefik']
 
     - role: linkerd-uninstall
       tags: ['linkerd']
       when: k3s_enable_service_mesh | bool
 
-    - role: traefik-uninstall
-      tags: ['traefik']
+    - role: cert-manager-uninstall
+      tags: ['certmanager']
 
-    - role: longhorn-uninstall
-      tags: ['longhorn']
-      when: k3s_enable_block_storage | bool
+    - role: metallb-uninstall
+      tags: ['metallb']

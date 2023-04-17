@@ -1,0 +1,39 @@
+# Uninstalls Longhorn.
+#
+# https://longhorn.io/docs/1.4.0/deploy/uninstall/
+---
+# First delete all persistent volumes and storage classes
+- name: Get a list of all Persistent Volumes
+  kubernetes.core.k8s_info:
+    kind: PersistentVolume
+  register: pvc_list
+
+- name: Delete Persistent Volumes with a Longhorn Storage Class
+  kubernetes.core.k8s:
+    kind: PersistentVolumeClaim
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ pvc_list.resources | selectattr('spec.storageClassName', '==', 'longhorn') | map(attribute='metadata.name')}}"
+
+- name: Delete Longhorn Storage Class
+  kubernetes.core.k8s:
+    kind: StorageClass
+    state: absent
+    name: longhorn
+
+# Remove Longhorn with Helm
+- name: Uninstall Longhorn with Helm
+  kubernetes.core.helm:
+    name: longhorn
+    namespace: "{{ k3s_longhorn_namespace }}"
+    state: absent
+    wait: true
+
+- name: Remove the Longhorn namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    name: "{{ k3s_longhorn_namespace }}"
+    kind: Namespace
+    state: absent
+
+

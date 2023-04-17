@@ -31,6 +31,13 @@
   include_tasks: remove_snap.yml
   when: "'snapd' in ansible_facts.packages"
 
+- name: Update all software packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+  notify:
+    - Reboot host
+
 # Install required software packages and Python libraries
 - name: Install prerequisite software packages
   ansible.builtin.package:
@@ -52,13 +59,6 @@
     update_cache: true
     state: present
   when: ubuntu_os|bool
-  notify:
-    - Reboot host
-
-- name: Update all software packages
-  ansible.builtin.apt:
-    update_cache: true
-    upgrade: dist
   notify:
     - Reboot host
 
@@ -107,4 +107,3 @@
 # Configure the networking on the DeskPi
 - name: Configure Networking
   include_tasks: networking.yml
-

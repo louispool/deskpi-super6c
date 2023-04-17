@@ -19,10 +19,6 @@
       - "{{ ip_subnet_prefix }}.0/24"
 
   roles:
-    # Cluster Preparation
-    - role: cluster-prep
-      tags: ['prep']
-
     # NTP Server Configuration
     - role: chrony
       tags: ['ntp', 'chrony']
@@ -31,6 +27,9 @@
     - role: dnsmasq
       tags: ['dns', 'dnsmasq']
 
+    # Cluster Preparation
+    - role: cluster-prep
+      tags: ['prep']
 
 - name: Prepare the cluster
   hosts: nodes
@@ -47,10 +46,10 @@
         type: server
 
   roles:
-    # Cluster Preparation
-    - role: cluster-prep
-      tags: ['prep']
-
     # NTP Client Configuration
     - role: chrony
       tags: ['ntp', 'chrony']
+
+    # Cluster Preparation
+    - role: cluster-prep
+      tags: ['prep']

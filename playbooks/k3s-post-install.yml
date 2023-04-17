@@ -28,6 +28,9 @@
 - name: Operations after k3s cluster installation.
   hosts: control_plane
 
+  vars_files:
+    - vars/config.yml
+
   gather_facts: true
   become: true
 

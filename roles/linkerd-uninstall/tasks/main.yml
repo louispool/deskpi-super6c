@@ -15,3 +15,16 @@
      linkerd uninstall | kubectl delete -f -
   when: linkerd_cli.stat.exists
 
+- name: Uninstall Linkerd Control Plane with Helm
+  kubernetes.core.helm:
+    name: linkerd-control-plane
+    namespace: "{{ k3s_linkerd_namespace }}"
+    state: absent
+    wait: true
+
+- name: Remove the Linkerd namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    name: "{{ k3s_linkerd_namespace }}"
+    kind: Namespace
+    state: absent

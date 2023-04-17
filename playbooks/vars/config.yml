@@ -65,15 +65,25 @@ k3s_ingress_external_ip: "{{ ip_subnet_prefix|string + '.' + k3s_external_min_ip
 
 # Whether to install Linkerd and inject proxy annotations into deployments
 k3s_enable_service_mesh: true
+
 # Whether to install Longhorn
 k3s_enable_block_storage: true
 
 # IP address of the NTP Server
 ntp_server: "{{ master_node_ip }}"
-
 # IP Address of the DNS Server
 dns_server: "{{ master_node_ip }}"
-dns_domain: deskpi.local.com
+
+# IP address of the NFS Server (leave empty if `local_nfs_server` is true)
+nfs_server: "{{ ip_subnet_prefix }}.6"
+nfs_dir: /NFS/data
+# Whether an NFS Service should be configured on the Host
+local_nfs_server: false
+
+# Top Level Domain
+dns_domain: localnet
+# Sub-Domain for the cluster
+cluster_dns_domain: deskpi.{{ dns_domain }}
 
 # Additional DNS entries for dnsmasq
 additional_dns_hosts:
@@ -92,13 +102,13 @@ dhcp_range_max_ip_octet: 209
 dhcp_range: "{{ ip_subnet_prefix|string +  '.' + dhcp_range_min_ip_octet|string + ',' + ip_subnet_prefix|string + '.' + dhcp_range_max_ip_octet|string  }}"
 
 # DNS service end-points
-traefik_dashboard_dns: "traefik.{{ dns_domain }}"
-longhorn_dashboard_dns: "longhorn.{{ dns_domain }}"
-kibana_dashboard_dns: "kibana.{{ dns_domain }}"
-elasticsearch_dns: "elasticsearch.{{ dns_domain }}"
-fluentd_dns: "fluentd.{{ dns_domain }}"
-monitoring_dns: "monitoring.{{ dns_domain }}"
-linkerd_dashboard_dns: "linkerd.{{ dns_domain }}"
+traefik_dashboard_dns: "traefik.{{ cluster_dns_domain }}"
+longhorn_dashboard_dns: "longhorn.{{ cluster_dns_domain }}"
+kibana_dashboard_dns: "kibana.{{ cluster_dns_domain }}"
+elasticsearch_dns: "elasticsearch.{{ cluster_dns_domain }}"
+fluentd_dns: "fluentd.{{ cluster_dns_domain }}"
+monitoring_dns: "monitoring.{{ cluster_dns_domain }}"
+linkerd_dashboard_dns: "linkerd.{{ cluster_dns_domain }}"
 
 # TLS certificates are CA selfsigned
 tls_issuer: ca
@@ -108,9 +118,9 @@ tls_issuer: ca
 # Valid E-mail address for registration with `Let's Encrypt`
 acme_email:
 
-# Path to mount the disk to (and subsequently used by Longhorn)
-longhorn_storage_path: /mnt/storage
 # Name of the disk device for use with Longhorn (check with `lsblk -f`)
 longhorn_disk_device: nvme0n1
+# Path to mount the disk to (and subsequently used by Longhorn)
+longhorn_storage_path: /mnt/storage
 # Whether to allow wiping and formatting the disk device
-longhorn_prepare_disk: true
+longhorn_prepare_disk: false

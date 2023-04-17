@@ -95,7 +95,7 @@
       preserve_hostname: true
 
       # Set hostname
-      fqdn: {{ inventory_hostname }}.{{ dns_domain }}
+      fqdn: {{ inventory_hostname }}.{{ cluster_dns_domain }}
       hostname: {{ inventory_hostname }}
       prefer_fqdn_over_hostname: false
   when: ubuntu_os|bool
@@ -132,5 +132,5 @@
     - regexp: "^DNS="
       line: "DNS={{ dns_server }}"
     - regexp: "^Domains"
-      line: "Domains={{ dns_domain }}"
+      line: "Domains={{ cluster_dns_domain }}"
   notify: Restart systemd-resolved

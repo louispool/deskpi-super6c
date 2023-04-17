@@ -13,3 +13,10 @@
     - longhorn_prepare_disk | bool
     - (ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'ext4') | list | length <= 0)
     - (ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'xfs')  | list | length <= 0)
+
+- name: Ensure storage path exists
+  ansible.builtin.file:
+    path: "{{ longhorn_storage_path }}"
+    state: directory
+    mode: '0777'
+  when: not longhorn_prepare_disk | bool

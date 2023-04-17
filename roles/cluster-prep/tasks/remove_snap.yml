@@ -8,6 +8,5 @@
 - name: Remove Snap
   ansible.builtin.apt:
     name: snapd
-    update_cache: true
     autoremove: true
     state: absent

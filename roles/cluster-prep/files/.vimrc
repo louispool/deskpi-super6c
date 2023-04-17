@@ -18,7 +18,7 @@ set shiftwidth=4
 set autoindent
 set smartindent
 set bg=dark
-"set nowrap
+set nowrap
 
 set pastetoggle=<F10>
 

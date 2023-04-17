@@ -1,0 +1,8 @@
+# Default variables used by the linkerd-install/control-plane role
+---
+# Linkerd install location
+linkerd_install_dir: "/usr/local/bin"
+linkerd_bin: "{{ linkerd_install_dir }}/linkerd"
+
+# Namespace for the Linkerd Control Plane
+k3s_linkerd_namespace: linkerd-control-plane

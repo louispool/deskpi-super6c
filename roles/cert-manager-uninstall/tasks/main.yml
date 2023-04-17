@@ -1,7 +1,6 @@
 # Uninstalls the cert-manager package.
 #
 # https://cert-manager.io/docs/installation/helm/#uninstalling
----
 
 # First delete all Issuers, ClusterIssuers, Certificates, CertificateRequests, Orders and Challenges
 - name: Get a list of all Cluster Issuers
@@ -91,13 +90,13 @@
 - name: Uninstall cert-manager with Helm
   kubernetes.core.helm:
     name: cert-manager
-    namespace: cert-manager
+    namespace: "{{ k3s_cert_manager_namespace }}"
     state: absent
     wait: true
 
 - name: Remove the cert-manager namespace
   kubernetes.core.k8s:
     api_version: v1
-    name: cert-manager
+    name: "{{ k3s_cert_manager_namespace }}"
     kind: Namespace
     state: absent

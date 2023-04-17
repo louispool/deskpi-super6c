@@ -1,0 +1,4 @@
+# Default variables used by the cert-manager role
+---
+# Namespace for the Certificate Manager
+k3s_cert_manager_namespace: cert-manager-system
