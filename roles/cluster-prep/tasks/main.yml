@@ -31,6 +31,12 @@
   include_tasks: remove_snap.yml
   when: "'snapd' in ansible_facts.packages"
 
+# Disable the Uncomplicated Firewall (UFW) on Ubuntu (see https://docs.k3s.io/installation/requirements?os=debian)
+- name: Disable Uncomplicated Firewall
+  community.general.ufw:
+    state: disabled
+  when: ubuntu_os|bool
+
 - name: Update all software packages
   ansible.builtin.apt:
     update_cache: true

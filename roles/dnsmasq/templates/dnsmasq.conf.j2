@@ -4,9 +4,6 @@ interface={{ dnsmasq_interface }}
 # Static IP address dnsmasq will listen on.
 listen-address={{ dnsmasq_listen_address }}
 
-# Range of IP Addresses the DHCP Server can use. Hosts in the inventory will, however, be statically configured.
-dhcp-range={{ dhcp_range }},24h
-
 # Upstream DNS Name Servers.
 {% for server in upstream_dns_servers %}
 server={{ server }}
@@ -37,12 +34,17 @@ domain={{ dns_domain }}
 address=/{{ cluster_dns_domain }}/{{ k3s_ingress_external_ip }}
 address=/{{ dns_domain }}/{{ gateway }}
 
+# Range of IP Addresses the DHCP Server can use. Hosts in the inventory will, however, be statically configured.
+# Do not uncomment this if you have a separate DHCP server
+# dhcp-range={{ dhcp_range }},24h
+
 # DHCP configuration based on inventory
-{% for host in groups['all'] %}
-{% if hostvars[host].ip_octet is defined %}
-dhcp-host={{ hostvars[host].inventory_hostname }},{{ ip_subnet_prefix|string }}.{{ hostvars[host].ip_octet|string }}
-{% endif %}
-{% endfor %}
+# Do not uncomment this if you have a separate DHCP server
+# {% for host in groups['all'] %}
+# {% if hostvars[host].ip_octet is defined %}
+# dhcp-host={{ hostvars[host].inventory_hostname }},{{ ip_subnet_prefix|string }}.{{ hostvars[host].ip_octet|string }}
+# {% endif %}
+# {% endfor %}
 
 # DNS configuration based on inventory
 {% for host in groups['all'] %}

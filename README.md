@@ -12,15 +12,19 @@
 
 # Step 1: Assemble the Board
 
-# Step 2: Install the OS
-We are going to install Raspberry Pi OS to the CM4's using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
+Assembly is described on the DeskPi Super6c's [github page](https://github.com/DeskPi-Team/super6c#how-to-assemble).
 
-## eMMC 
+# Step 2: Install the OS
+                     
+There are several ways we can install the OS to the Compute Modules (CM4) on the DeskPi Super6c, depending on whether the CM4 has eMMC storage or not.
+For the most part, we will be using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) tool to flash the OS to the CM4's.
+
+## Method 1: eMMC 
 
 The DeskPi functions as an IO Board and has micro-usb connectors next to each Compute Module. 
-Note that CM4#1's usb connector is on the back of the [board  where the IO ports are located](https://github.com/DeskPi-Team/super6c/blob/main/assets/port_definitions.png).
+Note that **CM4#1**'s usb connector is on the back of the [board  where the IO ports are located](https://github.com/DeskPi-Team/super6c/blob/main/assets/port_definitions.png).
 
-1. Install or compile [`rpiboot`](https://github.com/raspberrypi/usbboot) for your host OS. A windows installer is available here https://github.com/raspberrypi/usbboot/tree/master/win32. 
+1. Install or compile [`rpiboot`](https://github.com/raspberrypi/usbboot) for your host OS. A Windows installer is available here https://github.com/raspberrypi/usbboot/tree/master/win32. 
 2. Download and install the [Raspberry PI Imager](https://www.raspberrypi.com/software/) for your host OS.
 3. Bridge the [`nRPBOOT`](https://github.com/DeskPi-Team/super6c/blob/main/assets/CM4_Jumpers.png)  jumper next to the CM you want to flash.
 4. Plug in the Micro USB cable to the USB Connector of the CM you want to flash. 
@@ -28,7 +32,8 @@ Note that CM4#1's usb connector is on the back of the [board  where the IO ports
 6. Start `rpiboot`
 7. After `rpiboot` completes you should  have access to a new mass storage device. Do not format if prompted.
 8. Start the Raspberry Pi Imager tool.
-9. Select your preferred OS (for k3s you need a **64-bit** OS). Typically, the 64-bit lite version should be sufficient, unless you want full GUI support.
+9. Select your preferred OS (for k3s you need a **64-bit** OS). 
+   Typically, the 64-bit lite version should be sufficient, unless you want full GUI support - which would only make sense for the CM in the first slot.
 10. Select the newly discovered raspberry mass storage device to write to.
 11. NOTE: In `Advanced options`, be sure to 
 	* set the **hostname** of your Pi to something unique and memorable (I chose `deskpi` followed by a number, e.g. `deskpi1`)  
@@ -41,33 +46,49 @@ Note that CM4#1's usb connector is on the back of the [board  where the IO ports
 1. You may need to enable USB2.0 support for the CM in the first slot by adding `dtoverlay=dwc2,dr_mode=host` to the `config.txt` file in the root of the boot image.
 2. If you did not enable SSH via the Imager, to enable it you can create a blank file called `ssh` in the root of the boot image.
 3. At least on my monitor, I did not get a video signal, so for the CM in the first slot I had to replace `dtoverlay=vc4-kms-v3d`with `dtoverlay=vc4-fkms-v3d` (note the additional "f") in the `config.txt` file. I figured this out from this [comment](https://forums.raspberrypi.com/viewtopic.php?t=323920#p1939139) on the raspberry forums.
-4. You **cannot** mount an [SD Card to a CM with eMMC](https://www.reddit.com/r/retroflag_gpi/comments/snesyy/is_it_impossible_to_mount_the_sd_card_with_an/). Even though it's not explicitly stated, and the documentation on the Super6c github misleadingly states in the [TroubleShooting Section](https://github.com/DeskPi-Team/super6c#troubleshooting) that
-	> "If your CM4 module has eMMC on board, the SSD drive and **TF card** can be external mass storage." 
+4. Even though it's not explicitly stated, and the documentation on the Super6c github misleadingly states in the [TroubleShooting Section](https://github.com/DeskPi-Team/super6c#troubleshooting) that
+	> "If your CM4 module has eMMC on board, the SSD drive and **TF card** can be external mass storage."
+   
+    You **cannot** mount an [SD Card to a CM with eMMC](https://www.reddit.com/r/retroflag_gpi/comments/snesyy/is_it_impossible_to_mount_the_sd_card_with_an/).
 	
 ### References
 - https://github.com/raspberrypi/usbboot
 - https://www.raspberrypi.com/documentation/computers/compute-module.html#flashing-the-compute-module-emmc
 - https://www.jeffgeerling.com/blog/2020/usb-20-ports-not-working-on-compute-module-4-check-your-overlays
 
-## Non-eMMC (CM4 Lite)
-Flash Raspberry Pi OS to the TF cards or SSD drives, insert them into the card slot, fix it with screws, connect the power supply, and press `PWR_BTN` button to power them on.
+## Method 2: Non-eMMC (CM4 Lite)
 
-## Installing the OS to the NVMe SSD
+This method would be used for the CM4 Lite versions, which do not have eMMC storage. But is relatively simple and can be done with the Raspberry Pi Imager tool.
+
+1. Download, install and start the [Raspberry PI Imager](https://www.raspberrypi.com/software/) for your host OS.
+2. Select your preferred OS (for k3s you need a **64-bit** OS). Typically, the 64-bit lite version should be sufficient, unless you want full GUI support.
+3. Select the SD Card to write to.
+4. NOTE: In `Advanced options`, be sure to
+    * set the **hostname** of your Pi to something unique and memorable (I chose `deskpi` followed by a number, e.g. `deskpi1`)
+    * enable **passwordless** SSH
+    * set a common **username** for all your Pi's (I chose `deskpi`), as well as an optional password.
+    * configure Wireless LAN, if it is supported by your CM **(optional)**
+5. Once completed, insert the SD Card into the CM's card slot.  
+6. Repeat this for all CMs - the headless CM's do not need a desktop environment, so the 64-bit lite version of Raspberry Pi OS should be sufficient. Remember to change the hostname for every CM.
+                                                
+See the [Notes](#notes) section above for additional information.
+
+## 3. Installing the OS to the NVMe SSD
 
 You should ensure that you have enough disk space to accommodate the OS as well as the Kubernetes installation on the CM4. If you only have, say, 8GB of free space on the eMMC (or SD Card) of the CM4, the Kubernetes node may issue disk pressure warnings and may evict pods deployed on that node.
 
-If your CM4s have inadequate disk storage on the eMMC (or SD Card) you may consider installing the OS to an NVMe SSD with sufficient storage. To do this we have to install the OS to the NVMe drive and update the boot order according to the [NVMe boot documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#nvme-ssd-boot).
+If your CM4s have **inadequate** disk storage on the eMMC (or SD Card) you may consider installing the OS to an NVMe SSD with sufficient storage. To do this we have to install the OS to the NVMe drive and update the boot order according to the [NVMe boot documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#nvme-ssd-boot).
 
 ### Installing the OS to the NVMe SSD
 
 There are a number of ways to accomplish this, unfortunately, they are a bit more complicated than just using the Raspberry Pi Imager tool to burn the OS to the eMMC or SD Card of the CM4. 
 
-1. If you have a USB NVMe adapter, you can mount the SSD as a USB device and use the RPi Imager tool to burn the OS image to the SSD.
-2. If you do not have an adapter, you could install Raspberry Pi Desktop to the CM4 (as described above), log onto the CM4 and use the _SD Card Copier_ app to clone the eMMC (or SD Card) of the CM4 to the SSD.
-3. If you do not have access to a GUI desktop (as would be the case for all the RPi's apart from the one located in CM4#1 on the board), you could try one of the following methods to copy the image to the SSD:
-   - Clone the image with [rpi-clone](https://github.com/billw2/rpi-clone)
+1. If you have a USB NVMe adapter (which you can buy on Amazon for around 20 euros), you can mount the SSD as a USB device and use the RPi Imager tool to burn the OS image to the SSD.
+2. If you do not have an adapter, you could install **Raspberry Pi Desktop** to the CM4 (as described [above](#emmc-)), logon to the CM4 and use the _SD Card Copier_ app (found in the GUI) to clone the eMMC (or SD Card) of the CM4 to the SSD.
+3. If you do not have access to a GUI desktop (as would be the case for all the RPi's apart from the one located in CM4#1 on the board), you could try **one** of the following methods to copy the image to the SSD:
+   - Clone the image with [rpi-clone](https://github.com/billw2/rpi-clone) or
    - Use the [RPi Imager CLI](https://github.com/raspberrypi/rpi-imager/issues/460#issuecomment-1180525160)<br> 
-     `rpi-imager --cli <image file to write> <destination drive device>`    
+     `rpi-imager --cli <image file to write> <destination drive device>` or    
    - Use [SDM](https://github.com/gitbls/sdm), a Raspberry Pi SSD/SD Card Image Manager utility.
 
 ### Updating the Boot Order
@@ -110,6 +131,12 @@ sudo ./rpiboot -d recovery
 - https://notenoughtech.com/raspberry-pi/it-took-me-2-months-to-boot-cm4-from-nvme
 
 # Step 3: Prepare the cluster
+
+Before starting this section, you should ensure that you have successfully installed the OS on all the CM4's, that they are connected to the network and you can `ssh` onto all of them.
+
+By default, Ansible uses native OpenSSH and by extension the options in `~/.ssh/config` to connect to the hosts in the inventory.
+
+Additionally, consider assigning static IPs to your CM4's in your DHCP server directly. This may uncomplicate things when you need to access the CM4's by hostname and your DNS has not been set up correctly (yet).
 
 ## Installation requirements
 

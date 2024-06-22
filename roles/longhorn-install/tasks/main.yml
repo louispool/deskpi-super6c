@@ -2,6 +2,26 @@
 #
 # Assumes the `cluster-prep` role was previously run.
 ---
+# Install prerequisite software and modules
+- name: Install prerequisites
+  include_tasks: install_prereqs.yml
+
+# Note that these tasks will WIPE THE DISK!
+# Be extra careful before executing these tasks and make sure that you have set the variables properly.
+- name: Prepare the disk
+  include_tasks: prepare_disk.yml
+  when:
+    - longhorn_prepare_disk | bool
+    - (ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'ext4') | list | length <= 0)
+    - (ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'xfs')  | list | length <= 0)
+
+- name: Ensure storage path exists
+  ansible.builtin.file:
+    path: "{{ longhorn_storage_path }}"
+    state: directory
+    mode: '0777'
+  when: not longhorn_prepare_disk | bool
+
 - name: Create namespace for Longhorn namespace.
   kubernetes.core.k8s:
     name: "{{ k3s_longhorn_namespace }}"

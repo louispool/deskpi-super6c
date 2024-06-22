@@ -5,7 +5,7 @@
 ---
 # Install prerequisite software and modules
 - name: Install prerequisites
-  include_tasks: install_prereqs.yml
+  include_tasks: ../../tasks/install_prereqs.yml
 
 - name: Prepare the disk
   include_tasks: prepare_disk.yml

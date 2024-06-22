@@ -6,4 +6,4 @@
 #    version: v1.0.1
 collections:
   - name: kubernetes.core
-    version: ">=2.4.0"
+    version: ">=4.0.0"
