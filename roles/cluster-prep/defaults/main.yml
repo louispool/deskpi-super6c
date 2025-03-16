@@ -4,7 +4,7 @@
 ubuntu_os: true
 
 # Whether to reduce the memory allocated to the GPU
-reduce_gpu_mem: false
+reduce_gpu_mem: true
 
 # In Ubuntu cmdline.txt and config.txt is located in a different location to Raspberry Pi OS
 cmdline_txt_path: "{{ '/boot/firmware/cmdline.txt' if ubuntu_os else '/boot/cmdline.txt' }}"
@@ -17,18 +17,21 @@ software_packages:
   - build-essential
   - iptables
   - net-tools
-  - netcat
+  - netcat-openbsd
   - golang
   - git
   - podman
   - lvm2
   - nfs-common
   - fake-hwclock
+  - raspi-config
+  - ntpsec-ntpdate
 
 # Specific software packages required for Ubuntu installations
 software_packages_ubuntu:
   - libraspberrypi-bin
-  - linux-modules-extra-raspi
+  - linux-raspi
+  #- linux-modules-extra-raspi # This package was merged into linux-raspi since Ubuntu >=24.4
 
 # Python libraries to install
 python_libs:

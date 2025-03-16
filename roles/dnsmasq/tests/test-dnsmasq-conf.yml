@@ -1,0 +1,20 @@
+# Generates the dnsmasq configuration file to the local user directory for verification.
+#
+---
+
+- name: Test the generation of the dnsmasq configuration file.
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - ../defaults/main.yml
+    - ../../../playbooks/vars/config.yml
+
+  tasks:
+    - name: Generate from template file.
+      ansible.builtin.template:
+        src: ../templates/dnsmasq.conf.j2
+        dest: /home/{{ ansible_user }}/dnsmasq.conf
+        mode: 0644

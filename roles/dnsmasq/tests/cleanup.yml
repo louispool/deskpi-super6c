@@ -1,0 +1,18 @@
+# Cleans up artifacts left behind by the tests.
+#
+---
+- name: Clean up artifacts left by testing tasks
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - ../defaults/main.yml
+    - ../../../playbooks/vars/config.yml
+
+  tasks:
+    - name: Remove dnsmasq configuration
+      ansible.builtin.file:
+        path: /home/{{ ansible_user }}/dnsmasq.conf
+        state: absent

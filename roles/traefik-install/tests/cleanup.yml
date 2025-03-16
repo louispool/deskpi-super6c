@@ -1,0 +1,57 @@
+# Cleans up artifacts left behind by the tests.
+#
+---
+- name: Clean up artifacts left behind by the tests
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - ../defaults/main.yml
+    - ../../../playbooks/vars/config.yml
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  tasks:
+    - name: Delete Ingress
+      kubernetes.core.k8s:
+        state: absent
+        namespace: default
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: nginx-test-ingress
+
+    - name: Delete Service
+      kubernetes.core.k8s:
+        state: absent
+        namespace: default
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: nginx-test
+
+    - name: Delete Deployment
+      kubernetes.core.k8s:
+        state: absent
+        namespace: default
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: nginx-test
+
+    - name: Delete ConfigMap
+      kubernetes.core.k8s:
+        state: absent
+        namespace: default
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: nginx-test-index

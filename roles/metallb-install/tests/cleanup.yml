@@ -1,0 +1,40 @@
+# Cleans up artifacts left behind by the tests.
+#
+---
+
+- name: Clean up artifacts left behind by the tests
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - ../defaults/main.yml
+    - ../../../playbooks/vars/config.yml
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  tasks:
+
+    - name: Delete LoadBalancer Service
+      kubernetes.core.k8s:
+        state: absent
+        kind: Service
+        namespace: default
+        name: nginx-test-lb
+
+    - name: Delete NGINX Deployment
+      kubernetes.core.k8s:
+        state: absent
+        kind: Deployment
+        namespace: default
+        name: nginx-test
+
+    - name: Delete NGINX ConfigMap
+      kubernetes.core.k8s:
+        state: absent
+        kind: ConfigMap
+        namespace: default
+        name: nginx-test-cm

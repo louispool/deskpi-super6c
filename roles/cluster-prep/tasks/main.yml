@@ -56,6 +56,7 @@
   ansible.builtin.pip:
     name: "{{ python_libs }}"
     state: present
+    break_system_packages: yes # Allow pip to modify an externally-managed Python installation as defined by PEP 668
   notify:
     - Reboot host
 

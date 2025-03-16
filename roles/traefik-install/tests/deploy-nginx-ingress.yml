@@ -1,0 +1,111 @@
+- name: Deploy NGINX on K3s with Traefik Ingress
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - ../defaults/main.yml
+    - ../../../playbooks/vars/config.yml
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  tasks:
+
+    - name: Create ConfigMap for Custom NGINX Index Page
+      kubernetes.core.k8s:
+        state: present
+        namespace: default
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: nginx-test-index
+          data:
+            index.html: |
+              <html>
+              <head><title>Welcome to NGINX</title></head>
+              <body>
+                <h1>Hello from K3s!</h1>
+                <p>Served by pod: <span style="color:red">$HOSTNAME</span></p>
+              </body>
+              </html>
+
+    - name: Deploy NGINX
+      kubernetes.core.k8s:
+        state: present
+        namespace: default
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: nginx-test
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
+                app: nginx-test
+            template:
+              metadata:
+                labels:
+                  app: nginx-test
+              spec:
+                containers:
+                  - name: nginx
+                    image: nginx
+                    ports:
+                      - containerPort: 80
+                    volumeMounts:
+                      - name: index-html
+                        mountPath: /etc/nginx/templates
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - envsubst < /etc/nginx/templates/index.html > /usr/share/nginx/html/index.html && exec nginx -g 'daemon off;'
+                volumes:
+                  - name: index-html
+                    configMap:
+                      name: nginx-test-index
+
+    - name: Create ClusterIP Service for NGINX
+      kubernetes.core.k8s:
+        state: present
+        namespace: default
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: nginx-test
+          spec:
+            selector:
+              app: nginx-test
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 80
+            type: ClusterIP  # No external IP, handled by Ingress
+
+    - name: Create Ingress for NGINX (Traefik)
+      kubernetes.core.k8s:
+        state: present
+        namespace: default
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: nginx-test-ingress
+            annotations:
+              traefik.ingress.kubernetes.io/router.entrypoints: web
+          spec:
+            rules:
+              - host: "test.{{ cluster_dns_domain }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: nginx-test
+                          port:
+                            number: 80

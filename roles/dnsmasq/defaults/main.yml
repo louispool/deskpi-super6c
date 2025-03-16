@@ -3,17 +3,21 @@
 
 # Name of the network interface dnsmasq should listen on (leave empty to infer from host)
 dnsmasq_interface: ''
-
 # IP address dnsmasq should listen on (leave empty to infer from host)
 dnsmasq_listen_address: ''
 
 # Path to the main configuration file
 dnsmasq_conf_dir: '/etc/dnsmasq.d/'
 
-# Defines the Google public name servers as upstream name servers to dnsmasq.
+# Top Level Domain
+dns_domain: localnet
+# Sub-Domain for the cluster
+cluster_dns_domain: cluster.local
+
+# Defines Cloudflare and Google public name servers as upstream name servers to dnsmasq
 upstream_dns_servers:
+  - 1.1.1.1
   - 8.8.8.8
-  - 8.8.4.4
 
 # Additional DNS entries
 # For Example:
@@ -28,5 +32,9 @@ upstream_dns_servers:
 #     ip: 10.0.0.1
 additional_dns_hosts: {}
 
+# DHCP range used by dnsmasq (should not overlap range of IP addresses used by MetalLB)
+dhcp_range: ''
+# Whether to enable the DHCP server in dnsmasq
+enable_dhcp: false
 
 

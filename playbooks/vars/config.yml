@@ -64,7 +64,7 @@ k3s_external_ip_range: "{{ ip_subnet_prefix|string + '.' + k3s_external_min_ip_o
 k3s_ingress_external_ip: "{{ ip_subnet_prefix|string + '.' + k3s_external_min_ip_octet|string }}"
 
 # Whether to install Linkerd and inject proxy annotations into deployments
-k3s_enable_service_mesh: true
+k3s_enable_service_mesh: false
 
 # Whether to install Longhorn
 k3s_enable_block_storage: true
@@ -76,9 +76,12 @@ dns_server: "{{ master_node_ip }}"
 
 # IP address of the NFS Server (leave empty if `local_nfs_server` is true)
 nfs_server: "{{ ip_subnet_prefix }}.6"
-nfs_dir: /NFS/data
+# IP address of an alternate NFS Server (leave empty if `local_nfs_server` is true)
+nfs_server_alt: "{{ ip_subnet_prefix }}.4"
+
 # Whether an NFS Service should be configured on the Host
 local_nfs_server: false
+nfs_dir: /NFS/data
 
 # Top Level Domain
 dns_domain: localnet
@@ -95,11 +98,25 @@ additional_dns_hosts:
     desc: "DNS Server"
     hostname: dns
     ip: "{{ dns_server }}"
+  nas_server:
+    desc: "NAS Server"
+    hostname: nas
+    ip: "{{ nfs_server }}"
+  nas1_server:
+    desc: "NAS1 Server"
+    hostname: nas1
+    ip: "{{ nfs_server_alt }}"
+  nas2_server:
+    desc: "NAS2 Server"
+    hostname: nas2
+    ip: "{{ nfs_server }}"
 
 # DHCP range used by dnsmasq (should not overlap range of IP addresses used by MetalLB)
 dhcp_range_min_ip_octet: 200
 dhcp_range_max_ip_octet: 209
 dhcp_range: "{{ ip_subnet_prefix|string +  '.' + dhcp_range_min_ip_octet|string + ',' + ip_subnet_prefix|string + '.' + dhcp_range_max_ip_octet|string  }}"
+
+enable_dhcp: false
 
 # DNS service end-points
 traefik_dashboard_dns: "traefik.{{ cluster_dns_domain }}"

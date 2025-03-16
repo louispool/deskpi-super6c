@@ -19,6 +19,14 @@ Assembly is described on the DeskPi Super6c's [github page](https://github.com/D
 There are several ways we can install the OS to the Compute Modules (CM4) on the DeskPi Super6c, depending on whether the CM4 has eMMC storage or not.
 For the most part, we will be using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) tool to flash the OS to the CM4's.
 
+Take note that [K3s](https://docs.k3s.io/) requires a 64-bit OS. Additionally, some storage solutions, such as [Rook Ceph](https://rook.io/), require a Linux distribution shipped 
+with the `lvm2` package, which is not included in the Raspberry Pi OS distributions. 
+
+Furthermore, [K3s](https://docs.k3s.io/installation/requirements?os=pi) recommends installing to an SSD for performance reasons; since `etcd` is write-intensive 
+and, typically, SD cards and eMMC cannot handle the I/O load.
+
+Therefore, I recommend installing the [Ubuntu Server 64-bit](https://ubuntu.com/download/raspberry-pi) distribution to an NVMe SSD using [Method 3](#method-3-installing-the-os-to-the-nvme-ssd) below.
+
 ## Method 1: eMMC 
 
 The DeskPi functions as an IO Board and has micro-usb connectors next to each Compute Module. 
@@ -45,8 +53,9 @@ Note that **CM4#1**'s usb connector is on the back of the [board  where the IO p
 ### Notes
 1. You may need to enable USB2.0 support for the CM in the first slot by adding `dtoverlay=dwc2,dr_mode=host` to the `config.txt` file in the root of the boot image.
 2. If you did not enable SSH via the Imager, to enable it you can create a blank file called `ssh` in the root of the boot image.
-3. At least on my monitor, I did not get a video signal, so for the CM in the first slot I had to replace `dtoverlay=vc4-kms-v3d`with `dtoverlay=vc4-fkms-v3d` (note the additional "f") in the `config.txt` file. I figured this out from this [comment](https://forums.raspberrypi.com/viewtopic.php?t=323920#p1939139) on the raspberry forums.
-4. Even though it's not explicitly stated, and the documentation on the Super6c github misleadingly states in the [TroubleShooting Section](https://github.com/DeskPi-Team/super6c#troubleshooting) that
+3. When `ssh`'ing into the CM's, recall the user that you set during installation, in my case the `ssh` command would be something like: `ssh deskpi@deskpi1`
+4. At least on my monitor, I did not get a video signal, so for the CM in the first slot I had to replace `dtoverlay=vc4-kms-v3d`with `dtoverlay=vc4-fkms-v3d` (note the additional "f") in the `config.txt` file. I figured this out from this [comment](https://forums.raspberrypi.com/viewtopic.php?t=323920#p1939139) on the raspberry forums.
+5. Even though it's not explicitly stated, and the documentation on the Super6c github misleadingly states in the [TroubleShooting Section](https://github.com/DeskPi-Team/super6c#troubleshooting) that
 	> "If your CM4 module has eMMC on board, the SSD drive and **TF card** can be external mass storage."
    
     You **cannot** mount an [SD Card to a CM with eMMC](https://www.reddit.com/r/retroflag_gpi/comments/snesyy/is_it_impossible_to_mount_the_sd_card_with_an/).
@@ -73,18 +82,20 @@ This method would be used for the CM4 Lite versions, which do not have eMMC stor
                                                 
 See the [Notes](#notes) section above for additional information.
 
-## 3. Installing the OS to the NVMe SSD
+## Method 3: Installing the OS to the NVMe SSD
 
-You should ensure that you have enough disk space to accommodate the OS as well as the Kubernetes installation on the CM4. If you only have, say, 8GB of free space on the eMMC (or SD Card) of the CM4, the Kubernetes node may issue disk pressure warnings and may evict pods deployed on that node.
+You should ensure that you have enough disk space to accommodate the OS as well as the Kubernetes installation on the CM4. If you only have, say, 8GB of free space on the eMMC (or SD Card) of the CM4, 
+the Kubernetes node may issue disk pressure warnings and may evict pods deployed on that node.
 
-If your CM4s have **inadequate** disk storage on the eMMC (or SD Card) you may consider installing the OS to an NVMe SSD with sufficient storage. To do this we have to install the OS to the NVMe drive and update the boot order according to the [NVMe boot documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#nvme-ssd-boot).
+If your CM4s have **inadequate** disk storage on the eMMC (or SD Card) you may consider installing the OS to an NVMe SSD with sufficient storage. To do this we have to install the OS to the NVMe drive 
+and update the boot order according to the [NVMe boot documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#nvme-ssd-boot).
 
 ### Installing the OS to the NVMe SSD
 
 There are a number of ways to accomplish this, unfortunately, they are a bit more complicated than just using the Raspberry Pi Imager tool to burn the OS to the eMMC or SD Card of the CM4. 
 
 1. If you have a USB NVMe adapter (which you can buy on Amazon for around 20 euros), you can mount the SSD as a USB device and use the RPi Imager tool to burn the OS image to the SSD.
-2. If you do not have an adapter, you could install **Raspberry Pi Desktop** to the CM4 (as described [above](#emmc-)), logon to the CM4 and use the _SD Card Copier_ app (found in the GUI) to clone the eMMC (or SD Card) of the CM4 to the SSD.
+2. If you do not have an adapter, you could install **Raspberry Pi Desktop** to the CM4#1 (as described [above](#method-1-emmc-)), logon to the CM4 and use the _SD Card Copier_ app (found in the GUI) to clone the eMMC (or SD Card) of the CM4 to the SSD.
 3. If you do not have access to a GUI desktop (as would be the case for all the RPi's apart from the one located in CM4#1 on the board), you could try **one** of the following methods to copy the image to the SSD:
    - Clone the image with [rpi-clone](https://github.com/billw2/rpi-clone) or
    - Use the [RPi Imager CLI](https://github.com/raspberrypi/rpi-imager/issues/460#issuecomment-1180525160)<br> 
@@ -124,7 +135,9 @@ We can now run the `rpiboot` utility and use it to flash the new bootloader conf
 cd ..
 sudo ./rpiboot -d recovery
 ```
-                                                                                  
+
+See the [Notes](#notes) section above for additional information.
+                                                                               
 #### References
 
 - https://www.jeffgeerling.com/blog/2021/raspberry-pi-can-boot-nvme-ssds-now
@@ -132,16 +145,17 @@ sudo ./rpiboot -d recovery
 
 # Step 3: Prepare the cluster
 
-Before starting this section, you should ensure that you have successfully installed the OS on all the CM4's, that they are connected to the network and you can `ssh` onto all of them.
+Before starting this section, you should ensure that you have successfully installed the OS on all the CM4's, that they are connected to the network, and you can `ssh` onto all of them.
 
-By default, Ansible uses native OpenSSH and by extension the options in `~/.ssh/config` to connect to the hosts in the inventory.
+By default, Ansible uses native OpenSSH and by extension the options in `~/.ssh/config` to connect to the hosts in the inventory. I recommend a passwordless SSH connection to the CM4's, 
+since Ansible has been known to have issues with password prompts.
 
 Additionally, consider assigning static IPs to your CM4's in your DHCP server directly. This may uncomplicate things when you need to access the CM4's by hostname and your DNS has not been set up correctly (yet).
 
 ## Installation requirements
 
 - python (>= v3.6)
-- PyYAML (>= v3.11)
+- PyYAML (>= v3.11)  
 - Ansible (>= v2.13) For detailed instructions on installing Ansible see the [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html).
 
 As well as the required Ansible Collections listed in the [requirements](requirements.yml) file. You can install these with the following command:
@@ -190,7 +204,7 @@ Then the server / master node has the hostname `deskpi1` and the ip address: `19
 
 ### Consider assigning the Static IPs in your DHCP server directly
 
-#### TODO
+This can typically be done via your router configuration. 
 
 # Step 4: [Provision the cluster](playbooks/README.md) 
 
@@ -303,7 +317,7 @@ ansible-playbook playbooks/k3s-uninstall.yml
 
 ### Post installation playbook
 
-After k3s has been successfully set up on your cluster, you can run the [k3s post-install](playbooks/README.md#k3s-post-install) playbook.
+After k3s has been successfully set up on your cluster, you must run the [k3s post-install](playbooks/README.md#k3s-post-install) playbook.
 
 #### Synopsis
 
@@ -338,7 +352,7 @@ nfs_path: <path_to_share>
 
 #### Installation
 
-You can run the post-install playbook from the **project root** as follows:
+You run the post-install playbook from the **project root** as follows:
 
 ```bash
 ansible-playbook playbooks/k3s-post-install.yml

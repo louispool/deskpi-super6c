@@ -58,7 +58,7 @@
     - role: cert-manager-install
       tags: ['certmanager']
 
-    - role: linkerd-install/control-plane
+    - role: linkerd-install
       tags: ['linkerd']
       when: k3s_enable_service_mesh | bool
 

@@ -34,17 +34,18 @@ domain={{ dns_domain }}
 address=/{{ cluster_dns_domain }}/{{ k3s_ingress_external_ip }}
 address=/{{ dns_domain }}/{{ gateway }}
 
+{% if enable_dhcp is sameas true %}
 # Range of IP Addresses the DHCP Server can use. Hosts in the inventory will, however, be statically configured.
-# Do not uncomment this if you have a separate DHCP server
-# dhcp-range={{ dhcp_range }},24h
-
+dhcp-range={{ dhcp_range }},24h
+{% endif %}
+{% if enable_dhcp is sameas true %}
 # DHCP configuration based on inventory
-# Do not uncomment this if you have a separate DHCP server
-# {% for host in groups['all'] %}
-# {% if hostvars[host].ip_octet is defined %}
-# dhcp-host={{ hostvars[host].inventory_hostname }},{{ ip_subnet_prefix|string }}.{{ hostvars[host].ip_octet|string }}
-# {% endif %}
-# {% endfor %}
+{% for host in groups['all'] %}
+{% if hostvars[host].ip_octet is defined %}
+dhcp-host={{ hostvars[host].inventory_hostname }},{{ ip_subnet_prefix|string }}.{{ hostvars[host].ip_octet|string }}
+{% endif %}
+{% endfor %}
+{% endif %}
 
 # DNS configuration based on inventory
 {% for host in groups['all'] %}

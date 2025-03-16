@@ -56,6 +56,7 @@
       pip:
         name: kubernetes
         state: present
+        break_system_packages: yes # Allow pip to modify an externally-managed Python installation as defined by PEP 668
       become: true
       tags: ['always']
 
