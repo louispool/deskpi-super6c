@@ -1,9 +1,42 @@
+# These resources define the self-signed certificate authority (CA)
+#
+# This is a ClusterIssuer resource that will be used to issue self-signed certificates.
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   # Note the ClusterIssuer name should end with "-issuer"
   name: self-signed-issuer
-  namespace: {{ k3s_cert_manager_namespace }}
 spec:
   selfSigned: { }
+
+# This is a certificate resource that will be used to issue self-signed certificates.
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: k3s-ca-cert
+  namespace: {{ k3s_cert_manager_namespace }}
+spec:
+  isCA: true
+  commonName: k3s-ca
+  secretName: k3s-ca-secret
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: self-signed-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+
+# Defines an issuer to generate TLS certificates for subdomains.
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  # Note the ClusterIssuer name should end with "-issuer"
+  name: k3s-ca-issuer
+  namespace: {{ k3s_cert_manager_namespace }}
+spec:
+  ca:
+    secretName: k3s-ca-secret

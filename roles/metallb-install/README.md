@@ -34,13 +34,13 @@ This role does the following:
 
 ### Configuration
 
-Configure the namespace for the MetalLB deployment via the fact `k3s_metallb_namespace`:
+Configure the namespace for the MetalLB deployment via the config variable `k3s_metallb_namespace`:
 ```
 k3s_metallb_namespace: metallb-system
 ```
 
-Configure the pool of IP addresses MetalLB can assign to services via the fact `k3s_external_ip_range` In either CIDR notation (e.g. 192.168.10.0/24) or as a start and an end IP address 
-separated by a hyphen:
+Configure the pool of IP addresses MetalLB can assign to services via the variable `k3s_external_ip_range`. 
+In either CIDR notation (e.g. 192.168.10.0/24) or as a start and an end IP address separated by a hyphen:
 ```yaml
 k3s_external_ip_range="192.168.1.100-192.168.1.200"
 ```
@@ -59,6 +59,7 @@ On the cluster, verify that MetalLB assigned an external IP:
 ```shell
 kubectl get svc nginx-test-lb
 ```
+
 You should see an external IP assigned to the load balancer service:
 ```
 NAME            TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE

@@ -127,6 +127,11 @@ fluentd_dns: "fluentd.{{ cluster_dns_domain }}"
 monitoring_dns: "monitoring.{{ cluster_dns_domain }}"
 linkerd_dashboard_dns: "linkerd.{{ cluster_dns_domain }}"
 
+# Enable the self-signed Certificate Issuer
+enable_selfsigned: true
+# Enable `Let's Encrypt` ACME (Automated Certificate Management Environment) provider
+enable_letsencrypt: false
+
 # TLS certificates are CA selfsigned
 tls_issuer: ca
 # TLS certificates are signed by `Let's Encrypt`

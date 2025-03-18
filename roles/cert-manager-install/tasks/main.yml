@@ -36,16 +36,14 @@
       type: Ready
       status: "True"
 
-- name: Configure Cluster Issuers
+- name: Configure Self-Signed CA
   kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/' + item ) }}"
     state: present
-  loop:
-    - self-signed-issuer.yml.j2
-    - ca-issuer.yml.j2
+    definition: "{{ lookup('template', './templates/self-signed-issuer.yml.j2') }}"
+  when: enable_selfsigned
 
-- name: Create Lets-Encrypt ClusterIssuer
+- name: Create Lets-Encrypt CA
   kubernetes.core.k8s:
     state: present
-    definition: "{{ lookup('template', './templates/lets-encrypt-issuer.yml') | from_yaml }}"
+    definition: "{{ lookup('template', './templates/lets-encrypt-issuer.yml.j2') }}"
   when: enable_letsencrypt
