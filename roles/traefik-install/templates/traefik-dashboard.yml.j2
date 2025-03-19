@@ -8,6 +8,8 @@ metadata:
   namespace: {{ k3s_traefik_namespace }}
 spec:
   secretName: traefik-secret
+  duration: 2160h # 90 days
+  renewBefore: 360h # Renew before 15 days of expiration
   issuerRef:
     name: {{ tls_issuer }}-issuer
     kind: ClusterIssuer
@@ -16,6 +18,7 @@ spec:
     - {{ traefik_dashboard_dns }}
   privateKey:
     algorithm: ECDSA
+
 ---
 # Traefik v2 IngressRoute CRD
 apiVersion: traefik.io/v1alpha1

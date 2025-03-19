@@ -1,0 +1,28 @@
+# This file contains tasks to export and trust the k3s Self-Signed CA
+#
+---
+
+# Extract the CA Certificate from Kubernetes Secret
+- name: Get the CA certificate from Kubernetes
+  ansible.builtin.command: kubectl get secret {{ k3s_ca }}-secret -n {{ k3s_cert_manager_namespace}} -o jsonpath="{.data.ca\.crt}"
+  register: ca_cert_base64
+
+# Decode the base64-encoded certificate
+- name: Decode the CA certificate and save it to file
+  copy:
+    content: "{{ ca_cert_base64.stdout | b64decode }}"
+    dest: "/usr/local/share/ca-certificates/k3s-ca-cert.crt"
+    mode: '0644'
+
+# Update the trusted CA certificates
+- name: Update CA trust store (Debian/Ubuntu)
+  ansible.builtin.command: update-ca-certificates
+  when: ansible_os_family == "Debian"
+
+- name: Update CA trust store (RHEL/CentOS/Fedora)
+  ansible.builtin.command: update-ca-trust
+  when: ansible_os_family == "RedHat"
+
+- name: Update CA trust store (openSUSE)
+  ansible.builtin.command: trust extract-compat
+  when: ansible_os_family == "Suse"

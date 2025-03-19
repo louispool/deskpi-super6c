@@ -5,9 +5,13 @@ k3s_cert_manager_namespace: cert-manager-system
 
 # Enable the self-signed Certificate Issuer
 enable_selfsigned: true
-
 # Enable `Let's Encrypt` ACME (Automated Certificate Management Environment) provider
 enable_letsencrypt: false
+
+# Name of the certificate authority (CA) for self-signed certificates
+k3s_ca: k3s-ca
+# Name of the certificate authority (CA) for `Let's Encrypt` certificates
+letsencrypt: letsencrypt
 
 # Valid E-mail address for registration with `Let's Encrypt`
 acme_email:

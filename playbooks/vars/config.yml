@@ -132,10 +132,15 @@ enable_selfsigned: true
 # Enable `Let's Encrypt` ACME (Automated Certificate Management Environment) provider
 enable_letsencrypt: false
 
-# TLS certificates are CA selfsigned
-tls_issuer: ca
+# Name of the certificate authority (CA) for self-signed certificates
+k3s_ca: k3s-ca
+# Name of the certificate authority (CA) for `Let's Encrypt` certificates
+letsencrypt: letsencrypt
+
+# TLS certificates are self-signed
+tls_issuer: "{{ k3s_ca }}"
 # TLS certificates are signed by `Let's Encrypt`
-#tls_issuer: letsencrypt
+#tls_issuer: "{{ letsencrypt }}"
 
 # Valid E-mail address for registration with `Let's Encrypt`
 acme_email:

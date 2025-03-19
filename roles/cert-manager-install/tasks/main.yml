@@ -47,3 +47,7 @@
     state: present
     definition: "{{ lookup('template', './templates/lets-encrypt-issuer.yml.j2') }}"
   when: enable_letsencrypt
+
+- name: Export and Trust the Self-Signed CA
+  include_tasks: export-and-trust-k3s-ca.yml
+  when: enable_selfsigned

@@ -33,7 +33,7 @@
       status: "True"
 
 - name: Create BasicAuth credentials.
-  include_tasks: basic_auth_credentials.yml
+  include_tasks: basic-auth-credentials.yml
 
 - name: Configure Traefik
   kubernetes.core.k8s:
