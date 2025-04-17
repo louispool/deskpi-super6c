@@ -1,0 +1,16 @@
+# This file contains tasks to setup AWS CLI and set the AWS credentials as environment variables on the host.
+#
+---
+- name: Ensure AWS CLI is installed
+  package:
+    name: awscli
+    state: present
+
+- name: Set AWS credentials as environment variables
+  lineinfile:
+    path: /etc/environment
+    line: "{{ item }}"
+    create: yes
+  with_items:
+    - "AWS_ACCESS_KEY_ID={{ aws_access_key_id }}"
+    - "AWS_SECRET_ACCESS_KEY={{ aws_secret_access_key }}"

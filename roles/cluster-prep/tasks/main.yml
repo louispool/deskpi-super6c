@@ -17,7 +17,7 @@
     line: "gpu_mem=16"
     create: true
     mode: 0755
-  when: reduce_gpu_mem|bool
+  when: reduce_gpu_mem
   notify:
     - Reboot host
 
@@ -35,7 +35,7 @@
 - name: Disable Uncomplicated Firewall
   community.general.ufw:
     state: disabled
-  when: ubuntu_os|bool
+  when: ubuntu_os
 
 - name: Update all software packages
   ansible.builtin.apt:
@@ -65,7 +65,7 @@
     name: "{{ software_packages_ubuntu }}"
     update_cache: true
     state: present
-  when: ubuntu_os|bool
+  when: ubuntu_os
   notify:
     - Reboot host
 

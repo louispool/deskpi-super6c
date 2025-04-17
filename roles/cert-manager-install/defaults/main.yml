@@ -3,15 +3,46 @@
 # Namespace for the Certificate Manager
 k3s_cert_manager_namespace: cert-manager-system
 
-# Enable the self-signed Certificate Issuer
+# Enable the self-signed Certificate Issuer for the Private CA
 enable_selfsigned: true
-# Enable `Let's Encrypt` ACME (Automated Certificate Management Environment) provider
+# Enable `Let's Encrypt` ACME (Automated Certificate Management Environment) provider for the Public CA
 enable_letsencrypt: false
+# Enable AWS' `Route 53` DNS provider for routing public traffic to the cluster ingress.
+enable_route53: false
 
-# Name of the certificate authority (CA) for self-signed certificates
-k3s_ca: k3s-ca
-# Name of the certificate authority (CA) for `Let's Encrypt` certificates
-letsencrypt: letsencrypt
+# Whether to support IPv6 addresses
+IPv6_enabled: true
+
+# Replace with your public domain
+public_domain:
+# List of public sub-domains to register with the DNS (e.g. Route53)
+public_domains: []
+
+# Name of the certificate authority (CA) for self-signed certificates on the Local Network
+local_ca: k3s-ca
+# Name of the certificate authority (CA) for certificates on the Internet
+public_ca: letsencrypt
+
+# Issuer of TLS certificates on the Local Network (e.g. self-signed)
+local_tls_issuer: "{{ local_ca }}-issuer"
+# Issuer of TLS certificates on the Internet (e.g. 'Let's Encrypt')
+public_tls_issuer: "{{ public_ca }}-issuer"
 
 # Valid E-mail address for registration with `Let's Encrypt`
 acme_email:
+
+# When using the Route 53 DNS provider, replace with your AWS Access Key ID and Secret Access Key.
+# Consider using Ansible Vault to store these variables securely.
+aws_access_key_id:
+aws_secret_access_key:
+
+# When using the Route 53 DNS provider, replace with your AWS Hosted Zone ID.
+aws_hosted_zone_id:
+
+# Your AWS account ID (e.g. "005162895111")
+# Consider using Ansible Vault to store these variables securely.
+aws_account_id:
+
+# IAM username (e.g. "myuser" from `arn:aws:iam::<account-id>:user/myuser`)
+# Consider using Ansible Vault to store these variables securely.
+aws_iam_user:

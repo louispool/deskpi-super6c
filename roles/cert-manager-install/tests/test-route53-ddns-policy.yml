@@ -1,0 +1,39 @@
+# Creates and attaches the IAM policy to the configured AWS user.
+#
+---
+- name: Test the generation of the route53-ddns.sh file.
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - ../defaults/main.yml
+    - ../../../playbooks/vars/config.yml
+
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "../../../playbooks/vars/vault.yml"
+
+  tasks:
+    - name: Setup the environment
+      include_tasks: ../tasks/setup-aws-env.yml
+
+    - name: Create test IAM policy for Route53 DDNS
+      amazon.aws.iam_managed_policy:
+        access_key: "{{ aws_access_key_id }}"
+        secret_key: "{{ aws_secret_access_key }}"
+        policy_name: route53-test-policy
+        policy_description: "Test policy for Route53 DDNS"
+        policy: "{{ lookup('template', '../templates/route53-ddns-policy.json.j2') }}"
+        state: present
+      register: route53_test_policy
+
+    - name: Attach policy to user
+      amazon.aws.iam_user:
+        access_key: "{{ aws_access_key_id }}"
+        secret_key: "{{ aws_secret_access_key }}"
+        name: "{{ aws_iam_user }}"
+        managed_policies:
+          - "{{ route53_test_policy.policy.arn }}"
+        state: present

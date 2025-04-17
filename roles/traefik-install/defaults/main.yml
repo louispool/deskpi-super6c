@@ -2,14 +2,17 @@
 # Namespace for cert-manager
 k3s_traefik_namespace: traefik-system
 
-# Endpoint Service DNS name
-traefik_dashboard_dns: dashboard.traefik.localnet
+# Endpoint for the Traefik dashboard on the local network
+traefik_dashboard: dashboard.traefik.localnet
+# Endpoint for the Traefik dashboard on the public network
+public_traefik_dashboard:
+
+# Whether to allow access to the Traefik dashboard over the public network
+enable_public_traefik_dashboard: false
 
 # Basic auth user/passwd
 traefik_basic_auth_user: 'admin'
 traefik_basic_auth_passwd: '!s3cr3t'
-
-traefik_auth_htpasswd_pair:
 
 # Enable service mesh
 k3s_enable_service_mesh: false

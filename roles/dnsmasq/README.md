@@ -47,10 +47,10 @@ upstream_dns_servers:
   - 8.8.8.8
 ```
             
-The two facts for the domain name, `dns_domain` and `cluster_dns_domain` define your network's domain:
+The two variables for the local domain name, `local_domain` and `cluster_local_domain` define your local network's domain:
 ```yaml
-dns_domain: 'localnet'
-cluster_dns_domain: 'cluster.local'
+local_domain: 'localnet'
+cluster_local_domain: 'cluster.local'
 ```
     
 The variable `gateway` specifies the IP address of the network's gateway, while `k3s_ingress_external_ip` specifies the external IP for Kubernetes Ingress (typically used by Traefik)
@@ -59,7 +59,7 @@ gateway: "192.168.1.1"
 k3s_ingress_external_ip: "192.168.1.100"
 ```
 
-Calls to the `dns_domain` will resolve to the IP address of your network's gateway, while calls to the `cluster_dns_domain` will resolve to the IP address for Kubernetes Ingress.
+Calls to the `local_domain` will resolve to the IP address of your network's gateway, while calls to the `cluster_local_domain` will resolve to the IP address for Kubernetes Ingress.
 
 Subdomains of these domains are resolved their respective IP addresses via DNS wildcard. In other words, given the above example, `test.cluster.local` will resolve to the IP address of the 
 Kubernetes Ingress `192.168.1.100`.

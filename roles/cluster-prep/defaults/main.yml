@@ -26,6 +26,8 @@ software_packages:
   - fake-hwclock
   - raspi-config
   - ntpsec-ntpdate
+  - jq
+  - gawk
 
 # Specific software packages required for Ubuntu installations
 software_packages_ubuntu:

@@ -33,7 +33,7 @@
 
 - name: Configure IP address pool
   kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/' + item ) }}"
+    definition: "{{ lookup('template', 'templates/' + item) }}"
     state: present
   with_items:
     - metallb-config.yml.j2

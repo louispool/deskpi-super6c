@@ -83,10 +83,15 @@ nfs_server_alt: "{{ ip_subnet_prefix }}.4"
 local_nfs_server: false
 nfs_dir: /NFS/data
 
-# Top Level Domain
-dns_domain: localnet
-# Sub-Domain for the cluster
-cluster_dns_domain: deskpi.{{ dns_domain }}
+# Public domain - top level domain on the Internet
+public_domain:
+# Subdomain of the cluster on the Internet
+cluster_public_domain: deskpi.{{ public_domain }}
+
+# Top level domain for the Local Network
+local_domain: localnet
+# Subdomain of the cluster on the Local Network
+cluster_local_domain: deskpi.{{ local_domain }}
 
 # Additional DNS entries for dnsmasq
 additional_dns_hosts:
@@ -118,32 +123,71 @@ dhcp_range: "{{ ip_subnet_prefix|string +  '.' + dhcp_range_min_ip_octet|string 
 
 enable_dhcp: false
 
-# DNS service end-points
-traefik_dashboard_dns: "traefik.{{ cluster_dns_domain }}"
-longhorn_dashboard_dns: "longhorn.{{ cluster_dns_domain }}"
-kibana_dashboard_dns: "kibana.{{ cluster_dns_domain }}"
-elasticsearch_dns: "elasticsearch.{{ cluster_dns_domain }}"
-fluentd_dns: "fluentd.{{ cluster_dns_domain }}"
-monitoring_dns: "monitoring.{{ cluster_dns_domain }}"
-linkerd_dashboard_dns: "linkerd.{{ cluster_dns_domain }}"
+# Service end-points
+traefik_dashboard: "traefik.{{ cluster_local_domain }}"
+longhorn_dashboard: "longhorn.{{ cluster_local_domain }}"
+kibana_dashboard: "kibana.{{ cluster_local_domain }}"
+elasticsearch: "elasticsearch.{{ cluster_local_domain }}"
+fluentd: "fluentd.{{ cluster_local_domain }}"
+monitoring: "monitoring.{{ cluster_local_domain }}"
+linkerd_dashboard: "linkerd.{{ cluster_local_domain }}"
+
+public_traefik_dashboard: "traefik.{{ cluster_public_domain }}"
+public_longhorn_dashboard: "longhorn.{{ cluster_public_domain }}"
+public_kibana_dashboard: "kibana.{{ cluster_public_domain }}"
+public_elasticsearch: "elasticsearch.{{ cluster_public_domain }}"
+public_fluentd: "fluentd.{{ cluster_public_domain }}"
+public_monitoring: "monitoring.{{ cluster_public_domain }}"
+public_linkerd_dashboard: "linkerd.{{ cluster_public_domain }}"
+
+# List of public sub-domains to register with the DNS (e.g. Route53)
+public_domains:
+  - "{{ public_traefik_dashboard }}"
+  - "{{ public_longhorn_dashboard }}"
+  - "{{ public_kibana_dashboard }}"
+  - "{{ public_elasticsearch }}"
+  - "{{ public_fluentd }}"
+  - "{{ public_monitoring }}"
+  - "{{ public_linkerd_dashboard }}"
+
+# Whether to allow access to the dashboards over the public network
+enable_public_traefik_dashboard: false
+enable_public_longhorn_dashboard: false
+enable_public_kibana_dashboard: false
+enable_public_elasticsearch: false
+enable_public_fluentd: false
+enable_public_monitoring: false
+enable_public_linkerd_dashboard: false
 
 # Enable the self-signed Certificate Issuer
 enable_selfsigned: true
 # Enable `Let's Encrypt` ACME (Automated Certificate Management Environment) provider
 enable_letsencrypt: false
 
-# Name of the certificate authority (CA) for self-signed certificates
-k3s_ca: k3s-ca
-# Name of the certificate authority (CA) for `Let's Encrypt` certificates
-letsencrypt: letsencrypt
+# Name of the certificate authority (CA) for self-signed certificates on the Local Network
+local_ca: k3s-ca
+# Name of the certificate authority (CA) for certificates on the Internet
+public_ca: letsencrypt
 
-# TLS certificates are self-signed
-tls_issuer: "{{ k3s_ca }}"
-# TLS certificates are signed by `Let's Encrypt`
-#tls_issuer: "{{ letsencrypt }}"
+# Issuer of TLS certificates on the Local Network (e.g. self-signed)
+local_tls_issuer: "{{ local_ca }}-issuer"
+# Issuer of TLS certificates on the Internet (e.g. 'Let's Encrypt')
+public_tls_issuer: "{{ public_ca }}-issuer"
 
 # Valid E-mail address for registration with `Let's Encrypt`
 acme_email:
+
+# Enable AWS' `Route 53` DNS provider for routing public traffic to the cluster ingress
+enable_route53: false
+
+# AWS configuration, necessary for Route53 DNS provider (recommended to specify/override in the vault)
+aws_access_key_id:
+aws_secret_access_key:
+aws_hosted_zone_id:
+# AWS account ID (e.g. "002782789222" from `arn:aws:iam::002782789222:user/myuser`)
+aws_account_id:
+# IAM username (e.g. "myuser" from `arn:aws:iam::002782789222:user/myuser`)
+aws_iam_user:
 
 # Name of the disk device for use with Longhorn (check with `lsblk -f`)
 longhorn_disk_device: nvme0n1

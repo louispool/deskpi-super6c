@@ -1,0 +1,39 @@
+# Cleans up artifacts left behind by the tests.
+#
+# Note that this playbook will remove **all** managed policies from the IAM user
+#
+---
+- name: Clean up artifacts left by testing tasks
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - ../defaults/main.yml
+    - ../../../playbooks/vars/config.yml
+
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "../../../playbooks/vars/vault.yml"
+
+  tasks:
+    - name: Remove Route53 cronjob script file
+      ansible.builtin.file:
+        path: /home/{{ ansible_user }}/route53-ddns.sh
+        state: absent
+
+    - name: Detach **all** managed policies from user
+      amazon.aws.iam_user:
+        access_key: "{{ aws_access_key_id }}"
+        secret_key: "{{ aws_secret_access_key }}"
+        name: "{{ aws_iam_user }}"
+        managed_policies: []
+        state: present
+
+    - name: Delete Route53 DDNS managed policy
+      amazon.aws.iam_managed_policy:
+        access_key: "{{ aws_access_key_id }}"
+        secret_key: "{{ aws_secret_access_key }}"
+        policy_name: route53-test-policy
+        state: absent

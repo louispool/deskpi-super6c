@@ -44,3 +44,8 @@
     - http-redirect-middleware.yml.j2
     - traefik-dashboard.yml.j2
 
+- name: Configure Traefik Public IngressRoute to Dashboard
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/traefik-dashboard-public.yml.j2') }}"
+    state: present
+  when: enable_public_traefik_dashboard

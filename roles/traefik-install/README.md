@@ -45,11 +45,11 @@ k3s_enable_service_mesh: true
 Configure the user and password for the BasicAuth middleware via the variables `k3s_traefik_basic_auth_user` and `k3s_traefik_basic_auth_password`:
 ```yaml
 traefik_basic_auth_user: admin
-traefik_basic_auth_passwd: admin
+traefik_basic_auth_passwd: passwd
 ```   
-Configure the domain for the Traefik Dashboard via the variable `traefik_dashboard_dns`:
+Configure the domain for the Traefik Dashboard via the variable `traefik_dashboard`:
 ```yaml
-traefik_dashboard_dns: dashboard.traefik.localnet
+traefik_dashboard: traefik.deskpi.localnet
 ```
            
 The fact `k3s_ingress_external_ip` is used to specify the external IP address for the Traefik Ingress Controller:
@@ -95,7 +95,7 @@ service/nginx-test       ClusterIP   10.43.22.10    <none>        80/TCP    5s
 NAME                                           CLASS    HOSTS                ADDRESS         PORTS   AGE
 ingress.networking.k8s.io/nginx-test-ingress   <none>   test.cluster.local   192.168.1.100   80      5s
 ```
-The host is a subdomain of the `cluster_dns_domain` variable, and the IP address should correspond to the `k3s_ingress_external_ip`.
+The host is a subdomain of the `cluster_local_domain` variable, and the IP address should correspond to the `k3s_ingress_external_ip`.
 
 You can use `curl` to test the service:
 ```shell
@@ -117,9 +117,9 @@ ansible-playbook roles/traefik-install/tests/cleanup.yml
 ### Accessing the Traefik Dashboard
 
 The Traefik dashboard is exposed via an [IngressRoute](templates/traefik-dashboard.yml.j2) resource. 
-You can access the dashboard by navigating to the domain specified in the `traefik_dashboard_dns` fact and appending the `/dashboard/` path:
+You can access the dashboard by navigating to the domain specified in the `traefik_dashboard` variable and appending the `/dashboard/` path:
 ```shell
-http://dashboard.traefik.localnet/dashboard/
+https://traefik.deskpi.localnet/dashboard/
 ```
 Note the trailing slash ('/') in the URL.    
 

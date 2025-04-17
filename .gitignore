@@ -1,6 +1,5 @@
-.obsidian
 /playbooks/scratch/
 /.idea/
 *.iml
-/roles/ricsanfre.ntp/
 /log/
+/vault_pass.txt

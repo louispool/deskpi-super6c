@@ -1,6 +1,6 @@
 # Tasks for preparing every host in the cluster for the installation of Longhorn.
 #
-# Note that these tasks will WIPE THE DISK!
+# Note that these tasks will WIPE THE DISK when longhorn_prepare_disk is set to true.
 # Be extra careful before executing these tasks and make sure that you have set the variables properly.
 ---
 # Install prerequisite software and modules

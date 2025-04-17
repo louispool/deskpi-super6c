@@ -26,6 +26,7 @@ spec:
       priority: 1
       middlewares:
         - name: redirect-to-https
+          namespace: {{ k3s_traefik_namespace }}
       services:
         - kind: TraefikService
           name: noop@internal

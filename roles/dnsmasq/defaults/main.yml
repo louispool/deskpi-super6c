@@ -10,9 +10,9 @@ dnsmasq_listen_address: ''
 dnsmasq_conf_dir: '/etc/dnsmasq.d/'
 
 # Top Level Domain
-dns_domain: localnet
+local_domain: localnet
 # Sub-Domain for the cluster
-cluster_dns_domain: cluster.local
+cluster_local_domain: cluster.local
 
 # Defines Cloudflare and Google public name servers as upstream name servers to dnsmasq
 upstream_dns_servers:

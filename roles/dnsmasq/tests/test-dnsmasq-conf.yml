@@ -1,7 +1,6 @@
 # Generates the dnsmasq configuration file to the local user directory for verification.
 #
 ---
-
 - name: Test the generation of the dnsmasq configuration file.
   hosts: control_plane
 

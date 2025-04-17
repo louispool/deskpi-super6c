@@ -99,7 +99,7 @@
               traefik.ingress.kubernetes.io/router.entrypoints: web
           spec:
             rules:
-              - host: "test.{{ cluster_dns_domain }}"
+              - host: "test.{{ cluster_local_domain }}"
                 http:
                   paths:
                     - path: /

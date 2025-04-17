@@ -14,15 +14,15 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: {{ k3s_traefik_namespace }}-basic-auth@kubernetescrd
 
     # Use cert-manager to automatically create the SSL certificate
-    cert-manager.io/cluster-issuer: {{ tls_issuer }}-issuer
-    cert-manager.io/common-name: {{ longhorn_dashboard_dns }}
+    cert-manager.io/cluster-issuer: {{ local_tls_issuer }}-issuer
+    cert-manager.io/common-name: {{ longhorn_dashboard }}
 spec:
   tls:
     - hosts:
-        - {{ longhorn_dashboard_dns }}
+        - {{ longhorn_dashboard }}
       secretName: longhorn-tls
   rules:
-    - host: {{ longhorn_dashboard_dns }}
+    - host: {{ longhorn_dashboard }}
       http:
         paths:
           - path: /

@@ -87,6 +87,22 @@
     name: "{{ item }}"
   loop: "{{ challenges | json_query('resources[*].metadata.name') }}"
 
+- name: Get a list of all Secrets
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ k3s_cert_manager_namespace }}"
+  register: secrets
+
+- name: Delete Secrets
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ k3s_cert_manager_namespace }}"
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ secrets | json_query('resources[*].metadata.name') }}"
+
 - name: Uninstall cert-manager with Helm
   kubernetes.core.helm:
     name: cert-manager
@@ -100,3 +116,41 @@
     name: "{{ k3s_cert_manager_namespace }}"
     kind: Namespace
     state: absent
+
+- name: Remove cron job for Route53 DDNS updates
+  cron:
+    name: "Update Route 53 DDNS"
+    state: absent
+
+- name: Remove Route53 DDNS cron job script file
+  ansible.builtin.file:
+    path: /usr/local/bin/update_route53_ddns.sh
+    state: absent
+
+- name: Detach **all** managed policies from user
+  amazon.aws.iam_user:
+    access_key: "{{ aws_access_key_id }}"
+    secret_key: "{{ aws_secret_access_key }}"
+    name: "{{ aws_iam_user }}"
+    managed_policies: []
+    state: present
+
+- name: Delete Route53 DDNS managed policy
+  amazon.aws.iam_managed_policy:
+    access_key: "{{ aws_access_key_id }}"
+    secret_key: "{{ aws_secret_access_key }}"
+    policy_name: route53-ddns-policy
+    state: absent
+
+- name: Remove AWS credentials from environment
+  lineinfile:
+    path: /etc/environment
+    state: absent
+    regexp: "{{ item }}"
+  with_items:
+    - "^AWS_ACCESS_KEY_ID=.*$"
+    - "^AWS_SECRET_ACCESS_KEY=.*$"
+
+
+
+

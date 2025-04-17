@@ -1,0 +1,37 @@
+# This file contains tasks to setup a cronjob for setting up Dynamic DNS with Route53, which will
+# create a record consisting of your public domain and the public ip provided to you by your ISP.
+# Depending on the `minute` setting, it will update the record every few minutes.
+#
+# Assumes the `setup-aws-env.yml` tasks have been run and the AWS credentials are available in the environment.
+---
+- name: Create IAM policy for Route53 DDNS
+  amazon.aws.iam_managed_policy:
+    access_key: "{{ aws_access_key_id }}"
+    secret_key: "{{ aws_secret_access_key }}"
+    policy_name: route53-ddns-policy
+    policy_description: "Policy for Route53 DDNS updates"
+    policy: "{{ lookup('template', 'templates/route53-ddns-policy.json.j2') }}"
+    state: present
+  register: route53_ddns_policy
+
+- name: Attach policy to user
+  amazon.aws.iam_user:
+    access_key: "{{ aws_access_key_id }}"
+    secret_key: "{{ aws_secret_access_key }}"
+    name: "{{ aws_iam_user }}"
+    managed_policies:
+      - "{{ route53_ddns_policy.policy.arn }}"
+    state: present
+
+- name: Copy Route53 DDNS update script
+  template:
+    src: route53-ddns.sh.j2
+    dest: /usr/local/bin/update_route53_ddns.sh
+    mode: '0755'
+
+- name: Create cron job for Route53 DDNS updates
+  cron:
+    name: "Update Route 53 DDNS"
+    job: "/usr/local/bin/update_route53_ddns.sh"
+    user: "{{ ansible_user }}"
+    minute: "*/5" #Update every 5 minutes

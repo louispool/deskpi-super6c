@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Load AWS credentials
+source /etc/environment
+
+HOSTED_ZONE_ID="{{ aws_hosted_zone_id }}"
+
+# Fetch current public IPs
+IPV4=$(curl -s https://api64.ipify.org)
+IPV6=$(curl -s https://api64.ipify.org -6 || echo "")
+
+# Build JSON file
+cat <<EOF > /tmp/route53_update.json
+{
+  "Comment": "Dynamic DNS update",
+  "Changes": [
+{% for domain in public_domains %}
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "{{ domain }}",
+        "Type": "A",
+        "TTL": 300,
+        "ResourceRecords": [ { "Value": "$IPV4" } ]
+      }
+    }{% if IPv6_enabled %},
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "{{ domain }}",
+        "Type": "AAAA",
+        "TTL": 300,
+        "ResourceRecords": [ { "Value": "$IPV6" } ]
+      }
+    }{% endif %}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  ]
+}
+EOF
+
+{% if IPv6_enabled %}
+# Verify that IPv6 is supported, if not, remove the AAAA records
+if [[ -z "$IPV6" ]]; then
+  jq 'del(.Changes[] | select(.ResourceRecordSet.Type == "AAAA"))' /tmp/route53_update.json > /tmp/route53_update_clean.json
+  mv /tmp/route53_update_clean.json /tmp/route53_update.json
+fi
+{% endif %}
+
+# Update Route 53 DNS records
+aws route53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --change-batch file:///tmp/route53_update.json

@@ -1,10 +1,15 @@
 # This file contains tasks to export and trust the k3s Self-Signed CA
 #
 ---
+# Configure the Certificate Authority (CA) and Issuer of Self-Signed Certificates
+- name: Configure Self-Signed CA
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'templates/self-signed-ca.yml.j2') }}"
 
 # Extract the CA Certificate from Kubernetes Secret
 - name: Get the CA certificate from Kubernetes
-  ansible.builtin.command: kubectl get secret {{ k3s_ca }}-secret -n {{ k3s_cert_manager_namespace}} -o jsonpath="{.data.ca\.crt}"
+  ansible.builtin.command: kubectl get secret {{ local_ca }}-secret -n {{ k3s_cert_manager_namespace}} -o jsonpath="{.data.ca\.crt}"
   register: ca_cert_base64
 
 # Decode the base64-encoded certificate

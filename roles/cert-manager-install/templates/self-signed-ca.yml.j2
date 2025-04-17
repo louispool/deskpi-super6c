@@ -1,7 +1,7 @@
 # These resources define the self-signed certificate authority (CA)
 #
 ---
-# This defines a self-signed certificate authority (CA) in Kubernetes
+# This defines a self-signed issuer in Kubernetes
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -10,18 +10,18 @@ spec:
   selfSigned: { }
 
 ---
-# This is a certificate resource that will be used to issue self-signed certificates.
+# Defines a certificate resource for the CA that will be used to issue self-signed certificates.
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ k3s_ca }}-cert
+  name: {{ local_ca }}-cert
   namespace: {{ k3s_cert_manager_namespace }}
 spec:
   isCA: true
   duration: 8760h # Valid for 1 year
   renewBefore: 720h # Renew before 30 days of expiration
-  commonName: {{ k3s_ca }}
-  secretName: {{ k3s_ca }}-secret
+  commonName: {{ local_ca }}
+  secretName: {{ local_ca }}-secret
   privateKey:
     algorithm: ECDSA
     size: 256
@@ -35,8 +35,8 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: {{ k3s_ca }}-issuer
+  name: {{ local_tls_issuer }}
   namespace: {{ k3s_cert_manager_namespace }}
 spec:
   ca:
-    secretName: {{ k3s_ca }}-secret
+    secretName: {{ local_ca }}-secret

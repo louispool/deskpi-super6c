@@ -14,15 +14,15 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares:
       {{ k3s_traefik_namespace }}-basic-auth@kubernetescrd
     # Enable cert-manager to create automatically the SSL certificate and store in Secret
-    cert-manager.io/cluster-issuer: {{ tls_issuer }}-issuer
-    cert-manager.io/common-name: {{ linkerd_dashboard_dns }}
+    cert-manager.io/cluster-issuer: {{ local_tls_issuer }}-issuer
+    cert-manager.io/common-name: {{ linkerd_dashboard }}
 spec:
   tls:
     - hosts:
-        - {{ linkerd_dashboard_dns }}
+        - {{ linkerd_dashboard }}
       secretName: linkerd-viz-tls
   rules:
-    - host: {{ linkerd_dashboard_dns }}
+    - host: {{ linkerd_dashboard }}
       http:
         paths:
           - path: /
@@ -47,7 +47,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
-    - host: {{ linkerd_dashboard_dns }}
+    - host: {{ linkerd_dashboard }}
       http:
         paths:
           - path: /

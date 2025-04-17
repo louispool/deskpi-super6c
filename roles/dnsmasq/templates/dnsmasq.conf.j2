@@ -27,12 +27,12 @@ bogus-priv
 # log-dhcp
 
 # Add custom domain to local network
-local=/{{ dns_domain }}/
-domain={{ dns_domain }}
+local=/{{ local_domain }}/
+domain={{ local_domain }}
 
 # Resolve sub-domains via a DNS wildcard
-address=/{{ cluster_dns_domain }}/{{ k3s_ingress_external_ip }}
-address=/{{ dns_domain }}/{{ gateway }}
+address=/{{ cluster_local_domain }}/{{ k3s_ingress_external_ip }}
+address=/{{ local_domain }}/{{ gateway }}
 
 {% if enable_dhcp is sameas true %}
 # Range of IP Addresses the DHCP Server can use. Hosts in the inventory will, however, be statically configured.
@@ -50,7 +50,7 @@ dhcp-host={{ hostvars[host].inventory_hostname }},{{ ip_subnet_prefix|string }}.
 # DNS configuration based on inventory
 {% for host in groups['all'] %}
 {% if hostvars[host].ip_octet is defined %}
-host-record={{ hostvars[host].inventory_hostname }}.{{ dns_domain }},{{ hostvars[host].inventory_hostname }}.{{ cluster_dns_domain }},{{ ip_subnet_prefix|string }}.{{ hostvars[host].ip_octet|string }}
+host-record={{ hostvars[host].inventory_hostname }}.{{ local_domain }},{{ hostvars[host].inventory_hostname }}.{{ cluster_local_domain }},{{ ip_subnet_prefix|string }}.{{ hostvars[host].ip_octet|string }}
 {% endif %}
 {% endfor %}
 
@@ -60,6 +60,6 @@ host-record={{ hostvars[host].inventory_hostname }}.{{ dns_domain }},{{ hostvars
 # {{ host.desc }}
 {% endif %}
 {% if host.hostname is defined and host.ip is defined %}
-host-record={{ host.hostname }}.{{ dns_domain }},{{ host.hostname }}.{{ cluster_dns_domain }},{{ host.ip }}
+host-record={{ host.hostname }}.{{ local_domain }},{{ host.hostname }}.{{ cluster_local_domain }},{{ host.ip }}
 {% endif %}
 {% endfor %}
