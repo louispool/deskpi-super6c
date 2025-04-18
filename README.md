@@ -10,11 +10,11 @@
 - [The DIY Life: Turing Pi 2 Cluster](https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/)
 
 
-# Step 1: Assemble the Board
+# 1. Board Assembly
 
 Assembly is described on the DeskPi Super6c's [github page](https://github.com/DeskPi-Team/super6c#how-to-assemble).
 
-# Step 2: Install the OS
+# 2. OS Installation
                      
 There are several ways we can install the OS to the Compute Modules (CM4) on the DeskPi Super6c, depending on whether the CM4 has eMMC storage or not.
 For the most part, we will be using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) tool to flash the OS to the CM4's.
@@ -143,7 +143,7 @@ See the [Notes](#notes) section above for additional information.
 - https://www.jeffgeerling.com/blog/2021/raspberry-pi-can-boot-nvme-ssds-now
 - https://notenoughtech.com/raspberry-pi/it-took-me-2-months-to-boot-cm4-from-nvme
 
-# Step 3: Prepare the cluster
+# 3. Cluster Preparation
 
 Before starting this section, you should ensure that you have successfully installed the OS on all the CM4's, that they are connected to the network, and you can `ssh` onto all of them.
 
@@ -201,6 +201,17 @@ all:
               ip_octet: 205
 ```
 Then the server / master node has the hostname `deskpi1` and the ip address: `192.168.1.200` and the last node in the cluster has the hostname `deskpi6` and ip address `192.168.1.205`.
+          
+### Note
+Keep in mind that this is not how Ansible resolves the ip address of the hosts in the inventory. It sees the hosts as `deskpi1`, `deskpi2`, etc. and relies on your DNS server to resolve the hostname 
+to the correct IP address. If you do not have a DNS server, you can add the hostnames and IP addresses to the `/etc/hosts` file if you are using a Linux host, or the 
+`C:\Windows\System32\drivers\etc\hosts` file if you are using Windows.
+
+You can test the connection by ssh'ing into the hosts in the inventory:
+```bash
+ssh deskpi@deskpi1
+```
+Assuming `deskpi` is username you defined for your Pi's during [Step 2](#step-2--install-the-os) and the value of `ansible_user` in the `inventory/group_vars/cluster.yml` file.
 
 ### Consider assigning the Static IPs in your DHCP server directly
 
@@ -242,9 +253,9 @@ ansible-playbook playbooks/k3s-pre-install.yml --vault-password-file ~/.vault_pa
 export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass.txt
 ```
 
-# Step 4: [Provision the cluster](playbooks/README.md) 
+# 4. [Cluster Provisioning](playbooks/README.md) 
 
-## Prepare the cluster
+## 4.1 Pre-installation Playbook
 
 It might be prudent to **manually** update and upgrade all software packages on each DeskPi after installation of the OS, at least once, before running the playbooks:
 
@@ -274,7 +285,7 @@ On the Control Plane / Master Node this playbook will also:
 The reboot task may time out if the ip addresses of the CM4's were changed during the playbook run. 
 Consequently, you may have to flush your dns cache before you will be able to connect to them again. 
 
-## Install [k3s](https://k3s.io/)
+## 4.2 [k3s](https://k3s.io/) Installation  Playbook
 
 ### Configuration
 
@@ -341,21 +352,11 @@ root@deskpi1:~# cat k3s_install_log.txt
 [INFO]  systemd: Starting k3s
 ```
 
-### Uninstalling k3s
-
-You can uninstall k3s by running the [k3s-uninstall](playbooks/README.md#k3s-uninstall) playbook:
-
-```bash
-ansible-playbook playbooks/k3s-uninstall.yml
-```
-
-## Install additional packages 
-
-### Post installation playbook
+## 4.3 Post-installation Playbook
 
 After k3s has been successfully set up on your cluster, you must run the [k3s post-install](playbooks/README.md#k3s-post-install) playbook.
 
-#### Synopsis
+### Synopsis
 
 This playbook does the following:
 
@@ -364,7 +365,7 @@ This playbook does the following:
 - Installs [Helm](https://helm.sh/), the package manager for kubernetes, which will be used to install other k8s packages.
 - Creates an [NFS Storage Class](../roles/nfs-storage/README.md), based on an NFS export, on the Control Plane.
 
-#### Configuration
+### Configuration
 
 Configuration variables can be found in the [vars/config.yml](vars/config.yml).
 To configure the host as a local NFS Server, set the fact:
@@ -386,7 +387,7 @@ In both cases ensure the path to the share is correct:
 nfs_path: <path_to_share>
 ```
 
-#### Installation
+### Installation
 
 You run the post-install playbook from the **project root** as follows:
 
@@ -401,7 +402,7 @@ For example, to install specifically only **Helm** you can run the playbook as f
 ```bash
 ansible-playbook playbooks/k3s-post-install.yml --tags "helm" 
 ```
-### Install additional packages
+## 4.4 Additional Packages
 
 Packages for k3s are declared in the [`k3s-packages-install`](playbooks/README.md#k3s-packages-install) playbook, they are tagged and can be played individually via the `--tags` argument for `ansible-playbook`.
 
@@ -414,7 +415,7 @@ Packages for k3s are declared in the [`k3s-packages-install`](playbooks/README.m
 | [Longhorn](roles/longhorn-install/README.md)    |`longhorn`|
 
 
-#### Installation
+### Installation
 
 ```bash
 ansible-playbook playbooks/k3s-packages-install.yml 
@@ -498,6 +499,37 @@ nvme0n1
 ```
 In the example above, we can use `nvme0n1` for Ceph but not `mmcblk0` or any of its partitions. 
                  
+## 5. Uninstallation
+
+## 5.1 [Uninstalling Packages](playbooks/README.md#k3s-packages-uninstall)
+
+Remove the packages installed to k3s with the `k3s-packages-install` playbook.
+
+|Package|Tag|
+|-------|---|
+|Longhorn|`longhorn`|
+|Traefik | `traefik`|
+|Linkerd | `linkerd`|
+|Cert-Manager | `certmanager`|
+|MetalLB | `metallb`|
+
+```bash
+ansible-playbook playbooks/k3s-packages-uninstall.yml 
+```
+
+Packages can be individually uninstalled with the corresponding `tag`, for example:
+
+```bash
+ansible-playbook playbooks/k3s-packages-uninstall.yml --tags "metallb,certmanager,traefik" 
+```
+
+## 5.2 Uninstalling k3s
+
+You can uninstall k3s by running the [k3s-uninstall](playbooks/README.md#k3s-uninstall) playbook:
+
+```bash
+ansible-playbook playbooks/k3s-uninstall.yml
+```
 
 ### Additional Notes
 

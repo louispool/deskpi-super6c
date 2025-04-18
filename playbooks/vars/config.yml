@@ -55,8 +55,8 @@ k3s_logging_namespace: k3s-logging
 k3s_monitoring_namespace: k3s-monitoring
 
 # Range of IP addresses that MetalLB can use to assign IPs to services
-k3s_external_min_ip_octet: 210
-k3s_external_max_ip_octet: 255
+k3s_external_min_ip_octet: 100
+k3s_external_max_ip_octet: 199
 # In either CIDR notation (e.g. 192.168.10.0/24) or a start and an end IP address separated by a hyphen (192.168.9.1-192.168.9.5)
 k3s_external_ip_range: "{{ ip_subnet_prefix|string + '.' + k3s_external_min_ip_octet|string + '-' + ip_subnet_prefix|string +  '.' + k3s_external_max_ip_octet|string }}"
 
@@ -75,12 +75,10 @@ ntp_server: "{{ master_node_ip }}"
 dns_server: "{{ master_node_ip }}"
 
 # IP address of the NFS Server (leave empty if `local_nfs_server` is true)
-nfs_server: "{{ ip_subnet_prefix }}.6"
-# IP address of an alternate NFS Server (leave empty if `local_nfs_server` is true)
-nfs_server_alt: "{{ ip_subnet_prefix }}.4"
+nfs_server:
 
 # Whether an NFS Service should be configured on the Host
-local_nfs_server: false
+local_nfs_server: true
 nfs_dir: /NFS/data
 
 # Public domain - top level domain on the Internet
@@ -106,19 +104,11 @@ additional_dns_hosts:
   nas_server:
     desc: "NAS Server"
     hostname: nas
-    ip: "{{ nfs_server }}"
-  nas1_server:
-    desc: "NAS1 Server"
-    hostname: nas1
-    ip: "{{ nfs_server_alt }}"
-  nas2_server:
-    desc: "NAS2 Server"
-    hostname: nas2
-    ip: "{{ nfs_server }}"
+    ip: "{{ master_node_ip if local_nfs_server else nfs_server }}"
 
 # DHCP range used by dnsmasq (should not overlap range of IP addresses used by MetalLB)
 dhcp_range_min_ip_octet: 200
-dhcp_range_max_ip_octet: 209
+dhcp_range_max_ip_octet: 254
 dhcp_range: "{{ ip_subnet_prefix|string +  '.' + dhcp_range_min_ip_octet|string + ',' + ip_subnet_prefix|string + '.' + dhcp_range_max_ip_octet|string  }}"
 
 enable_dhcp: false

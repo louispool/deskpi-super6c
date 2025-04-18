@@ -57,10 +57,10 @@
             addresses:
               - {{ ip_subnet_prefix }}.{{ ip_octet }}/24
             routes:
-             - to: default
-               via: {{ gateway }}
+              - to: default
+                via: {{ gateway }}
             nameservers:
-                addresses:
+              addresses:
                 - {{ dns_server }}
     dest: /etc/netplan/01-netcfg.yaml
     force: yes

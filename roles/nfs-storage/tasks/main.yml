@@ -23,14 +23,12 @@
 
 - name: Configure a Local NFS Server
   include_tasks: configure_local_nfs_server.yml
-  when:
-    - local_nfs_server | bool
+  when: local_nfs_server
 
 - name: Set NFS Server to Host (if not defined)
   ansible.builtin.set_fact:
     nfs_server: "{{ ip_subnet_prefix|string + '.' + ip_octet|string }}"
-  when:
-    - local_nfs_server | bool
+  when: local_nfs_server
 
 - name: Add the Kubernetes NFS Subdir External Provisioner chart repository.
   kubernetes.core.helm_repository:

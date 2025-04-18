@@ -103,6 +103,22 @@
     name: "{{ item }}"
   loop: "{{ secrets | json_query('resources[*].metadata.name') }}"
 
+- name: Get a list of all ConfigMaps
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ k3s_cert_manager_namespace }}"
+  register: configmaps
+
+- name: Delete ConfigMaps
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ k3s_cert_manager_namespace }}"
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ configmaps | json_query('resources[*].metadata.name') }}"
+
 - name: Uninstall cert-manager with Helm
   kubernetes.core.helm:
     name: cert-manager

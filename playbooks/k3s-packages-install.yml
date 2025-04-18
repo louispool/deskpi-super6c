@@ -32,7 +32,7 @@
   roles:
     - role: longhorn-install/cluster-prep
       tags: ['longhorn']
-      when: k3s_enable_block_storage | bool
+      when: k3s_enable_block_storage
 
 - name: Install various packages to k3s (via the control plane).
   hosts: control_plane
@@ -51,15 +51,15 @@
     K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
   pre_tasks:
+    - name: Include vault variables
+      include_vars: "vars/vault.yml"
+      tags: ["always"]
+
     - name: Ensure Helm Diff Plugin is installed
       kubernetes.core.helm_plugin:
         plugin_path: https://github.com/databus23/helm-diff
         state: present
       tags: ['always']
-
-    - name: Include vault variables
-      include_vars: "vars/vault.yml"
-      tags: ["always"]
 
   roles:
     - role: metallb-install
@@ -70,12 +70,12 @@
 
     - role: linkerd-install
       tags: ['linkerd']
-      when: k3s_enable_service_mesh | bool
+      when: k3s_enable_service_mesh
 
     - role: traefik-install
       tags: ['traefik']
 
     - role: longhorn-install/control-plane
       tags: ['longhorn']
-      when: k3s_enable_block_storage | bool
+      when: k3s_enable_block_storage
 

@@ -14,6 +14,11 @@
   vars_files:
     - vars/config.yml
 
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "vars/vault.yml"
+      tags: ["always"]
+
   tasks:
     - name: Create K3S configuration directory
       ansible.builtin.file:
@@ -34,6 +39,11 @@
 
   vars_files:
     - vars/config.yml
+
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "vars/vault.yml"
+      tags: ["always"]
 
   tasks:
     # Run the installation script downloaded from get.k3s.io
@@ -90,6 +100,11 @@
   vars:
     k3s_url: https://{{ master_node_ip }}:6443
     k3s_token: "{{ hostvars[groups['control_plane'][0]]['node_token'] }}"
+
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "vars/vault.yml"
+      tags: ["always"]
 
   tasks:
     # Run the installation script for the worker nodes

@@ -34,7 +34,6 @@ This role does the following:
 - Sets the DNS server on `systemd-resolved`
 - Reboots the DeskPi (if necessary)
 
-
 - When Ubuntu is installed on the DeskPi:
   - Removes the 'snap' package manager
   - Disables network configuration via cloud-init

@@ -1,6 +1,19 @@
 # Tasks for the removal of Traefik
 ---
-# First delete all IngressRoutes and Middlewares
+- name: Get a list of all Ingress
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Ingress
+  register: ingress
+
+- name: Delete all Ingress
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Ingress
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ ingress| json_query('resources[*].metadata.name') }}"
+
 - name: Get a list of all Ingress Routes
   kubernetes.core.k8s_info:
     api_version: "traefik.containo.us/v1alpha1"
@@ -45,6 +58,38 @@
     state: absent
     name: "{{ item }}"
   loop: "{{ service_monitors | json_query('resources[*].metadata.name') }}"
+
+- name: Get a list of all Secrets
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ k3s_traefik_namespace }}"
+  register: secrets
+
+- name: Delete Secrets
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ k3s_traefik_namespace }}"
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ secrets | json_query('resources[*].metadata.name') }}"
+
+- name: Get a list of all ConfigMaps
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ k3s_traefik_namespace }}"
+  register: configmaps
+
+- name: Delete ConfigMaps
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ k3s_traefik_namespace }}"
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ configmaps | json_query('resources[*].metadata.name') }}"
 
 - name: Uninstall Traefik with Helm
   kubernetes.core.helm:

@@ -28,9 +28,6 @@
 - name: Operations after k3s cluster installation.
   hosts: control_plane
 
-  vars_files:
-    - vars/config.yml
-
   gather_facts: true
   become: true
 
@@ -41,7 +38,14 @@
     # The location of the kubeconfig file on the master.
     K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
+  vars_files:
+    - vars/config.yml
+
   pre_tasks:
+    - name: Include vault variables
+      include_vars: "vars/vault.yml"
+      tags: ["always"]
+
     # Install kubernetes core collection dependencies (kubernetes python package) using PIP.
     - name: Ensure PIP is installed.
       package:

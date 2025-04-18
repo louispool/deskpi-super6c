@@ -35,7 +35,7 @@
 - name: Create BasicAuth credentials.
   include_tasks: basic-auth-credentials.yml
 
-- name: Configure Traefik
+- name: Configure Traefik Middleware and Dashboard
   kubernetes.core.k8s:
     definition: "{{ lookup('template', 'templates/' + item ) }}"
     state: present

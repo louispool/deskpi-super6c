@@ -31,14 +31,14 @@
   roles:
     - role: longhorn-uninstall
       tags: ['longhorn']
-      when: k3s_enable_block_storage | bool
+      when: k3s_enable_block_storage
 
     - role: traefik-uninstall
       tags: ['traefik']
 
     - role: linkerd-uninstall
       tags: ['linkerd']
-      when: k3s_enable_service_mesh | bool
+      when: k3s_enable_service_mesh
 
     - role: cert-manager-uninstall
       tags: ['certmanager']
