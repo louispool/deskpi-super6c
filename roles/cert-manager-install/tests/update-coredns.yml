@@ -1,0 +1,62 @@
+# Ensures that Kubernetes CoreDNS will forward DNS queries to public DNS servers as opposed to the local resolvers on the node
+---
+- name:  Ensure Kubernetes CoreDNS will forward DNS queries to public DNS servers
+  hosts: control_plane
+
+  gather_facts: false
+  become: true
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  vars_files:
+    - ../defaults/main.yml
+    - ../../../playbooks/vars/config.yml
+
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "../../../playbooks/vars/vault.yml"
+
+  tasks:
+    - name: Get current coredns configmap
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        namespace: kube-system
+        name: coredns
+      register: coredns_cm
+
+    - name: Check if Corefile uses /etc/resolv.conf
+      ansible.builtin.set_fact:
+        needs_corefile_update: "{{ 'forward . /etc/resolv.conf' in coredns_cm.resources[0].data.Corefile }}"
+
+    - name: Replace forward line in coredns Corefile if necessary
+      ansible.builtin.set_fact:
+        new_corefile: "{{ coredns_cm.resources[0].data.Corefile | regex_replace('forward \\.\\s+/etc/resolv\\.conf', 'forward . 1.1.1.1 8.8.8.8') }}"
+      when: needs_corefile_update
+
+    - name: Apply updated coredns configmap if modified
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: ConfigMap
+        namespace: kube-system
+        name: coredns
+        definition:
+          metadata:
+            name: coredns
+            namespace: kube-system
+          data:
+            Corefile: "{{ new_corefile }}"
+        state: present
+      when: needs_corefile_update
+
+    - name: Restart coredns pods if configmap was updated
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Pod
+        namespace: kube-system
+        label_selectors:
+          - "k8s-app=kube-dns"
+        state: absent
+      when: needs_corefile_update

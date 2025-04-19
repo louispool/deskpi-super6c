@@ -9,7 +9,7 @@
 
 # Extract the CA Certificate from Kubernetes Secret
 - name: Get the CA certificate from Kubernetes
-  ansible.builtin.command: kubectl get secret {{ local_ca }}-secret -n {{ k3s_cert_manager_namespace}} -o jsonpath="{.data.ca\.crt}"
+  ansible.builtin.command: kubectl get secret {{ private_ca }}-secret -n {{ k3s_cert_manager_namespace}} -o jsonpath="{.data.ca\.crt}"
   register: ca_cert_base64
 
 # Decode the base64-encoded certificate

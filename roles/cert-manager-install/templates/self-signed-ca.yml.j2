@@ -14,14 +14,14 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ local_ca }}-cert
+  name: {{ private_ca }}-cert
   namespace: {{ k3s_cert_manager_namespace }}
 spec:
   isCA: true
   duration: 8760h # Valid for 1 year
   renewBefore: 720h # Renew before 30 days of expiration
-  commonName: {{ local_ca }}
-  secretName: {{ local_ca }}-secret
+  commonName: {{ private_ca }}
+  secretName: {{ private_ca }}-secret
   privateKey:
     algorithm: ECDSA
     size: 256
@@ -36,7 +36,6 @@ apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: {{ local_tls_issuer }}
-  namespace: {{ k3s_cert_manager_namespace }}
 spec:
   ca:
-    secretName: {{ local_ca }}-secret
+    secretName: {{ private_ca }}-secret

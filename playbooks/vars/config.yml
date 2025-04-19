@@ -155,17 +155,17 @@ enable_selfsigned: true
 enable_letsencrypt: false
 
 # Name of the certificate authority (CA) for self-signed certificates on the Local Network
-local_ca: k3s-ca
+private_ca: k3s-ca
 # Name of the certificate authority (CA) for certificates on the Internet
 public_ca: letsencrypt
 
 # Issuer of TLS certificates on the Local Network (e.g. self-signed)
-local_tls_issuer: "{{ local_ca }}-issuer"
+local_tls_issuer: "{{ private_ca }}-issuer"
 # Issuer of TLS certificates on the Internet (e.g. 'Let's Encrypt')
 public_tls_issuer: "{{ public_ca }}-issuer"
 
 # Valid E-mail address for registration with `Let's Encrypt`
-acme_email:
+email:
 
 # Enable AWS' `Route 53` DNS provider for routing public traffic to the cluster ingress
 enable_route53: false
@@ -173,6 +173,9 @@ enable_route53: false
 # AWS configuration, necessary for Route53 DNS provider (recommended to specify/override in the vault)
 aws_access_key_id:
 aws_secret_access_key:
+aws_region: us-east-1
+
+# When using the Route 53 DNS provider, replace with your AWS Hosted Zone ID.
 aws_hosted_zone_id:
 # AWS account ID (e.g. "002782789222" from `arn:aws:iam::002782789222:user/myuser`)
 aws_account_id:

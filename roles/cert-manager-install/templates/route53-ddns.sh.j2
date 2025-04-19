@@ -3,11 +3,15 @@
 # Load AWS credentials
 source /etc/environment
 
+LOGFILE="{{ cron_log_file }}"
 HOSTED_ZONE_ID="{{ aws_hosted_zone_id }}"
 
 # Fetch current public IPs
-IPV4=$(curl -s https://api64.ipify.org)
+IPV4=$(curl -s https://api64.ipify.org -4)
 IPV6=$(curl -s https://api64.ipify.org -6 || echo "")
+
+# Timestamp for log entries
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Route53 DDNS update" >> "$LOGFILE"
 
 # Build JSON file
 cat <<EOF > /tmp/route53_update.json
@@ -44,8 +48,22 @@ EOF
 if [[ -z "$IPV6" ]]; then
   jq 'del(.Changes[] | select(.ResourceRecordSet.Type == "AAAA"))' /tmp/route53_update.json > /tmp/route53_update_clean.json
   mv /tmp/route53_update_clean.json /tmp/route53_update.json
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] No IPv6 detected — removed AAAA records from JSON payload" >> "$LOGFILE"
 fi
 {% endif %}
 
 # Update Route 53 DNS records
-aws route53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --change-batch file:///tmp/route53_update.json
+RESPONSE=$(aws route53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --change-batch file:///tmp/route53_update.json 2>&1)
+STATUS=$?
+
+if [[ $STATUS -ne 0 ]]; then
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Route53 update failed with status $STATUS" >> "$LOGFILE"
+  echo "Response: $RESPONSE" >> "$LOGFILE"
+  # Exit non-zero to trigger cron email (assuming MAILTO is set)
+  exit 1
+else
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Route53 update successful" >> "$LOGFILE"
+  echo "Response: $RESPONSE" >> "$LOGFILE"
+fi
+
+exit 0

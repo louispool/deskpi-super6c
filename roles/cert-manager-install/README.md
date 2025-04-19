@@ -9,7 +9,8 @@
 |  |  |  ├── main.yml 
 |  |  |  ├── setup-aws-env.yml
 |  |  |  ├── setup-route53-ddns.yml
-|  |  |  ├── setup-self-signed-ca.yml  
+|  |  |  ├── setup-self-signed-ca.yml
+|  |  |  ├── setup-lets-encrypt-ca.yml  
 |  |  ├── templates
 |  |  |  ├── self-signed-ca.yml.j2
 |  |  |  ├── lets-encrypt-ca.yml.j2
@@ -25,7 +26,7 @@ In a K3s cluster, cert-manager integrates seamlessly with Traefik, enabling auto
 
 ![Certificate Management](cert-management.svg)
 
-### Synopsis
+## Synopsis
 
 This role does the following:
 
@@ -41,7 +42,7 @@ This role does the following:
    - Generates a script and cronjob to update Route53 DNS records.
 5. Configures a Route53 DNS solver for the `Let's Encrypt` ACME challenge.
   
-### Configuration
+## Configuration
 
 Configure the namespace for the cert-manager deployment via the variable `k3s_cert_manager_namespace`:
 ```yaml
@@ -52,31 +53,38 @@ Configure enabling the self-signed CA for ingress via local domain:
 ```yaml
 enable_selfsigned: true
 ```
-Configure the name of the CA for self-signed certificates with the variable `local_ca`:
+Configure the name of the CA for self-signed certificates with the variable `private_ca`:
 ```yaml
-local_ca: "k3s-ca"
+private_ca: "k3s-ca"
+```
+
+Configure the naming of the CA for public certificates issued by `Let's Encrypt` via the variable `public_ca`:
+```yaml
+public_ca: "letsencrypt"
 ```
 
 Configure enabling the `Let's Encrypt` ACME (Automated Certificate Management Environment) as a TLS issuer for public domain
 ```yaml
 enable_letsencrypt: false
 ```
-Configure the email address for Let's Encrypt certificate issuance via the variable `acme_email`. 
+Configure the email address for Let's Encrypt certificate issuance via the variable `email`. 
 ```yaml
-acme_email: your_email@mail.com
+email: your_email@mail.com
 ```   
 Let's Encrypt will use this to contact you about expiring certificates and issues related to your account.
-
-Configure the naming of the CA for Let's Encrypt certificates via the variable `public_ca`:
-```yaml
-public_ca: "letsencrypt"
-```
-       
+      
 Configure enabling AWS's Route53 DNS for the `Let's Encrypt` ACME challenge if your public domain is managed by AWS Route53:
 ```yaml
 enable_route53: false
 ```
-               
+   
+Configure the log file location for the Route53 DDNS script via the variable `cron_log_file`:
+```yaml
+cron_log_file: "/var/log/update_route53_ddns.log"
+```
+
+### Route53    
+        
 #### AWS Environment Configuration
 
 When using Route53 you will also need to configure the AWS environment.
@@ -85,6 +93,7 @@ When using Route53 you will also need to configure the AWS environment.
 # The AWS Access Key ID and Secret Access Key for the IAM user that will be used to update the Route53 DNS records:
 aws_access_key_id:
 aws_secret_access_key:
+aws_region:
 
 # The AWS Hosted Zone ID.
 aws_hosted_zone_id:
@@ -103,7 +112,7 @@ attach the policies for updating Route53 DNS records.
 
 These policies (`IAMReadOnlyAccess` and `IAMFullAccess`) can be removed after the playbook has been run.
 
-### Exporting and Trusting the Self-Signed CA Certificate
+## Exporting and Trusting the Self-Signed CA Certificate
 
 If you enabled the self-signed CA, it will automatically be exported and trusted on the `control_plane`. If you want to export the CA certificate to your local machine, 
 you can find it at `/usr/local/share/ca-certificates/k3s-ca-cert.crt` on the DeskPi acting as the `control_plane`.
@@ -125,8 +134,13 @@ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keyc
 - Open **certmgr.msc**
 - Go to **Trusted Root Certification Authorities** → **Certificates**
 - Right-click → **Import** → Select **k3s-ca-cert.crt**
+   
+## Logging
 
-### Testing
+The Route53 DDNS script will log to the file specified in the variable `cron_log_file` (default: `/var/log/update_route53_ddns.log`). 
+Logs are rotated daily, compressed and archived for a week.
+
+## Testing
 
 Verify the installation by running the command:
 
@@ -143,7 +157,7 @@ cert-manager-cainjector-5ff6c59d4b-kjxxm   1/1     Running   0          1m
 cert-manager-webhook-6b5b5f65c8-xjzkk      1/1     Running   0          1m
 ```
 
-#### Route53
+### Route53
 
 There is a playbook available in the [tests](tests/test-route53-ddns-script-gen.yml) directory with which you can test the generation of the `route53-ddns.sh` file,
 run the following command from the project root directory:
@@ -162,7 +176,78 @@ To clean up resources created by the tests, run the following command:
 ```shell
 ansible-playbook roles/cert-manager-install/tests/cleanup.yml
 ```
-### References
+
+To check that the Route53 records are correctly updated you can use either the AWS CLI or a DNS query to check what’s actually recorded.
+
+#### 1. Using AWS CLI:
+
+To list the records in your hosted zone:
+```shell
+aws route53 list-resource-record-sets --hosted-zone-id YOUR_HOSTED_ZONE_ID
+```
+
+This will dump all the records — filter the ones you care about:
+```shell
+aws route53 list-resource-record-sets --hosted-zone-id YOUR_HOSTED_ZONE_ID --query "ResourceRecordSets[?Name == 'example.com.']"
+```
+Replace `example.com.` with your record (note the trailing dot — DNS absolute FQDN format).
+
+You can also look for your AAAA record if needed:
+```
+--query "ResourceRecordSets[?Name == 'example.com.' && Type=='AAAA']"
+```  
+
+#### 2. Using DNS Query:
+
+Sometimes Route53 changes propagate quickly, sometimes it takes a moment — but you can check what’s resolving publicly:
+
+```shell
+dig +short example.com
+dig +short AAAA example.com
+```
+
+Or specify a DNS resolver if your local cache is in the way:
+```shell
+dig @8.8.8.8 +short example.com
+```
+This should return the IP address the DDNS script pushed.
+
+## Troubleshooting issues with Certificates
+                    
+If you are having issues with certificates or the certificate issuers, you can try the following steps:
+
+##### 1. Check the logs of the `cert-manager` pods
+
+```shell
+kubectl logs deployment/cert-manager -n <cert-manager-namespace>
+```
+
+##### 2. Describe the Issuers and Certificates
+```shell
+kubectl describe clusterissuer <issuer-name>
+```                                                              
+
+```shell
+kubectl describe certificate <certificate-name> -n <namespace>
+```
+
+##### 3. Check the Active Challenges
+
+List them:
+```
+kubectl get certificaterequests -A
+kubectl get orders -A
+kubectl get challenges -A
+```
+Then describe one:
+```shell
+kubectl describe certificaterequest <name> -n <namespace>
+kubectl describe order <name> -n <namespace>
+kubectl describe challenge <name> -n <namespace>
+```
+That could reveal which part of the DNS-01 validation or ACME process is failing.
+
+## References
 
 https://cert-manager.io/docs/installation/helm/
 https://picluster.ricsanfre.com/docs/certmanager/

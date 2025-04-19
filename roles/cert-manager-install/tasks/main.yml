@@ -49,8 +49,6 @@
   when: enable_route53
 
 - name: Create Lets-Encrypt CA
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ lookup('template', 'templates/lets-encrypt-ca.yml.j2') }}"
+  include_tasks: setup-lets-encrypt-ca.yml
   when: enable_letsencrypt and enable_route53
 
