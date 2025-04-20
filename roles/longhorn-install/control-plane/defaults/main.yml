@@ -1,23 +1,22 @@
 # Default variables used by the longhorn-install role
 ---
-# Whether to allow wiping and formatting the disk device
-longhorn_prepare_disk: false
-
-# Name of the disk device to use (check with `lsblk -f`)
-longhorn_disk_device:
-
-# Filesystem to format the disk to (must be either 'ext4' or 'xfs')
-longhorn_fstype: ext4
-
-# Path to mount the disk to (and subsequently used by Longhorn)
-longhorn_storage_path: /mnt/longhorn
-
-# Domain Name for the Longhorn Dashboard
-longhorn_dashboard: dashboard.longhorn.localnet
-
 # Namespace for Longhorn
 k3s_longhorn_namespace: longhorn-system
 
 # Enable service mesh
 k3s_enable_service_mesh: false
+
+# Endpoint for the Longhorn dashboard on the local network
+longhorn_dashboard: dashboard.longhorn.localnet
+# Endpoint for the Longhorn dashboard on the public network
+public_longhorn_dashboard:
+
+# Whether to allow access to the Longhorn dashboard over the public network
+enable_public_longhorn_dashboard: false
+
+# Basic auth user/passwd
+longhorn_basic_auth_user: 'admin'
+longhorn_basic_auth_passwd: '!s3cr3t'
+
+
 

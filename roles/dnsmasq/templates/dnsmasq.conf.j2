@@ -32,7 +32,7 @@ domain={{ local_domain }}
 
 # Resolve sub-domains via a DNS wildcard
 address=/{{ cluster_local_domain }}/{{ k3s_ingress_external_ip }}
-address=/{{ local_domain }}/{{ gateway }}
+#address=/{{ local_domain }}/{{ gateway }}
 
 {% if enable_dhcp is sameas true %}
 # Range of IP Addresses the DHCP Server can use. Hosts in the inventory will, however, be statically configured.
@@ -60,6 +60,6 @@ host-record={{ hostvars[host].inventory_hostname }}.{{ local_domain }},{{ hostva
 # {{ host.desc }}
 {% endif %}
 {% if host.hostname is defined and host.ip is defined %}
-host-record={{ host.hostname }}.{{ local_domain }},{{ host.hostname }}.{{ cluster_local_domain }},{{ host.ip }}
+host-record={{ host.hostname }}.{{ cluster_local_domain }},{{ host.ip }}
 {% endif %}
 {% endfor %}

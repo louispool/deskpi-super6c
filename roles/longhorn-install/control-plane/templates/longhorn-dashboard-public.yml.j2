@@ -1,0 +1,42 @@
+# Exposes the Longhorn dashboard (see https://longhorn.io/docs/1.8.1/deploy/accessing-the-ui/longhorn-ingress/) on the public network.
+---
+# Create a certificate for TLS using cert-manager
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: longhorn-pub-cert
+  namespace: {{ k3s_longhorn_namespace }}
+spec:
+  secretName: longhorn-pub-cert-secret
+  duration: 2160h # 90 days
+  renewBefore: 360h # Renew 15 days before expiration
+  issuerRef:
+    name: {{ public_tls_issuer}}
+    kind: ClusterIssuer
+  commonName: {{ public_longhorn_dashboard }}
+  dnsNames:
+    - {{ public_longhorn_dashboard }}
+  privateKey:
+    algorithm: ECDSA
+
+---
+# Traefik v2 IngressRoute CRD
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: longhorn-dashboard-public
+  namespace: {{ k3s_longhorn_namespace }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ public_longhorn_dashboard }}`)
+      middlewares:
+        - name: {{ longhorn_basic_auth }}
+          namespace: {{ k3s_longhorn_namespace }}
+      services:
+        - name: longhorn-frontend
+          port: 80
+  tls:
+    secretName: longhorn-pub-cert-secret

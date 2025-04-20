@@ -1,3 +1,7 @@
+# Tasks for preparing a disk for use by Longhorn
+#
+# These include
+# - wiping the disk
 # - formatting the disk to ext4
 # - creating a mount point
 #
@@ -8,8 +12,7 @@
   block:
     - debug:
         msg: Wiping {{ longhorn_disk_device }} on {{ inventory_hostname }}
-    - ansible.builtin.shell: |
-        wipefs -a /dev/{{ longhorn_disk_device }}
+    - ansible.builtin.command: wipefs -a /dev/{{ longhorn_disk_device }}
 
 - name: Format the disk to the desired filesystem type
   community.general.filesystem:

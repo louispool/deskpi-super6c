@@ -1,6 +1,6 @@
 # Tasks for the installation of Traefik (see https://github.com/traefik/traefik-helm-chart#installing)
 ---
-- name: Create the namespace for Traefik.
+- name: Create the namespace for Traefik
   kubernetes.core.k8s:
     name: "{{ k3s_traefik_namespace }}"
     api_version: v1
@@ -12,7 +12,7 @@
     name: traefik
     repo_url: "https://traefik.github.io/charts"
 
-- name: Deploy Traefik Helm chart.
+- name: Deploy Traefik Helm chart
   kubernetes.core.helm:
     name: traefik
     chart_ref: traefik/traefik
@@ -32,15 +32,23 @@
       type: Ready
       status: "True"
 
-- name: Create BasicAuth credentials.
-  include_tasks: basic-auth-credentials.yml
+- ansible.builtin.set_fact:
+    traefik_basic_auth: "traefik-basic-auth"
+
+- name: Create BasicAuth credentials for the Traefik dashboard
+  include_role:
+    name: traefik-basic-auth
+  vars:
+    k3s_basic_auth_namespace: "{{ k3s_traefik_namespace }}"
+    k3s_basic_auth_name: "{{ traefik_basic_auth }}"
+    basic_auth_user: "{{ traefik_basic_auth_user }}"
+    basic_auth_passwd: "{{ traefik_basic_auth_passwd }}"
 
 - name: Configure Traefik Middleware and Dashboard
   kubernetes.core.k8s:
     definition: "{{ lookup('template', 'templates/' + item ) }}"
     state: present
   with_items:
-    - basic-auth-middleware.yml.j2
     - http-redirect-middleware.yml.j2
     - traefik-dashboard.yml.j2
 

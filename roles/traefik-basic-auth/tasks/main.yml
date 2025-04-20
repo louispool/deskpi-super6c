@@ -1,0 +1,50 @@
+# This file contains tasks to generate a user:password pair and configure the
+# Traefik BasicAuth middleware declared in 'templates/basic_auth_middleware.yml'
+---
+- name: Ensure required packages are installed
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - 'apache2-utils'
+    - 'python3-passlib'
+
+- name: Create a temporary file for htpasswd
+  ansible.builtin.tempfile:
+    state: file
+    suffix: htpasswd
+  register: htpasswd_tmpfile
+
+- name: Generate htpasswd entry for Traefik BasicAuth
+  community.general.htpasswd:
+    path: "{{ htpasswd_tmpfile.path }}"
+    name: "{{ basic_auth_user }}"
+    password: "{{ basic_auth_passwd }}"
+    crypt_scheme: bcrypt
+    state: present
+
+- name: Read generated htpasswd entry
+  ansible.builtin.slurp:
+    src: "{{ htpasswd_tmpfile.path }}"
+  register: htpasswd_content
+
+- name: Set htpasswd string variable
+  ansible.builtin.set_fact:
+    basic_auth_htpasswd_pair: "{{ htpasswd_content.content | b64decode | trim }}"
+
+- name: Remove temporary htpasswd file
+  ansible.builtin.file:
+    path: "{{ htpasswd_tmpfile.path }}"
+    state: absent
+
+- name: Configure the Traefik BasicAuth Middleware
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/basic-auth-middleware.yml.j2') }}"
+    state: present
+
+- name: Set facts for created BasicAuth resources
+  ansible.builtin.set_fact:
+    basic_auth_secret_name: "{{ k3s_basic_auth_name }}-secret"
+    basic_auth_middleware_name: "{{ k3s_basic_auth_name }}"
+

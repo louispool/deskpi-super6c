@@ -38,21 +38,34 @@ Configure the namespace for the Traefik deployment via the variable `k3s_traefik
 ```yaml
 k3s_traefik_namespace: traefik-system
 ```
+
 Configure whether to enable the Linkerd service mesh via the variable `k3s_enable_service_mesh`:
 ```yaml
 k3s_enable_service_mesh: true
 ```
-Configure the user and password for the BasicAuth middleware via the variables `k3s_traefik_basic_auth_user` and `k3s_traefik_basic_auth_password`:
+
+Configure the user and password for the BasicAuth middleware used to access the Traefik Dashboard:
 ```yaml
 traefik_basic_auth_user: admin
 traefik_basic_auth_passwd: passwd
 ```   
-Configure the domain for the Traefik Dashboard via the variable `traefik_dashboard`:
+
+Configure the local domain for the Traefik Dashboard via the variable `traefik_dashboard`:
 ```yaml
 traefik_dashboard: traefik.deskpi.localnet
 ```
-           
-The fact `k3s_ingress_external_ip` is used to specify the external IP address for the Traefik Ingress Controller:
+
+Configure the public domain for the Traefik Dashboard via the variable `public_traefik_dashboard`:
+```yaml
+public_traefik_dashboard: traefik.deskpi.localnet
+```
+
+Configure whether to allow access to the Longhorn dashboard over the public network
+```yaml
+enable_public_traefik_dashboard: false      
+```
+
+The variable `k3s_ingress_external_ip` is used to specify the external IP address for the Traefik Ingress Controller:
 ```yaml  
 k3s_ingress_external_ip: 192.168.1.100 
 ```

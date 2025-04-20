@@ -2,26 +2,6 @@
 #
 # Assumes the `longhorn/cluster-prep` role was previously run.
 ---
-# Install prerequisite software and modules
-- name: Install prerequisites
-  include_tasks: install_prereqs.yml
-
-# Note that these tasks will WIPE THE DISK!
-# Be extra careful before executing these tasks and make sure that you have set the variables properly.
-- name: Prepare the disk
-  include_tasks: prepare_disk.yml
-  when:
-    - longhorn_prepare_disk | bool
-    - (ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'ext4') | list | length <= 0)
-    - (ansible_mounts | selectattr('mount', 'eq', longhorn_storage_path) | selectattr('fstype', 'eq', 'xfs')  | list | length <= 0)
-
-- name: Ensure storage path exists
-  ansible.builtin.file:
-    path: "{{ longhorn_storage_path }}"
-    state: directory
-    mode: '0777'
-  when: not longhorn_prepare_disk | bool
-
 - name: Create namespace for Longhorn namespace.
   kubernetes.core.k8s:
     name: "{{ k3s_longhorn_namespace }}"
@@ -54,11 +34,6 @@
       type: Ready
       status: "True"
 
-- name: Create an Ingress rule for Longhorn UI
-  kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/longhorn-ui-ingress.yml.j2') | from_yaml }}"
-    state: present
-
 - name: Configure the Service Mesh for use with Longhorn
   include_tasks: configure_service_mesh.yml
   when: k3s_enable_service_mesh
@@ -74,5 +49,28 @@
         annotations:
           storageclass.kubernetes.io/is-default-class: "false"
     state: patched
+
+- ansible.builtin.set_fact:
+    longhorn_basic_auth: "longhorn-basic-auth"
+
+- name: Create BasicAuth credentials for the Longhorn dashboard
+  include_role:
+    name: traefik-basic-auth
+  vars:
+    k3s_basic_auth_namespace: "{{ k3s_longhorn_namespace }}"
+    k3s_basic_auth_name: "{{ longhorn_basic_auth }}"
+    basic_auth_user: "{{ longhorn_basic_auth_user }}"
+    basic_auth_passwd: "{{ longhorn_basic_auth_passwd }}"
+
+- name: Configure IngressRoute to local Dashboard
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/longhorn-dashboard.yml.j2') }}"
+    state: present
+
+- name: Configure IngressRoute to public Dashboard
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/longhorn-dashboard-public.yml.j2') }}"
+    state: present
+  when: enable_public_longhorn_dashboard
 
 

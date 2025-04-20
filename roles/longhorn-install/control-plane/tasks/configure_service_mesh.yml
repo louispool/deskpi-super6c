@@ -7,7 +7,7 @@
   register: change_pod_env
   changed_when: '"daemonset.apps/longhorn-manager env updated" in change_pod_env.stdout'
 
-- name: Annotate longhorn-manager
+- name: Annotate Longhorn Manager
   kubernetes.core.k8s:
     definition:
       apiVersion: v1
@@ -22,13 +22,13 @@
               linkerd.io/inject: enabled
     state: patched
 
-- name: Annotate longhorn-ui
+- name: Annotate Longhorn Dashboard
   kubernetes.core.k8s:
     definition:
       apiVersion: v1
       kind: Deployment
       metadata:
-        name: longhorn-ui
+        name: longhorn-dashboard
         namespace: "{{ k3s_longhorn_namespace }}"
       spec:
         template:
@@ -36,3 +36,19 @@
             annotations:
               linkerd.io/inject: enabled
     state: patched
+
+- name: Annotate public longhorn-dashboard
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Deployment
+      metadata:
+        name: longhorn-dashboard
+        namespace: "{{ k3s_longhorn_namespace }}"
+      spec:
+        template:
+          metadata:
+            annotations:
+              linkerd.io/inject: enabled
+    state: patched
+  when: enable_public_longhorn_dashboard

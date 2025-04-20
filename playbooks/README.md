@@ -123,7 +123,7 @@ This playbook does the following:
 - Configures [kubectl autocompletion](https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/) and creates the alias `kc` for [`kubectl`](https://kubernetes.io/docs/reference/kubectl/), which is automatically installed by the k3s installation script, on every host in the cluster.
 - Installs [Helm](https://helm.sh/), the package manager for kubernetes, which will be used to install other k8s packages.
 - Creates an [NFS Storage Class](../roles/nfs-storage/README.md), based on an NFS export, on the Control Plane.
-- Updates CoreDNS to use a replica count of 2 and forward DNS requests to public DNS servers.
+- Updates [CoreDNS](https://docs.k3s.io/networking/networking-services#coredns)  to use a replica count of 2 and forward DNS requests to public DNS servers.
 
 #### Configuration
 

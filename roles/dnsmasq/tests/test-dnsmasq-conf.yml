@@ -11,6 +11,10 @@
     - ../defaults/main.yml
     - ../../../playbooks/vars/config.yml
 
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "../../../playbooks/vars/vault.yml"
+
   tasks:
     - name: Generate from template file.
       ansible.builtin.template:

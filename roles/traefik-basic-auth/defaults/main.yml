@@ -1,0 +1,6 @@
+---
+k3s_basic_auth_namespace: default
+k3s_basic_auth_name:
+
+basic_auth_user: 'admin'
+basic_auth_passwd: '!s3cr3t'

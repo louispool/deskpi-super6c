@@ -2,26 +2,24 @@
 #
 # Passwords must be hashed using MD5, SHA1, or BCrypt. The `htpasswd` utility can be used to generate passwords.
 # Note that, in a kubernetes secret, the user:password string pair must be base64 encoded.
-#
-# Refer to tasks/basic-auth-credentials.yml to see how this is done with the `htpasswd` utility.
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: traefik-basic-auth-secret
-  namespace: {{ k3s_traefik_namespace }}
+  name: {{ k3s_basic_auth_name }}-secret
+  namespace: {{ k3s_basic_auth_namespace }}
 type: Opaque
 stringData:
   users: |
-    {{ traefik_auth_htpasswd_pair }}
+    {{ basic_auth_htpasswd_pair }}
 
 ---
 # Traefik's BasicAuth middleware
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: traefik-basic-auth
-  namespace: {{ k3s_traefik_namespace }}
+  name: {{ k3s_basic_auth_name }}
+  namespace: {{ k3s_basic_auth_namespace }}
 spec:
   basicAuth:
-    secret: traefik-basic-auth-secret
+    secret: {{ k3s_basic_auth_name }}-secret

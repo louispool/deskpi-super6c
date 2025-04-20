@@ -25,7 +25,6 @@ Consisting of the following roles:
 - [longhorn-install/cluster-prep](./cluster-prep/README.md) for the preparation of the cluster prior to the installation of Longhorn.
 - [longhorn-install/control-plane](./control-plane/README.md) installs the Longhorn Control-Plane. 
 
-
 **Note** that these roles contains tasks that will **WIPE THE DISK** configured for use by Longhorn! Be extra careful before executing these roles and make sure that you have set all the variables properly.
 
 ### References

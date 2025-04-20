@@ -1,0 +1,44 @@
+---
+- name: Deploy the Traefik Dashboard IngressRoutes
+  hosts: control_plane
+
+  gather_facts: true
+  become: true
+
+  collections:
+    - kubernetes.core
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  vars_files:
+    - ../../../playbooks/vars/config.yml
+
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "../../../playbooks/vars/vault.yml"
+
+  tasks:
+    - ansible.builtin.set_fact:
+        traefik_basic_auth: "traefik-basic-auth"
+
+    - name: Create BasicAuth credentials for the Traefik dashboard
+      include_role:
+        name: traefik-basic-auth
+      vars:
+        k3s_basic_auth_namespace: "{{ k3s_traefik_namespace }}"
+        k3s_basic_auth_name: "{{ traefik_basic_auth }}"
+        basic_auth_user: "{{ traefik_basic_auth_user }}"
+        basic_auth_passwd: "{{ traefik_basic_auth_passwd }}"
+
+    - name: Configure Traefik Middleware and Dashboard
+      kubernetes.core.k8s:
+        definition: "{{ lookup('template', '../templates/traefik-dashboard.yml.j2') }}"
+        state: present
+
+    - name: Configure Traefik Public IngressRoute to Dashboard
+      kubernetes.core.k8s:
+        definition: "{{ lookup('template', '../templates/traefik-dashboard-public.yml.j2') }}"
+        state: present
+      when: enable_public_traefik_dashboard
