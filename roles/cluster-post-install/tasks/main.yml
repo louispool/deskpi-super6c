@@ -1,0 +1,134 @@
+# Modifies the CoreDNS manifest to set replicas to 2 and forward DNS queries to public DNS servers as opposed
+# to the local resolvers on the node.
+---
+- name: Initialize coredns update changed flag
+  ansible.builtin.set_fact:
+    coredns_manifest_changed: false
+
+- name: Read CoreDNS manifest content
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/manifests/coredns.yaml
+  register: coredns_manifest_raw
+  no_log: true
+
+- name: Parse CoreDNS manifest YAML
+  ansible.builtin.set_fact:
+    coredns_manifest_parsed: "{{ coredns_manifest_raw.content | b64decode | from_yaml_all }}"
+  no_log: true
+
+- name: Update CoreDNS deployment replicas to 2
+  ansible.builtin.set_fact:
+    coredns_manifest_updated: "{{ coredns_manifest_updated | default([]) + [updated_item] }}"
+  vars:
+    updated_item: >-
+      {{
+        item if 'kind' not in item or item.kind != 'Deployment'
+        else item | combine({'spec': item.spec | combine({'replicas': 2})}, recursive=True)
+      }}
+  loop: "{{ coredns_manifest_parsed }}"
+  loop_control:
+    loop_var: item
+  no_log: true
+
+- name: Update Corefile forwarders
+  ansible.builtin.set_fact:
+    coredns_manifest_final: "{{ coredns_manifest_final | default([]) + [updated_item] }}"
+  vars:
+    updated_item: >-
+      {{
+        item if 'kind' not in item or item.kind != 'ConfigMap' or 'data' not in item or 'Corefile' not in item.data
+        else item | combine({
+          'data': item.data | combine({
+            'Corefile': item.data.Corefile | regex_replace('forward\s+\.\s+\/etc\/resolv\.conf', 'forward . 1.1.1.1 8.8.8.8')
+          })
+        }, recursive=True)
+      }}
+  loop: "{{ coredns_manifest_updated }}"
+  loop_control:
+    loop_var: item
+  no_log: true
+
+- name: Check if CoreDNS manifest has been modified
+  ansible.builtin.set_fact:
+    coredns_manifest_changed: "{{ coredns_manifest_parsed != coredns_manifest_final }}"
+
+- name: Write updated CoreDNS manifest back to file
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/k3s/server/manifests/coredns.yaml
+    content: "{{ coredns_manifest_final | to_nice_yaml(indent=2, width=65536) }}"
+  when: coredns_manifest_changed
+
+- name: Get current CoreDNS configmap
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: kube-system
+    name: coredns
+  register: coredns_cm
+
+- name: Check if CoreDNS ConfigMap should be updated
+  ansible.builtin.set_fact:
+    coredns_cm_needs_update: "{{
+      coredns_cm.resources | length == 0 or
+      'data' not in coredns_cm.resources[0] or
+      'Corefile' not in coredns_cm.resources[0].data or
+      coredns_cm.resources[0].data.Corefile is search('forward\\s+\\.\\s+\\/etc\\/resolv\\.conf')
+    }}"
+
+- name: Update Corefile in CoreDNS' Kubernetes ConfigMap
+  kubernetes.core.k8s:
+    state: present
+    namespace: kube-system
+    name: coredns
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: coredns
+        namespace: kube-system
+      data:
+        Corefile: "{{ coredns_manifest_final
+          | selectattr('kind', 'equalto', 'ConfigMap')
+          | selectattr('data.Corefile', 'defined')
+          | map(attribute='data.Corefile')
+          | first
+        }}"
+  when: coredns_cm_needs_update
+
+- name: Get current CoreDNS deployment
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    namespace: kube-system
+    name: coredns
+  register: coredns_deploy
+
+- name: Check if CoreDNS deployment needs replica count update
+  ansible.builtin.set_fact:
+    coredns_replicas_need_update: "{{
+      'replicas' not in coredns_deploy.resources[0].spec or
+      coredns_deploy.resources[0].spec.replicas < 2
+    }}"
+  when: coredns_deploy.resources | length > 0
+
+- name: Set CoreDNS deployment replicas to 2
+  kubernetes.core.k8s:
+    state: present
+    namespace: kube-system
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: coredns
+        namespace: kube-system
+      spec:
+        replicas: 2
+  when: coredns_replicas_need_update
+
+- name: Notify restart of coredns if changes detected
+  ansible.builtin.debug:
+    msg: "Changes detected — notifying handler to restart coredns"
+  notify: Restart coredns pods
+  when: coredns_manifest_changed or coredns_cm_needs_update or coredns_replicas_need_update
+
+

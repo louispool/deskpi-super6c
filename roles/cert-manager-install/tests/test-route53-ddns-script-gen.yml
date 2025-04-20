@@ -20,4 +20,4 @@
       ansible.builtin.template:
         src: ../templates/route53-ddns.sh.j2
         dest: /home/{{ ansible_user }}/route53-ddns.sh
-        mode: 0644
+        mode: 0777

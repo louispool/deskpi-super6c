@@ -1,0 +1,150 @@
+---
+- name: Install various packages to k3s
+  hosts: control_plane
+
+  gather_facts: true
+  become: true
+
+  collections:
+    - kubernetes.core
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  vars_files:
+    - ../../../playbooks/vars/config.yml
+
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "../../../playbooks/vars/vault.yml"
+
+  tasks:
+    - name: Initialize coredns update changed flag
+      ansible.builtin.set_fact:
+        coredns_manifest_changed: false
+
+    - name: Read coredns manifest content
+      ansible.builtin.slurp:
+        src: /var/lib/rancher/k3s/server/manifests/coredns.yaml
+      register: coredns_manifest_raw
+
+    - name: Parse coredns manifest YAML
+      ansible.builtin.set_fact:
+        coredns_manifest_parsed: "{{ coredns_manifest_raw.content | b64decode | from_yaml_all }}"
+
+    - name: Update coredns manifest data
+      ansible.builtin.set_fact:
+        coredns_manifest_updated: "{{ coredns_manifest_updated | default([]) + [updated_item] }}"
+      vars:
+        updated_item: >-
+          {{
+            item if 'kind' not in item or item.kind != 'Deployment'
+            else item | combine({'spec': item.spec | combine({'replicas': 2})}, recursive=True)
+          }}
+      loop: "{{ coredns_manifest_parsed }}"
+      loop_control:
+        loop_var: item
+
+#    - name: Debug updated manifest
+#      ansible.builtin.debug:
+#        var: coredns_manifest_updated
+
+    - name: Update Corefile forwarders
+      ansible.builtin.set_fact:
+        coredns_manifest_final: "{{ coredns_manifest_final | default([]) + [updated_item] }}"
+      vars:
+        updated_item: >-
+          {{
+            item if 'kind' not in item or item.kind != 'ConfigMap' or 'data' not in item or 'Corefile' not in item.data
+            else item | combine({
+              'data': item.data | combine({
+                'Corefile': item.data.Corefile | regex_replace('forward\s+\.\s+\/etc\/resolv\.conf', 'forward . 1.1.1.1 8.8.8.8')
+              })
+            }, recursive=True)
+          }}
+      loop: "{{ coredns_manifest_updated }}"
+      loop_control:
+        loop_var: item
+
+#    - name: Debug final manifest
+#      ansible.builtin.debug:
+#        var: coredns_manifest_final
+
+#    - name: Debug config map string
+#      ansible.builtin.debug:
+#        msg: "{{ coredns_manifest_final
+#          | selectattr('kind', 'equalto', 'ConfigMap')
+#          | selectattr('data.Corefile', 'defined')
+#          | map(attribute='data.Corefile')
+#          | first
+#        }}"
+
+    - name: Check if coredns manifest has been modified
+      ansible.builtin.set_fact:
+        coredns_manifest_changed: "{{ coredns_manifest_parsed != coredns_manifest_final }}"
+
+    - name: Write updated coredns manifest back to file
+      ansible.builtin.copy:
+        dest: /home/{{ ansible_user }}/coredns.yaml
+        content: "{{ coredns_manifest_final | to_nice_yaml(indent=2, width=65536) }}"
+      when: coredns_manifest_changed
+
+    - name: Get current coredns configmap
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        namespace: default
+        name: my-coredns-test
+      register: coredns_cm
+
+    - name: Check if ConfigMap should be updated
+      ansible.builtin.set_fact:
+        needs_cm_update: "{{
+          coredns_cm.resources | length == 0 or
+          'data' not in coredns_cm.resources[0] or
+          'Corefile' not in coredns_cm.resources[0].data or
+          coredns_cm.resources[0].data.Corefile is search('forward\\s+\\.\\s+\\/etc\\/resolv\\.conf')
+        }}"
+
+#    - name: Replace "forward" line in CoreDNS' ConfigMap (if necessary)
+#      ansible.builtin.set_fact:
+#        new_corefile: "{{ coredns_cm.resources[0].data.Corefile | regex_replace('forward\\s+\\.\\s+\\/etc\\/resolv\\.conf', 'forward . 1.1.1.1 8.8.8.8') }}"
+#      when: needs_cm_update
+#
+#    - name: Apply updated coredns configmap if modified
+#      kubernetes.core.k8s:
+#        api_version: v1
+#        kind: ConfigMap
+#        namespace: default
+#        name: my-coredns-test
+#        definition:
+#          metadata:
+#            name: my-coredns-test
+#            namespace: default
+#          data:
+#            Corefile: "{{ new_corefile }}"
+#        state: present
+#      when: needs_cm_update
+
+    - name: Create a test Kubernetes ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        namespace: default
+        name: my-coredns-test
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: my-coredns-test
+            namespace: default
+          data:
+            Corefile: "{{ coredns_manifest_final
+              | selectattr('kind', 'equalto', 'ConfigMap')
+              | selectattr('data.Corefile', 'defined')
+              | map(attribute='data.Corefile')
+              | first
+            }}"
+      when: needs_cm_update
+
+

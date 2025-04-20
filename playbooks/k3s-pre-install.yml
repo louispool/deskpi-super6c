@@ -1,7 +1,7 @@
 # Playbook for preparing the DeskPi Super6c cluster
 #
 # Invokes the roles
-# - cluster-prep (Cluster Preparation)
+# - cluster-pre-install (Cluster Preparation)
 # - chrony (NTP Server/Client)
 # - dnsmasq (DNS Server)
 ---
@@ -33,7 +33,7 @@
       tags: ['dns', 'dnsmasq']
 
     # Cluster Preparation
-    - role: cluster-prep
+    - role: cluster-pre-install
       tags: ['prep']
 
 - name: Prepare the cluster
@@ -61,5 +61,5 @@
       tags: ['ntp', 'chrony']
 
     # Cluster Preparation
-    - role: cluster-prep
+    - role: cluster-pre-install
       tags: ['prep']

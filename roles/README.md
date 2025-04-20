@@ -24,7 +24,7 @@ This structure houses the roles used by the [Ansible Playbooks](../playbooks/REA
 - [DNS Server installation](./dnsmasq/README.md)
 - [NTP Server/Client installation](./chrony/README.md) 
 - [HELM installation](./helm/README.md)
-- [Cluster Preparation](./cluster-prep/README.md) (for k3s installation)
+- [Cluster Preparation](cluster-pre-install/README.md) (for k3s installation)
 - [Installation of Cert-Manager](./cert-manager-install/README.md)
 - [Uninstallation of Cert-Manager](./cert-manager-uninstall/README.md)
 - [Installation of Linkerd](./linkerd-install/README.md) (Service Mesh)

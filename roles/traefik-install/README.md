@@ -1,4 +1,4 @@
-# Role definition for installing the [Traefik](https://traefik.io/) Ingress Controller.
+# Role definition for installing the [Traefik](https://traefik.io/) Ingress Controller
 
 ```
 ├── roles

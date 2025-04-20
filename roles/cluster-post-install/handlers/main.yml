@@ -1,0 +1,7 @@
+# Handlers for the tasks in the cluster-post-install role.
+---
+- name: Restart coredns pods
+  ansible.builtin.command: kubectl rollout restart deployment coredns -n kube-system
+  register: coredns_restart
+  changed_when: "'deployment \"coredns\" restarted' in coredns_restart.stdout"
+  failed_when: coredns_restart.rc != 0

@@ -1,6 +1,6 @@
 # Tasks for installing Longhorn - a lightweight distributed block storage system for Kubernetes - onto a host in the cluster.
 #
-# Assumes the `cluster-prep` role was previously run.
+# Assumes the `longhorn/cluster-prep` role was previously run.
 ---
 # Install prerequisite software and modules
 - name: Install prerequisites

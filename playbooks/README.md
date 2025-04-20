@@ -31,7 +31,7 @@ ansible-playbook playbooks/k3s-pre-install.yml
 
 This playbook will, on every host in the cluster:
 
-- Execute the [Cluster Preparation](../roles/cluster-prep/README.md) role
+- Execute the [Cluster Preparation](../roles/cluster-pre-install/README.md) role
 - Configure an [NTP Client](../roles/chrony/README.md)  
      
 On the Control Plane / Master Node this playbook will also:
@@ -116,7 +116,6 @@ ansible-playbook playbooks/k3s-uninstall.yml
 
 This playbook executes several operations and installs several packages after k3s has been successfully installed to the deskpi cluster. 
 
- 
 #### Synopsis
 
 This playbook does the following:   
@@ -124,6 +123,7 @@ This playbook does the following:
 - Configures [kubectl autocompletion](https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/) and creates the alias `kc` for [`kubectl`](https://kubernetes.io/docs/reference/kubectl/), which is automatically installed by the k3s installation script, on every host in the cluster.
 - Installs [Helm](https://helm.sh/), the package manager for kubernetes, which will be used to install other k8s packages.
 - Creates an [NFS Storage Class](../roles/nfs-storage/README.md), based on an NFS export, on the Control Plane.
+- Updates CoreDNS to use a replica count of 2 and forward DNS requests to public DNS servers.
 
 #### Configuration
 

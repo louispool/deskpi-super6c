@@ -1,8 +1,8 @@
-# Ansible Role definition for Cluster Preparation
+# Ansible Role definition for tasks to be run **before** k3s installation
 
 ```
 ├── roles
-│  ├── cluster-prep
+│  ├── cluster-pre-install
 |  |  ├── defaults
 |  |  |  ├── main.yml
 |  |  ├── files
@@ -18,7 +18,8 @@
 |  |  |  ├── remove_snap_packages.yml
 ```
 
-This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for the various tasks that prepare the DeskPi cluster before k3s installation.  
+This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for the various tasks that prepare the DeskPi cluster **before** 
+k3s installation.  
 
 ### Synopsis
 

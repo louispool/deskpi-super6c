@@ -274,7 +274,7 @@ ansible-playbook playbooks/k3s-pre-install.yml
 
 This playbook will, on every host in the cluster:
 
-- Execute the [Cluster Preparation](roles/cluster-prep/README.md) role
+- Execute the [Cluster Preparation](roles/cluster-pre-install/README.md) role
 - Configure an [NTP Client](roles/chrony/README.md)
 
 On the Control Plane / Master Node this playbook will also:

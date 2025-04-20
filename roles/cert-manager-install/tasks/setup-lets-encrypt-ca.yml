@@ -9,7 +9,7 @@
 ---
 
 # Ensures that CoreDNS will forward DNS queries to public DNS servers
-- name: Get current coredns configmap
+- name: Get current CoreDNS configmap
   kubernetes.core.k8s_info:
     api_version: v1
     kind: ConfigMap
@@ -17,16 +17,21 @@
     name: coredns
   register: coredns_cm
 
-- name: Check if Corefile uses /etc/resolv.conf
+- name: Check if CoreDNS ConfigMap should be updated
   ansible.builtin.set_fact:
-    needs_corefile_update: "{{ 'forward . /etc/resolv.conf' in coredns_cm.resources[0].data.Corefile }}"
+    coredns_cm_needs_update: "{{
+      coredns_cm.resources | length > 0 and
+      'data' in coredns_cm.resources[0] and
+      'Corefile' in coredns_cm.resources[0].data and
+      coredns_cm.resources[0].data.Corefile is search('forward\\s+\\.\\s+\\/etc\\/resolv\\.conf')
+    }}"
 
-- name: Replace forward line in coredns Corefile if necessary
+- name: Replace "forward" line in CoreDNS' ConfigMap (if necessary)
   ansible.builtin.set_fact:
-    new_corefile: "{{ coredns_cm.resources[0].data.Corefile | regex_replace('forward \\.\\s+/etc/resolv\\.conf', 'forward . 1.1.1.1 8.8.8.8') }}"
-  when: needs_corefile_update
+    new_corefile: "{{ coredns_cm.resources[0].data.Corefile | regex_replace('forward\\s+\\.\\s+\\/etc\\/resolv\\.conf', 'forward . 1.1.1.1 8.8.8.8') }}"
+  when: coredns_cm_needs_update
 
-- name: Apply updated coredns configmap if modified
+- name: Apply updated CoreDNS ConfigMap (if modified)
   kubernetes.core.k8s:
     api_version: v1
     kind: ConfigMap
@@ -39,9 +44,9 @@
       data:
         Corefile: "{{ new_corefile }}"
     state: present
-  when: needs_corefile_update
+  when: coredns_cm_needs_update
 
-- name: Restart coredns pods if configmap was updated
+- name: Restart CoreDNS pods if ConfigMap was updated
   kubernetes.core.k8s:
     api_version: v1
     kind: Pod
@@ -49,7 +54,7 @@
     label_selectors:
       - "k8s-app=kube-dns"
     state: absent
-  when: needs_corefile_update
+  when: coredns_cm_needs_update
 
 # Create the Lets-Encrypt CA
 - name: Create Lets-Encrypt CA and Issuer

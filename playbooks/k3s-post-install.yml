@@ -3,6 +3,7 @@
 # - Sets up kubectl autocompletion
 # - Sets up HELM
 # - Creates an NFS export and NFS Storage Class on the Control Plane.
+# - Runs the post-install role for any additional tasks that may be needed after k3s installation.
 #
 # Assumes 'k3s-install.yml' was run previously.
 ---
@@ -69,3 +70,5 @@
       tags: ['helm']
     - role: nfs-storage
       tags: ['nfs']
+    - role: cluster-post-install
+      tags: ['post']
