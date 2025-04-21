@@ -58,6 +58,11 @@
     content: "{{ coredns_manifest_final | to_nice_yaml(indent=2, width=65536) }}"
   when: coredns_manifest_changed
 
+- name: Create a .skip file which will cause K3s to ignore the manifest
+  ansible.builtin.file:
+    dest: /var/lib/rancher/k3s/server/manifests/coredns.yaml.skip
+    state: touch
+
 - name: Get current CoreDNS configmap
   kubernetes.core.k8s_info:
     api_version: v1
