@@ -1,0 +1,20 @@
+tenant:
+
+  name: minio-tenant
+
+  configSecret:
+    name: {{ minio_config_secret_name }}
+    existingSecret: true
+
+  pools:
+    - servers: 6
+      volumesPerServer: 2
+      size: 130Gi
+      storageClassName: longhorn
+
+  certificate:
+    requestAutoCert: false
+
+  metrics:
+    enabled: true
+

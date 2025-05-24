@@ -1,0 +1,15 @@
+# Default variables used by the minio-install role
+---
+# Namespace for MinIO operator
+k3s_minio_operator_namespace: minio-operator-system
+# Namespace for MinIO tenant
+k3s_minio_tenant_namespace: minio-tenant-system
+
+# Endpoint for the Traefik dashboard on the local network
+minio_console: minio.console.localnet
+# Endpoint for the Traefik dashboard on the public network
+public_minio_console:
+
+# Whether to allow access to the S3 Minio Console over the public network
+enable_public_traefik_dashboard: false
+

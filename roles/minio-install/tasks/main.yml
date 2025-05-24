@@ -1,0 +1,48 @@
+# Tasks for installing Minio - a lightweight distributed block storage system for Kubernetes - onto a host in the cluster.
+
+---
+- name: Create namespace
+  kubernetes.core.k8s:
+    name: "{{ k3s_minio_operator_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Add MinIO Helm repository
+  kubernetes.core.helm_repository:
+    name: minio
+    repo_url: https://operator.min.io/
+
+- name: Deploy MinIO Operator Helm chart
+  kubernetes.core.helm:
+    name: "minio-operator"
+    chart_ref: minio/operator
+    namespace: "{{ k3s_minio_operator_namespace }}"
+    values: "{{ lookup('template', 'templates/minio-helm-operator-values.yml.j2') | from_yaml }}"
+    state: present
+
+- name: Wait for Pods to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ k3s_minio_operator_namespace }}"
+    wait: yes
+    wait_sleep: 10
+    wait_timeout: 360
+    wait_condition:
+      type: Ready
+      status: "True"
+
+- name: Create minio tenant namespace
+  kubernetes.core.k8s:
+    name: "{{ k3s_minio_tenant_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Deploy MinIO Tenant Helm chart
+  kubernetes.core.helm:
+    name: "minio-tenant"
+    chart_ref: "minio/tenant"
+    namespace: "{{ k3s_minio_tenant_namespace }}"
+    state: present
+    values:  "{{ lookup('template', 'templates/minio-helm-tenant-values.yml.j2') | from_yaml }}"

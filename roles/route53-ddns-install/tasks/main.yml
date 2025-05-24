@@ -1,0 +1,9 @@
+# Tasks to set up Route53 DDNS
+---
+- name: Setup the AWS environment for Route53
+  include_tasks: setup-aws-env.yml
+  when: enable_route53
+
+- name: Configure Route53 DDNS
+  include_tasks: setup-route53-ddns.yml
+  when: enable_route53

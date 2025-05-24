@@ -10,13 +10,8 @@ enable_letsencrypt: false
 # Enable AWS' `Route 53` DNS provider for routing public traffic to the cluster ingress.
 enable_route53: false
 
-# Whether to support IPv6 addresses
-IPv6_enabled: true
-
 # Replace with your public domain
 public_domain:
-# List of public sub-domains to register with the DNS (e.g. Route53)
-public_domains: []
 
 # Name of the certificate authority (CA) for self-signed certificates on the Local Network
 private_ca: k3s-ca
@@ -31,9 +26,6 @@ public_tls_issuer: "{{ public_ca }}-issuer"
 # Valid E-mail address for registration with `Let's Encrypt`
 email:
 
-# Log file for the cron job that updates the Route 53 DNS records
-cron_log_file: "/var/log/update_route53_ddns.log"
-
 # When using the Route 53 DNS provider, replace with your AWS Access Key ID and Secret Access Key.
 # Consider using Ansible Vault to store these variables securely.
 aws_access_key_id:
@@ -42,11 +34,3 @@ aws_region: us-east-1
 
 # When using the Route 53 DNS provider, replace with your AWS Hosted Zone ID.
 aws_hosted_zone_id:
-
-# Your AWS account ID (e.g. "005162895111")
-# Consider using Ansible Vault to store these variables securely.
-aws_account_id:
-
-# IAM username (e.g. "myuser" from `arn:aws:iam::<account-id>:user/myuser`)
-# Consider using Ansible Vault to store these variables securely.
-aws_iam_user:

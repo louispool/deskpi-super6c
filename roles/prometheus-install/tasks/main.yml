@@ -1,0 +1,46 @@
+# Tasks for the installation of the kube-prometheus-stack (see https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#kube-prometheus-stack)
+---
+- name: Create the monitoring namespace
+  kubernetes.core.k8s:
+    name: "{{ k3s_monitoring_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Create Grafana admin credentials secret
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ k3s_monitoring_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: grafana-admin-creds
+      type: Opaque
+      stringData:
+        admin-password: "{{ grafana_admin_password }}"
+
+- name: Add Prometheus Community chart repo.
+  kubernetes.core.helm_repository:
+    name: prometheus-community
+    repo_url: https://prometheus-community.github.io/helm-charts
+
+- name: Deploy kube-prometheus-stack Helm chart
+  kubernetes.core.helm:
+    name: kube-prometheus-stack
+    chart_ref: prometheus-community/kube-prometheus-stack
+    release_namespace: "{{ k3s_monitoring_namespace }}"
+    update_repo_cache: true
+    state: present
+    values: "{{ lookup('template', 'templates/prometheus-helm-values.yml.j2') | from_yaml }}"
+
+- name: Wait for Pods to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ k3s_monitoring_namespace }}"
+    wait: yes
+    wait_sleep: 10
+    wait_timeout: 360
+    wait_condition:
+      type: Ready
+      status: "True"

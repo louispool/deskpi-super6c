@@ -65,6 +65,9 @@
     - role: metallb-install
       tags: ['metallb']
 
+    - role: route53-ddns-install
+      tags: ['certmanager', 'route53ddns']
+
     - role: cert-manager-install
       tags: ['certmanager']
 

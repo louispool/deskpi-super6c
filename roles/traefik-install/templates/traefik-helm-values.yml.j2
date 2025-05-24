@@ -5,6 +5,8 @@
 ---
 
 deployment:
+  # -- Number of pods of the deployment (only applies when kind == Deployment)
+  replicas: 2
 {% if k3s_enable_service_mesh is sameas true %}
   # Automatic proxy injection: https://linkerd.io/2.12/features/proxy-injection/
   podAnnotations:

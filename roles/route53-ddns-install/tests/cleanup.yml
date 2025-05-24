@@ -10,7 +10,7 @@
   become: true
 
   vars_files:
-    - ../defaults/main.yml
+    - ../../route53-ddns/defaults/main.yml
     - ../../../playbooks/vars/config.yml
 
   pre_tasks:

@@ -43,5 +43,8 @@
     - role: cert-manager-uninstall
       tags: ['certmanager']
 
+    - role: route53-ddns-uninstall
+      tags: ['certmanager', 'route53ddns']
+
     - role: metallb-uninstall
       tags: ['metallb']

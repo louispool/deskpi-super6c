@@ -1,0 +1,39 @@
+# Exposes the Grafana dashboard
+---
+# Create a certificate for TLS using cert-manager
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-pub-cert
+  namespace: {{ k3s_monitoring_namespace }}
+spec:
+  secretName: grafana-pub-cert-secret
+  duration: 2160h # 90 days
+  renewBefore: 360h # Renew before 15 days of expiration
+  issuerRef:
+    name: {{ public_tls_issuer }}
+    kind: ClusterIssuer
+  commonName: {{ public_grafana_dashboard }}
+  dnsNames:
+    - {{ public_grafana_dashboard }}
+  privateKey:
+    algorithm: ECDSA
+
+---
+# Traefik v2 IngressRoute CRD for Grafana
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana-dashboard-public
+  namespace: {{ k3s_monitoring_namespace }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ public_grafana_dashboard }}`)
+      services:
+        - name: kube-prometheus-stack-grafana
+          port: 80
+  tls:
+    secretName: grafana-pub-cert-secret

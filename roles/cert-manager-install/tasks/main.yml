@@ -19,11 +19,6 @@
     state: present
     values:
       installCRDs: true
-      # Configure "Let's Encrypt" as the default certificate issuer
-      # which enables the use of the kube-lego: kubernetes.io/tls-acme: "true"
-#      ingressShim.defaultIssuerName: letsencrypt-prod
-#      ingressShim.defaultIssuerKind: ClusterIssuer
-#      ingressShim.defaultIssuerGroup: cert-manager.io
 
 - name: Wait for Pods to be ready
   kubernetes.core.k8s_info:
@@ -39,14 +34,6 @@
 - name: Configure Self-Signed CA
   include_tasks: setup-self-signed-ca.yml
   when: enable_selfsigned
-
-- name: Setup the AWS environment for Route53
-  include_tasks: setup-aws-env.yml
-  when: enable_route53
-
-- name: Configure Route53 DDNS
-  include_tasks: setup-route53-ddns.yml
-  when: enable_route53
 
 - name: Create Lets-Encrypt CA
   include_tasks: setup-lets-encrypt-ca.yml

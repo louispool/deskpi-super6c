@@ -4,15 +4,45 @@
 #
 # Assumes the `setup-aws-env.yml` tasks have been run and the AWS credentials are available in the environment.
 ---
+
+- name: Gather existing managed policies
+  amazon.aws.iam_policy_info:
+    aws_access_key: "{{ aws_access_key_id }}"
+    aws_secret_key: "{{ aws_secret_access_key }}"
+    iam_name: "{{ aws_iam_user }}"
+    iam_type: user
+  register: managed_policies
+
+- name: Check if route53-ddns-policy exists
+  set_fact:
+    route53_ddns_policy_exists: "{{ managed_policies.policies | selectattr('PolicyName', 'equalto', 'route53-ddns-policy') | list | length > 0 }}"
+
 - name: Create IAM policy for Route53 DNS-01 challenges and DDNS updates
   amazon.aws.iam_managed_policy:
     access_key: "{{ aws_access_key_id }}"
     secret_key: "{{ aws_secret_access_key }}"
     policy_name: route53-ddns-policy
     policy_description: "Policy for Route53 DNS-01 challenges and DDNS updates"
-    policy: "{{ lookup('template', 'templates/route53-policy.json.j2') }}"
+    policy: "{{ lookup('template', 'templates/route53-iam-policy.json.j2') }}"
     state: present
+  when: not route53_ddns_policy_exists
   register: route53_iam_policy
+
+- name: Gather IAM user info
+  amazon.aws.iam_user_info:
+    name: "{{ aws_iam_user }}"
+    aws_access_key: "{{ aws_access_key_id }}"
+    aws_secret_key: "{{ aws_secret_access_key }}"
+  register: iam_user_info
+
+- name: Check if policy is already attached
+  set_fact:
+    policy_already_attached: >-
+      {{
+        (iam_user_info.users[0].attached_managed_policies | default([]))
+        | selectattr('PolicyName', 'equalto', 'route53-ddns-policy')
+        | list | length > 0
+      }}
 
 - name: Attach policy to user
   amazon.aws.iam_user:
@@ -22,6 +52,7 @@
     managed_policies:
       - "{{ route53_iam_policy.policy.arn }}"
     state: present
+  when: not policy_already_attached
 
 - name: Copy Route53 DDNS update script
   template:
@@ -60,5 +91,3 @@
               :
           endscript
       }
-
-

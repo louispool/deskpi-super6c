@@ -1,0 +1,25 @@
+# Ansible playbook to update Route53 DNS records for a domain using DDNS
+---
+- name: Setup Route53 DDNS
+  hosts: control_plane
+
+  gather_facts: true
+  become: true
+
+  collections:
+    - kubernetes.core
+
+  vars_files:
+    - vars/config.yml
+
+  environment:
+    # The location of the kubeconfig file on the master.
+    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+  pre_tasks:
+    - name: Include vault variables
+      include_vars: "vars/vault.yml"
+      tags: ["always"]
+
+  roles:
+    - role: route53-ddns-install
