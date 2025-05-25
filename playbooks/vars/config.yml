@@ -118,10 +118,12 @@ enable_dhcp: false
 # Service end-points
 traefik_dashboard: "traefik.{{ cluster_local_domain }}"
 longhorn_dashboard: "longhorn.{{ cluster_local_domain }}"
+prometheus_dashboard: "prometheus.{{ cluster_local_domain }}"
+alertmanager_dashboard: "alertmanager.{{ cluster_local_domain }}"
+grafana_dashboard: "grafana.{{ cluster_local_domain }}"
 kibana_dashboard: "kibana.{{ cluster_local_domain }}"
 elasticsearch: "elasticsearch.{{ cluster_local_domain }}"
 fluentd: "fluentd.{{ cluster_local_domain }}"
-grafana_dashboard: "grafana.{{ cluster_local_domain }}"
 linkerd_dashboard: "linkerd.{{ cluster_local_domain }}"
 minio_console: "minio.{{ cluster_local_domain }}"
 
@@ -129,9 +131,6 @@ public_traefik_dashboard: "traefik.{{ cluster_public_domain }}"
 public_longhorn_dashboard: "longhorn.{{ cluster_public_domain }}"
 public_kibana_dashboard: "kibana.{{ cluster_public_domain }}"
 public_grafana_dashboard: "grafana.{{ cluster_public_domain }}"
-public_elasticsearch: "elasticsearch.{{ cluster_public_domain }}"
-public_fluentd: "fluentd.{{ cluster_public_domain }}"
-public_linkerd_dashboard: "linkerd.{{ cluster_public_domain }}"
 public_minio_console: "minio.{{ cluster_public_domain }}"
 
 # List of public sub-domains to register with the DNS (e.g. Route53)
@@ -139,20 +138,14 @@ public_domains:
   - "{{ public_traefik_dashboard }}"
   - "{{ public_longhorn_dashboard }}"
   - "{{ public_kibana_dashboard }}"
-  - "{{ public_elasticsearch }}"
-  - "{{ public_fluentd }}"
   - "{{ public_grafana_dashboard }}"
-  - "{{ public_linkerd_dashboard }}"
   - "{{ public_minio_console }}"
 
 # Whether to allow access to the dashboards over the public network
 enable_public_traefik_dashboard: false
 enable_public_longhorn_dashboard: false
-enable_public_kibana_dashboard: false
 enable_public_grafana_dashboard: false
-enable_public_linkerd_dashboard: false
-enable_public_elasticsearch: false
-enable_public_fluentd: false
+enable_public_kibana_dashboard: false
 enable_public_minio_console: false
 
 # Enable the self-signed Certificate Issuer

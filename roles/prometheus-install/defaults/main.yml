@@ -2,12 +2,24 @@
 # Namespace for cert-manager
 k3s_monitoring_namespace: monitoring
 
-# Endpoint for the Grafana dashboard on the local network
+# Endpoints for the dashboards on the local network
 grafana_dashboard: dashboard.grafana.localnet
+prometheus_dashboard: dashboard.prometheus.localnet
+alertmanager_dashboard: dashboard.alertmanager.localnet
+
 # Endpoint for the Grafana dashboard on the public network
 public_grafana_dashboard:
-
-grafana_admin_password: '!s3cr3t'
-
 # Whether to allow access to the Grafana dashboard over the public network
 enable_public_grafana_dashboard: false
+
+# Admin credentials for Grafana, consider using Ansible Vault to encrypt sensitive data
+grafana_admin_password: '!s3cr3t'
+
+# Basic auth user/passwd
+prometheus_basic_auth_user: 'admin'
+prometheus_basic_auth_passwd: '!s3cr3t'
+
+# Basic auth user/passwd for Alertmanager
+alertmanager_basic_auth_user: 'admin'
+alertmanager_basic_auth_passwd: '!s3cr3t'
+

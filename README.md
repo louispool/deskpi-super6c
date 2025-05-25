@@ -360,8 +360,8 @@ After k3s has been successfully set up on your cluster, you must run the [k3s po
 
 This playbook does the following:
 
-- Configures [kubectl autocompletion](https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/) and creates the alias `kc`
-  for [`kubectl`](https://kubernetes.io/docs/reference/kubectl/), which is automatically installed by the k3s installation script, on every host in the cluster.
+- Configures [kubectl autocompletion](https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/) and creates the alias `kc` for [`kubectl`](https://kubernetes.io/docs/reference/kubectl/), 
+  which is automatically installed by the k3s installation script, on every host in the cluster.
 - Installs [Helm](https://helm.sh/), the package manager for kubernetes, which will be used to install other k8s packages.
 - Creates an [NFS Storage Class](../roles/nfs-storage/README.md), based on an NFS export, on the Control Plane.
 - Updates [CoreDNS](https://docs.k3s.io/networking/networking-services#coredns) to use a replica count of 2 and forward DNS requests to public DNS servers.
@@ -370,21 +370,18 @@ This playbook does the following:
 
 Configuration variables can be found in the [vars/config.yml](vars/config.yml).
 To configure the host as a local NFS Server, set the fact:
-
-```
+```yaml
 local_nfs_server: true
 ```
 
 Alternatively, to set the location of a **remote** NFS Server, set the facts:
-
-```
+```yaml
 local_nfs_server: false
 nfs_server: <ip_address_of_nfs>
 ```
 
 In both cases ensure the path to the share is correct:
-
-```
+```yaml
 nfs_path: <path_to_share>
 ```
 
@@ -405,16 +402,18 @@ ansible-playbook playbooks/k3s-post-install.yml --tags "helm"
 ```
 ## 4.4 Additional Packages
 
-Packages for k3s are declared in the [`k3s-packages-install`](playbooks/README.md#k3s-packages-install) playbook, they are tagged and can be played individually via the `--tags` argument for `ansible-playbook`.
+Packages for k3s are declared in the [`k3s-packages-install`](playbooks/README.md#k3s-packages-install) playbook, they are tagged 
+and can be played individually via the `--tags` argument for `ansible-playbook`.
 
-| Package                                         |Tag|
-|-------------------------------------------------|---|
-| [MetalLB](roles/metallb-install/README.md)      | `metallb`|
-| [Cert-Manager](roles/cert-manager-install/README.md) | `certmanager`|
-| [Traefik](roles/traefik-install/README.md)      | `traefik`|
-| [Linkerd](roles/linkerd-install/control-plane/README.md) | `linkerd`|
-| [Longhorn](roles/longhorn-install/README.md)    |`longhorn`|
-
+| Package                                              | Tag           |
+|------------------------------------------------------|---------------|
+| [MetalLB](roles/metallb-install/README.md)           | `metallb`     |
+| [Cert-Manager](roles/cert-manager-install/README.md) | `certmanager` |
+| [Route53-DDNS](roles/route53-ddns-install/README.md) | `route53ddns` |
+| [Traefik](roles/traefik-install/README.md)           | `traefik`     |
+| [Longhorn](roles/longhorn-install/README.md)         | `longhorn`    |
+| [Prometheus](roles/prometheus-install/README.md)     | `prometheus`  |
+| [Linkerd](roles/linkerd-install/README.md)           | `linkerd`     |
 
 ### Installation
 
@@ -427,92 +426,22 @@ Packages can be individually installed with the corresponding `tag`, for example
 ```bash
 ansible-playbook playbooks/k3s-packages-install.yml --tags "metallb,certmanager,traefik" 
 ```
-
-### [Prometheus](https://prometheus.io/)
-                 
-#### About
-Prometheus is an open-source systems monitoring and alerting toolkit. We’ll use Helm to install the [Kube-Prometheus stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) into our K3s cluster.
-
-The Kube-Prometheus stack typically installs the following components:
-
-- [Prometheus](https://prometheus.io/)
-- [Alert-manager](https://github.com/prometheus/alertmanager) (though **disabled** in our playbook)
-- [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)
-- [Prometheus Node Exporter](https://github.com/prometheus/node_exporter)
-- [Prometheus Adapter for Kubernetes Metrics APIs](https://github.com/kubernetes-sigs/prometheus-adapter)
-- [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics)
-- [Grafana](https://grafana.com/)
-
-Helm and Kube-Prometheus pre-configure these components to scrape several endpoints in our cluster by default.
-
-Such as, among others, the 
-- `cadvisor` 
-- `kubelet` 
-- node-exporter `/metrics` endpoints on K8s Nodes, 
-- K8s API server metrics endpoint 
-- kube-state-metrics endpoints 
-
-To see a full list of configured scrape targets, refer to the Kube-Prometheus Helm chart’s [values.yaml](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml).
-You can find scrape targets by searching for `serviceMonitor` objects. To learn more about configuring the Kube-Prometheus stack’s scrape targets, see the `ServiceMonitor` spec in the [Prometheus Operator GitHub repo](https://github.com/prometheus-operator/prometheus-operator).
-
-The Kube-Prometheus stack also provisions several monitoring [mixins](https://github.com/monitoring-mixins/docs). A 'mixin' is a collection of prebuilt Grafana dashboards, Prometheus recording rules, and Prometheus alerting rules. 
-
-In particular, it includes:
-
-- The [Kubernetes Mixin](https://github.com/kubernetes-monitoring/kubernetes-mixin), which includes several useful dashboards and alerts for monitoring K8s clusters and their workloads
-- The [Node Mixin](https://github.com/prometheus/node_exporter/tree/master/docs/node-mixin), which does the same for 'Node Exporter' metrics
-- The [Prometheus Mixin](https://github.com/prometheus/prometheus/tree/main/documentation/prometheus-mixin)
-
-Mixins are written in [Jsonnet](https://jsonnet.org/), a data templating language, and generate JSON dashboard files and rules YAML files. 
-
-To learn more, check out 
-
-- [Generate config files](https://github.com/monitoring-mixins/docs#generate-config-files) (from the Prometheus Monitoring Mixins repo)
-- [Grizzly](https://github.com/grafana/grizzly)  (a tool for working with Jsonnet-defined assets against the Grafana Cloud API)
-
-#### Installation
-
-To install specifically only the Kube-Prometheus stack you can run the playbook with the a `--tags` argument:
-
-```bash
-ansible-playbook playbooks/k3s-packages.yml --tags "prometheus" 
-```
-                                                               
-A precondition is that **Helm** has already been installed. 
-
-### [Rook-Ceph](https://rook.io/)
-
-[Rook](https://rook.io/) is a specialized Storage Operator for Kubernetes and orchestrates a [Ceph](https://ceph.io/en/) Storage cluster solution. 
-
-With Ceph we can expose the NVMe SSD's installed on our DeskPi Super6c as a shared Filesystem (CephFS) on which we can mount an NFS.   
-
-Before installing Rook and Ceph ensure that the drives you wish to include in the Ceph cluster do not have formatted filesystems.
-
-You can check that by executing the command `lsblk -f` and verifying that the `FSTYPE` field is empty on those devices you wish to have included in the Ceph cluster. 
-			  
-```bash
-$ lsblk -f
-NAME         FSTYPE FSVER LABEL  UUID                                 FSAVAIL FSUSE% MOUNTPOINT
-mmcblk0
-├─mmcblk0p1  vfat   FAT32 boot   3772-58CD                             224.5M    12% /boot
-└─mmcblk0p2  ext4   1.0   rootfs ee7f279a-1fe9-4c98-9f3c-83c7173683b7     23G    14% /
-nvme0n1
-```
-In the example above, we can use `nvme0n1` for Ceph but not `mmcblk0` or any of its partitions. 
                  
 ## 5. Uninstallation
 
 ## 5.1 [Uninstalling Packages](playbooks/README.md#k3s-packages-uninstall)
 
-Remove the packages installed to k3s with the `k3s-packages-install` playbook.
+Remove the packages installed to k3s with the [`k3s-packages-uninstall`](playbooks/README.md#k3s-packages-uninstall) playbook, they are tagged 
+and can be played individually via the `--tags` argument for `ansible-playbook`.
 
-|Package|Tag|
-|-------|---|
-|Longhorn|`longhorn`|
-|Traefik | `traefik`|
-|Linkerd | `linkerd`|
-|Cert-Manager | `certmanager`|
-|MetalLB | `metallb`|
+| Package                                                | Tag           |
+|--------------------------------------------------------|---------------|
+| [MetalLB](roles/metallb-uninstall/README.md)           | `metallb`     |
+| [Cert-Manager](roles/cert-manager-uninstall/README.md) | `certmanager` |
+| [Route53-DDNS](roles/route53-ddns-uninstall/README.md) | `route53ddns` |
+| [Traefik](roles/traefik-uninstall/README.md)           | `traefik`     |
+| [Longhorn](roles/longhorn-uninstall/README.md)         | `longhorn`    |
+| [Linkerd](roles/linkerd-uninstall/README.md)           | `linkerd`     |
 
 ```bash
 ansible-playbook playbooks/k3s-packages-uninstall.yml 
@@ -532,12 +461,44 @@ You can uninstall k3s by running the [k3s-uninstall](playbooks/README.md#k3s-uni
 ansible-playbook playbooks/k3s-uninstall.yml
 ```
 
-### Additional Notes
+## Additional Playbooks
 
-#### Playbook to update software packages
+### [update-deskpis.yml](playbooks/update-deskpis.yml)
 
-You can run the [update](playbooks/update.yml) playbook to update all software packages on all the nodes configured in your deskPi cluster.
+Updates the software on all the Pi's in the cluster. Reboots them if required.
 
 ```bash
-ansible-playbook playbooks/update.yml
+ansible-playbook playbooks/update-deskpis.yml
 ```
+
+(Run from the project root directory)
+
+### [reboot-deskpis.yml](playbooks/reboot-deskpis.yml)
+
+Reboots all the Pi's in the cluster.
+
+```bash
+ansible-playbook playbooks/reboot-deskpis.yml
+```
+
+(Run from the project root directory)
+
+### [shutdown-deskpis.yml](playbooks/shutdown-deskpis.yml)
+
+Shuts down all the Pi's in the cluster.
+
+```bash
+ansible-playbook playbooks/shutdown-deskpis.yml
+```
+
+(Run from the project root directory)
+
+### [update-route53-ddns.yml](playbooks/update-route53-ddns.yml)
+
+Updates the DDNS records for the Pi's in the cluster using the [Route53 DDNS script](roles/route53-ddns-install/README.md).
+
+```bash
+ansible-playbook playbooks/update-route53-ddns.yml
+```
+
+(Run from the project root directory)

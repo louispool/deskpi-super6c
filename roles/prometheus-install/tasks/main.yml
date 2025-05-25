@@ -44,3 +44,47 @@
     wait_condition:
       type: Ready
       status: "True"
+
+- name: Configure IngressRoute to Grafana Dashboard
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/grafana-dashboard.yml.j2') }}"
+    state: present
+
+- name: Configure IngressRoute to Public Grafana Dashboard
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/grafana-dashboard-public.yml.j2') }}"
+    state: present
+  when: enable_public_traefik_dashboard
+
+# Expose Prometheus and Alertmanager dashboards with IngressRoute and BasicAuth
+- ansible.builtin.set_fact:
+    prometheus_basic_auth: "prometheus-basic-auth"
+    alertmanager_basic_auth: "alertmanager-basic-auth"
+
+- name: Create BasicAuth credentials for Prometheus dashboard
+  include_role:
+    name: traefik-basic-auth
+  vars:
+    k3s_basic_auth_namespace: "{{ k3s_monitoring_namespace }}"
+    k3s_basic_auth_name: "{{ prometheus_basic_auth }}"
+    basic_auth_user: "{{ prometheus_basic_auth_user }}"
+    basic_auth_passwd: "{{ prometheus_basic_auth_passwd }}"
+
+- name: Create BasicAuth credentials for Alertmanager dashboard
+  include_role:
+    name: traefik-basic-auth
+  vars:
+    k3s_basic_auth_namespace: "{{ k3s_monitoring_namespace }}"
+    k3s_basic_auth_name: "{{ alertmanager_basic_auth }}"
+    basic_auth_user: "{{ alertmanager_basic_auth_user }}"
+    basic_auth_passwd: "{{ alertmanager_basic_auth_passwd }}"
+
+- name: Configure IngressRoute to Prometheus Dashboard
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/prometheus-dashboard.yml.j2') }}"
+    state: present
+
+- name: Configure IngressRoute to Alertmanager Dashboard
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/alertmanager-dashboard.yml.j2') }}"
+    state: present

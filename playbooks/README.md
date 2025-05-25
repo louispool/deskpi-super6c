@@ -167,13 +167,14 @@ ansible-playbook playbooks/k3s-post-install.yml --tags "helm"
 
 Installs several packages to k3s:
 
-| Package                                                     |Tag|
-|-------------------------------------------------------------|---|
-| [MetalLB](../roles/metallb-install/README.md)               | `metallb`|
-| [Cert-Manager](../roles/cert-manager-install/README.md)     | `certmanager`|
-| [Traefik](../roles/traefik-install/README.md)               | `traefik`|
-| [Linkerd](../roles/linkerd-install/control-plane/README.md) | `linkerd`|
-| [Longhorn](../roles/longhorn-install/README.md)             |`longhorn`|
+| Package                                                 | Tag           |
+|---------------------------------------------------------|---------------|
+| [MetalLB](../roles/metallb-install/README.md)           | `metallb`     |
+| [Cert-Manager](../roles/cert-manager-install/README.md) | `certmanager` |
+| [Route53-ddns](../roles/route53-ddns-install/README.md) | `route53ddns` |
+| [Traefik](../roles/traefik-install/README.md)           | `traefik`     |
+| [Longhorn](../roles/longhorn-install/README.md)         | `longhorn`    |
+| [Linkerd](../roles/linkerd-install/README.md)           | `linkerd`     |
 
 ```bash
 ansible-playbook playbooks/k3s-packages-install.yml 
@@ -186,15 +187,16 @@ ansible-playbook playbooks/k3s-packages-install.yml --tags "metallb,certmanager,
 
 ### [k3s-packages-uninstall](k3s-packages-uninstall.yml)
 
-Removes the packages installed to k3s with the `k3s-packages-install` playbook. 
+Removes the packages installed to k3s: 
 
-|Package|Tag|
-|-------|---|
-|Longhorn|`longhorn`|
-|Traefik | `traefik`|
-|Linkerd | `linkerd`|
-|Cert-Manager | `certmanager`|
-|MetalLB | `metallb`|
+| Package                                                   | Tag           |
+|-----------------------------------------------------------|---------------|
+| [MetalLB](../roles/metallb-uninstall/README.md)           | `metallb`     |
+| [Cert-Manager](../roles/cert-manager-uninstall/README.md) | `certmanager` |
+| [Route53-DDNS](../roles/route53-ddns-uninstall/README.md) | `route53ddns` |
+| [Traefik](../roles/traefik-uninstall/README.md)           | `traefik`     |
+| [Longhorn](../roles/longhorn-uninstall/README.md)         | `longhorn`    |
+| [Linkerd](../roles/linkerd-uninstall/README.md)           | `linkerd`     |
 
 ```bash
 ansible-playbook playbooks/k3s-packages-uninstall.yml 
