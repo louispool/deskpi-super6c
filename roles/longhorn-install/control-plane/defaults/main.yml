@@ -14,9 +14,6 @@ public_longhorn_dashboard:
 # Whether to allow access to the Longhorn dashboard over the public network
 enable_public_longhorn_dashboard: false
 
-# Basic auth user/passwd
+# Basic auth user/passwd. Override with Ansible Vault variables.
 longhorn_basic_auth_user: 'admin'
 longhorn_basic_auth_passwd: '!s3cr3t'
-
-
-

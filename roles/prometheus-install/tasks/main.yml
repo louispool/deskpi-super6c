@@ -18,7 +18,8 @@
         name: grafana-admin-creds
       type: Opaque
       stringData:
-        admin-password: "{{ grafana_admin_password }}"
+        admin-user: "{{ grafana_admin_user }}"
+        admin-password: "{{ grafana_admin_passwd }}"
 
 - name: Add Prometheus Community chart repo.
   kubernetes.core.helm_repository:
@@ -44,17 +45,6 @@
     wait_condition:
       type: Ready
       status: "True"
-
-- name: Configure IngressRoute to Grafana Dashboard
-  kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/grafana-dashboard.yml.j2') }}"
-    state: present
-
-- name: Configure IngressRoute to Public Grafana Dashboard
-  kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/grafana-dashboard-public.yml.j2') }}"
-    state: present
-  when: enable_public_traefik_dashboard
 
 # Expose Prometheus and Alertmanager dashboards with IngressRoute and BasicAuth
 - ansible.builtin.set_fact:
@@ -88,3 +78,14 @@
   kubernetes.core.k8s:
     definition: "{{ lookup('template', 'templates/alertmanager-dashboard.yml.j2') }}"
     state: present
+
+- name: Configure IngressRoute to Grafana Dashboard
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/grafana-dashboard.yml.j2') }}"
+    state: present
+
+- name: Configure IngressRoute to Public Grafana Dashboard
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/grafana-dashboard-public.yml.j2') }}"
+    state: present
+  when: enable_public_traefik_dashboard

@@ -40,7 +40,7 @@ To use this Role, you typically include it in your Ansible playbook, and set the
 - ansible.builtin.set_fact:
     my_basic_auth: "my-basic-auth"
 
-- name: Create BasicAuth credentials for the Longhorn dashboard
+- name: Create BasicAuth credentials
   include_role:
     name: traefik-basic-auth
   vars:

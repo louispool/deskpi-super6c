@@ -13,6 +13,7 @@
     state: absent
     name: "{{ item }}"
   loop: "{{ ingress| json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
 
 - name: Get a list of all Ingress Routes
   kubernetes.core.k8s_info:
@@ -27,6 +28,7 @@
     state: absent
     name: "{{ item }}"
   loop: "{{ ingress_routes | json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
 
 - name: Get a list of all Middleware
   kubernetes.core.k8s_info:
@@ -41,6 +43,7 @@
     state: absent
     name: "{{ item }}"
   loop: "{{ middle_wares | json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
 
 # Delete any Service Monitors
 - name: Get a list of Traefik Service Monitors
@@ -58,6 +61,7 @@
     state: absent
     name: "{{ item }}"
   loop: "{{ service_monitors | json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
 
 - name: Get a list of all Secrets
   kubernetes.core.k8s_info:
@@ -74,6 +78,7 @@
     state: absent
     name: "{{ item }}"
   loop: "{{ secrets | json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
 
 - name: Get a list of all ConfigMaps
   kubernetes.core.k8s_info:
@@ -90,6 +95,7 @@
     state: absent
     name: "{{ item }}"
   loop: "{{ configmaps | json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
 
 - name: Uninstall Traefik with Helm
   kubernetes.core.helm:

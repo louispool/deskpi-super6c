@@ -1,0 +1,124 @@
+# Values for OpenSearch Community HELM chart
+# https://github.com/opensearch-project/helm-charts/blob/main/charts/opensearch/values.yaml
+---
+clusterName: {{ opensearch_cluster_name }}
+nodeGroup: {{ opensearch_node_group }}
+
+image:
+  repository: opensearchproject/opensearch
+  tag: "{{ opensearch_app_version }}"
+  pullPolicy: IfNotPresent
+
+initContainer:
+  image: busybox
+  imagePullPolicy: IfNotPresent
+
+config:
+  opensearch.yml: |
+    cluster.name: {{ opensearch_cluster_name }}
+
+    # Bind to all interfaces because we don't know what IP address Docker will assign to us.
+    network.host: 0.0.0.0
+
+    plugins:
+      security:
+        ssl:
+          http:
+            enabled: true
+            pemcert_filepath: certs/tls.crt
+            pemkey_filepath: certs/tls.key
+            pemtrustedcas_filepath: certs/ca.crt
+        allow_default_init_securityindex: true
+        authcz:
+          admin_dn:
+            - "CN=admin,OU=client,O=org"
+        nodes_dn:
+          - "CN=*.{{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+        audit:
+          type: internal_opensearch
+        enable_snapshot_restore_privilege: true
+        check_snapshot_restore_write_privileges: true
+        restapi:
+          roles_enabled:
+            - all_access
+            - security_rest_api_access
+        system_indices:
+          enabled: true
+          indices:
+            - ".opendistro-alerting-config"
+            - ".opendistro-alerting-alert*"
+            - ".opendistro-anomaly-results*"
+            - ".opendistro-anomaly-detector*"
+            - ".opendistro-anomaly-checkpoints"
+            - ".opendistro-anomaly-detection-state"
+            - ".opendistro-reports-*"
+            - ".opendistro-notifications-*"
+            - ".opendistro-notebooks"
+            - ".opendistro-asynchronous-search-response*"
+
+replicas: {{ opensearch_replicas | default(3) }}
+
+resources:
+  limits:
+    memory: {{ opensearch_resources_limits_memory | default('4Gi') }}
+    cpu: {{ opensearch_resources_limits_cpu | default('2000m') }}
+  requests:
+    memory: {{ opensearch_resources_requests_memory | default('2Gi') }}
+    cpu: {{ opensearch_resources_requests_cpu | default('1000m') }}
+
+persistence:
+  enabled: true
+  size: {{ opensearch_pvc_size | default('30Gi') }}
+  storageClass: {{ opensearch_storage_class | default('longhorn') }}
+
+roles:
+  - master
+  - data
+  - ingest
+
+affinity:
+  # Anti-affinity rules to ensure that OpenSearch pods are not scheduled on the same node.
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - opensearch
+        topologyKey: kubernetes.io/hostname
+
+# Only necessary if you have applied a corresponding taint to certain nodes in your cluster to
+# repel general workloads and reserve those nodes for OpenSearch. For example:
+# kubectl taint nodes <node-name> opensearch=true:NoSchedule
+{% if opensearch_enable_node_tolerations is sameas true %}
+tolerations:
+  - key: "opensearch"
+    operator: "Exists"
+    effect: "NoSchedule"
+{% endif %}
+
+securityConfig:
+  enabled: true
+  transportCertSecret: opensearch-transport-cert-secret
+  httpCertSecret: opensearch-http-cert-secret
+  adminSecret: opensearch-admin-secret
+  auditLog:
+    enabled: false
+
+service:
+  type: ClusterIP
+
+{% if opensearch_enable_monitoring is sameas true %}
+# Installs the prometheus-exporter plugin needed for serving metrics. Important: the versions must match.
+# At the time of writing there is no exporter plugin matching v3.0.0 of OpenSearch.
+plugins:
+  enabled: true
+  installList:
+    - https://github.com/Virtimo/prometheus-exporter-plugin-for-opensearch/releases/download/v{{ opensearch_app_version }}/prometheus-exporter-{{ opensearch_app_version}}.zip
+
+metrics:
+  enabled: true
+  service:
+    type: ClusterIP
+{% endif %}

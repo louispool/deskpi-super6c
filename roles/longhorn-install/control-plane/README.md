@@ -24,7 +24,7 @@ Assumes the [longhorn/cluster-prep](../cluster-prep/README.md) role was previous
 This role does the following:
 
 1. Creates a namespace for the Longhorn deployment.
-2. Deploys the [Longhorn Helm chart](https://longhorn.io/docs/1.4.0/deploy/install/install-with-helm/) with values that specify:
+2. Deploys the [Longhorn Helm chart](https://longhorn.io/docs/1.9.0/deploy/install/install-with-helm/) with values that specify:
     - the location of the mount point on the DeskPi's
 3. Configures the Linkerd Service Mesh (if `k3s_enable_service_mesh` is set to `true`).  
 4. Prefer the `longhorn storage class` as default by setting the `local-path storage` class as **non**-default.

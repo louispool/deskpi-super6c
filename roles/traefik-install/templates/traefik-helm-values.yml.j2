@@ -13,21 +13,6 @@ deployment:
     linkerd.io/inject: ingress
     config.linkerd.io/skip-outbound-ports: "443"
 {% endif %}
-  # Sidecar container for access logging
-  additionalContainers:
-    - name: stream-accesslog
-      image: busybox
-      args:
-      - /bin/sh
-      - -c
-      - tail -n+1 -F /data/access.log
-      imagePullPolicy: Always
-      resources: {}
-      terminationMessagePath: /dev/termination-log
-      terminationMessagePolicy: File
-      volumeMounts:
-      - mountPath: /data
-        name: data
 
 # Set a specific load balancer ip address for the ingress service
 service:
@@ -62,5 +47,3 @@ logs:
     enabled: true
     # Generate logs formatted in json
     format: json
-    # Print access log to file instead of stdout
-    filePath: "/data/access.log"

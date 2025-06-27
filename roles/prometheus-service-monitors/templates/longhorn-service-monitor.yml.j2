@@ -1,0 +1,20 @@
+# This defines the Prometheus ServiceMonitor for scraping Longhorn's metrics endpoint.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: longhorn-manager
+    release: monitoring
+  name: longhorn-prometheus-service-monitor
+  namespace: {{ k3s_longhorn_namespace }}
+spec:
+  endpoints:
+    - port: manager
+      path: /metrics
+  namespaceSelector:
+    matchNames:
+      - {{ k3s_longhorn_namespace }}
+  selector:
+    matchLabels:
+      app: longhorn-manager

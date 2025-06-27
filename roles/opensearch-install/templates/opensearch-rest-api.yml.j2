@@ -1,0 +1,39 @@
+# Exposes the OpenSearch HTTP REST API (see https://docs.opensearch.org/docs/latest/api-reference/#rest-apis) on the local network.
+---
+# Certificate resource for the OpenSearch HTTP REST API
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-http-cert
+  namespace: {{ k3s_opensearch_namespace }}
+spec:
+  secretName: opensearch-http-cert-secret
+  duration: 2160h # 90 days
+  renewBefore: 360h # Renew before 15 days of expiration
+  issuerRef:
+    name: {{ local_tls_issuer }}
+    kind: ClusterIssuer
+  commonName: {{ opensearch_rest_api }}
+  dnsNames:
+    - {{ opensearch_rest_api }}
+  privateKey:
+    algorithm: ECDSA
+
+---
+# Ingress to the OpenSearch HTTP REST API
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: opensearch-http
+  namespace: {{ k3s_opensearch_namespace }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ opensearch_rest_api }}`)
+      kind: Rule
+      services:
+        - name: {{ opensearch_cluster_name }}-{{ opensearch_node_group }}
+          port: 9200
+  tls:
+    secretName: opensearch-http-cert-secret

@@ -47,3 +47,4 @@
         path: "{{ nfs_dir }}"
       storageClass:
         onDelete: delete
+        name: "{{ nfs_storage_class_name }}"

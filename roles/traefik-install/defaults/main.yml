@@ -10,7 +10,7 @@ public_traefik_dashboard:
 # Whether to allow access to the Traefik dashboard over the public network
 enable_public_traefik_dashboard: false
 
-# Basic auth user/passwd
+# Basic auth user/passwd. Override with Ansible Vault variables.
 traefik_basic_auth_user: 'admin'
 traefik_basic_auth_passwd: '!s3cr3t'
 

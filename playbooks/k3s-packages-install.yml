@@ -82,3 +82,10 @@
       tags: ['longhorn']
       when: k3s_enable_block_storage
 
+    - role: prometheus-install
+      tags: ['prometheus']
+      when: k3s_enable_monitoring
+
+    - role: opensearch-install
+      tags: ['opensearch', 'logstack']
+      when: k3s_enable_logstack

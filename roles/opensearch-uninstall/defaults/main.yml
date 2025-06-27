@@ -1,0 +1,19 @@
+# Default variables used by the opensearch-uninstall role
+---
+k3s_opensearch_namespace: "opensearch"
+
+# From these variables Kubernetes will create resources named `opensearch-cluster-master`
+opensearch_cluster_name: "opensearch-cluster"
+
+# If you have applied the corresponding taint to certain nodes in your cluster to
+# repel general workloads and reserve those nodes for OpenSearch via
+# `kubectl taint nodes <node-name> opensearch=true:NoSchedule`
+opensearch_enable_node_tolerations: false
+
+# Will taint the following k8s nodes with the key `opensearch=true:NoSchedule`
+# if `opensearch_enable_node_tolerations` is set to true.
+opensearch_nodes:
+  - deskpi2
+  - deskpi3
+  - deskpi4
+

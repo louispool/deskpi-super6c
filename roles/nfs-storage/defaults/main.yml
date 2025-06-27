@@ -10,3 +10,6 @@ local_nfs_server: true
 
 # Namespace to deploy the NFS provisioner to
 nfs_provisioner_namespace: kube-system
+
+# Name of the Storage Class to be created by the NFS Subdir External Provisioner
+nfs_storage_class_name: nfs-client

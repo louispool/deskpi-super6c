@@ -66,3 +66,70 @@ To learn more, check out
 - [Generate config files](https://github.com/monitoring-mixins/docs#generate-config-files) (from the Prometheus Monitoring Mixins repo)
 - [Grizzly](https://github.com/grafana/grizzly)  (a tool for working with Jsonnet-defined assets against the Grafana Cloud API)
 
+## Configuration
+
+Configure the namespace for the Prometheus deployment via the variable `k3s_monitoring_namespace`:
+```yaml
+k3s_monitoring_namespace: monitoring
+```
+
+Configure whether to enable the [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/) via the variable `prom_alertmanager_enabled`:
+```yaml
+prom_alertmanager_enabled: true
+```
+
+Configure whether to enable the [Node Exporter](https://github.com/prometheus/node_exporter) via the variable `prom_node_exporter_enabled`:
+```yaml
+prom_node_exporter_enabled: true
+```
+
+Configure whether to enable [Kube State Metrics](https://github.com/kubernetes/kube-state-metrics) via the variable `prom_kube_state_metrics_enabled`:
+```yaml
+prom_kube_state_metrics_enabled: true
+```
+
+Define the internal endpoint for the Prometheus UI via the variable `prometheus_dashboard`:
+```yaml
+prometheus_dashboard: dashboard.prometheus.localnet
+```
+
+Define the internal endpoint for the Alertmanager UI via the variable `alertmanager_dashboard`:
+```yaml
+alertmanager_dashboard: dashboard.alertmanager.localnet
+```
+
+Access to the Prometheus UI is restricted via basic auth, the user and password can be configured as follows:        
+```yaml
+prometheus_basic_auth_user: admin
+prometheus_basic_auth_passwd: passwd
+```
+Consider using Ansible Vault to encrypt these credentials for security.
+
+Access to the Alertmanager UI is also restricted via basic auth, the user and password can be configured as follows:
+```yaml
+alertmanager_basic_auth_user: admin
+alertmanager_basic_auth_passwd: passwd
+```
+Consider using Ansible Vault to encrypt these credentials for security.
+      
+Define the endpoint to Grafana via the variable `grafana_dashboard`:
+```yaml
+grafana_dashboard: dashboard.grafana.localnet
+```
+
+Define the endpoint to the public Grafana dashboard via the variable `public_grafana_dashboard`:
+```yaml
+public_grafana_dashboard: dashboard.grafana.example.com
+```
+
+Configure whether to enable the public Grafana dashboard via the variable `enable_public_grafana_dashboard`:
+```yaml
+enable_public_grafana_dashboard: true
+```
+
+The admin credentials for Grafana can be configured via the variables:
+```yaml
+grafana_admin_user: admin
+grafana_admin_passwd:  passwd  
+```
+Consider using Ansible Vault to encrypt these credentials for security.

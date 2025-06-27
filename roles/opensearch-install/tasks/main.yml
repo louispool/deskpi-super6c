@@ -1,0 +1,69 @@
+# Tasks for the installation of OpenSearch (see https://github.com/opensearch-project/helm-charts/tree/main/charts/opensearch)
+---
+- name: Taint nodes for OpenSearch
+  kubernetes.core.k8s_taint:
+    name: "{{ item }}"
+    taints:
+      - key: "opensearch"
+        value: "true"
+        effect: "NoSchedule"
+        state: "present"
+  loop: "{{ opensearch_nodes }}"
+  when: opensearch_enable_node_tolerations
+
+- name: Create the namespace for OpenSearch
+  kubernetes.core.k8s:
+    name: "{{ k3s_opensearch_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Configure OpenSearch Transport Layer and REST API
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/' + item ) }}"
+    state: present
+  with_items:
+    - opensearch-transport-cert.yml.j2
+    - opensearch-rest-api.yml.j2
+
+- name: Create OpenSearch admin credentials secret
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ k3s_opensearch_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: opensearch-admin-secret
+      type: Opaque
+      stringData:
+        username: "admin"
+        password: "{{ opensearch_admin_passwd }}"
+
+- name: Add OpenSearch chart repo.
+  kubernetes.core.helm_repository:
+    name: opensearch
+    repo_url: "https://opensearch-project.github.io/helm-charts"
+
+- name: Deploy OpenSearch Helm chart
+  kubernetes.core.helm:
+    name: "{{ opensearch_cluster_name }}"
+    chart_ref: opensearch/opensearch
+    chart_version: "{{ opensearch_chart_version }}"
+    release_namespace: "{{ k3s_opensearch_namespace }}"
+    update_repo_cache: true
+    state: present
+    values: "{{ lookup('template', 'templates/opensearch-helm-values.yml.j2') | from_yaml }}"
+    wait: yes
+
+- name: Wait for Pods to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ k3s_opensearch_namespace }}"
+    wait: yes
+    wait_sleep: 10
+    wait_timeout: 600
+    wait_condition:
+      type: Ready
+      status: "True"
+

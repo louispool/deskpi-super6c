@@ -29,6 +29,14 @@
       tags: ["always"]
 
   roles:
+    - role: opensearch-uninstall
+      tags: ['opensearch', 'logstack']
+      when: k3s_enable_logstack
+
+    - role: prometheus-uninstall
+      tags: ['prometheus']
+      when: k3s_enable_monitoring
+
     - role: longhorn-uninstall
       tags: ['longhorn']
       when: k3s_enable_block_storage

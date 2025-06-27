@@ -20,14 +20,19 @@ of the persistent volume over to the storage class itself.
 
 This can be used as an external storage for AlertManager and Prometheus, ensuring multi-node level durability (of the storage).
 
-### Configuration
+## Configuration
 
-To configure the Host as a local NFS Server, set the variable: 
+To set the name of the storage class to be created by the NFS provisioner configure the variable `nfs_storage_class_name`:
+```
+nfs_storage_class_name: nfs-client
+```
+
+To configure the host as a **local** NFS Server, set the variable:
 ```
 local_nfs_server: true
 ```
 
-To set the location of a remote NFS Server, configure the variables:
+To set the location of a **remote** NFS Server, configure the variables:
 ```
 local_nfs_server: false
 nfs_server: <ip_address_of_nfs>
@@ -45,14 +50,24 @@ For example, to show the NFS exports for a local NFS server the command would be
 ```
 /sbin/showmount -e localhost
 ```
- 
-### Testing
+
+Note that `showmount`queries the `mountd` service on the server (usually via port 111 and then a dynamic port) to list exported directories. 
+`mountd` is part of NFSv3, not NFSv4, therefore, if you are using NFSv4, you may not see any exports listed with `showmount` since NFSv4 doesn't use `mountd`.<br> 
+Instead, exports are presented as a single unified filesystem (usually under **/export**, or **/**, depending on the server).
+
+To test what’s available, try mounting directly:
+```shell
+sudo mount -t nfs4 <ip_address_of_nfs>:/ /mnt/test
+ls /mnt/test
+```
+
+## Testing
             
 After the role has been executed, you can check the storage class created by running the following command:
 ```
 kubectl get storageclass
 ```
-You should see the storage class `nfs-client` listed
+You should see the storage class listed by the name you configured, for example:
 ```
 NAME                   PROVISIONER                                                     RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
 local-path (default)   rancher.io/local-path                                           Delete          WaitForFirstConsumer   false                  22h
@@ -78,6 +93,6 @@ And then applying the file:
 kubectl apply -f test-pvc.yaml
 ```
 
-### References
+## References
 
 https://fabianlee.org/2022/01/12/kubernetes-nfs-mount-using-dynamic-volume-and-storage-class/

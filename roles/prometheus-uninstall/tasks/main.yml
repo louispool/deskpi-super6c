@@ -1,0 +1,78 @@
+# Tasks for the installation of the kube-prometheus-stack (see https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#kube-prometheus-stack)
+---
+- name: Get a list of all Ingress Routes
+  kubernetes.core.k8s_info:
+    api_version: "traefik.containo.us/v1alpha1"
+    kind: IngressRoute
+    namespace: "{{ k3s_monitoring_namespace }}"
+  register: ingress_routes
+
+- name: Delete Ingress Routes
+  kubernetes.core.k8s:
+    api_version: "traefik.containo.us/v1alpha1"
+    kind: IngressRoute
+    state: absent
+    name: "{{ item }}"
+    namespace: "{{ k3s_monitoring_namespace }}"
+  loop: "{{ ingress_routes | json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
+
+- name: Get all PVCs in monitoring namespace
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    namespace: "{{ k3s_monitoring_namespace }}"
+  register: pvc_list
+
+- name: Delete all PVCs in monitoring namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    name: "{{ item }}"
+    namespace: "{{ k3s_monitoring_namespace }}"
+    state: absent
+  loop: "{{ pvc_list.resources | json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
+
+- name: Uninstall kube-prometheus-stack Helm release
+  kubernetes.core.helm:
+    name: kube-prometheus-stack
+    namespace: "{{ k3s_monitoring_namespace }}"
+    state: absent
+
+- name: Delete monitoring namespace (optional)
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ k3s_monitoring_namespace }}"
+    state: absent
+  ignore_errors: true
+
+- name: Delete kube-prometheus-stack CRDs
+  kubernetes.core.k8s:
+    api_version: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - alertmanagerconfigs.monitoring.coreos.com
+    - alertmanagers.monitoring.coreos.com
+    - podmonitors.monitoring.coreos.com
+    - probes.monitoring.coreos.com
+    - prometheusagents.monitoring.coreos.com
+    - prometheuses.monitoring.coreos.com
+    - prometheusrules.monitoring.coreos.com
+    - scrapeconfigs.monitoring.coreos.com
+    - servicemonitors.monitoring.coreos.com
+    - thanosrulers.monitoring.coreos.com
+  ignore_errors: true
+
+
+
+
+
+
+
+
+
+

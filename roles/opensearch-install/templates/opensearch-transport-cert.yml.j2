@@ -1,0 +1,20 @@
+# Certificate resource for the Opensearch Transport layer - ensures encrypted communication between OpenSearch nodes
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-transport-cert
+  namespace: {{ k3s_opensearch_namespace }}
+spec:
+  secretName: opensearch-transport-cert-secret
+  duration: 2160h # 90 days
+  renewBefore: 360h # Renew 15 days before expiration
+  issuerRef:
+    name: {{ local_tls_issuer }}
+    kind: ClusterIssuer
+  commonName: "{{ opensearch_cluster_name}}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+  dnsNames:
+    - "{{ opensearch_cluster_name}}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+    - "*.{{ opensearch_cluster_name}}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+  privateKey:
+    algorithm: ECDSA

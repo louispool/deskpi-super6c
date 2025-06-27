@@ -1,5 +1,5 @@
 ---
-# Namespace for cert-manager
+# Namespace for prometheus monitoring
 k3s_monitoring_namespace: monitoring
 
 # Endpoints for the dashboards on the local network
@@ -12,14 +12,27 @@ public_grafana_dashboard:
 # Whether to allow access to the Grafana dashboard over the public network
 enable_public_grafana_dashboard: false
 
-# Admin credentials for Grafana, consider using Ansible Vault to encrypt sensitive data
-grafana_admin_password: '!s3cr3t'
+# Admin credentials for Grafana. Override with Ansible Vault variable.
+grafana_admin_user: 'admin'
+grafana_admin_passwd: '!s3cr3t'
 
-# Basic auth user/passwd
+# Basic auth user/passwd for the Prometheus UI. Override with Ansible Vault variable.
 prometheus_basic_auth_user: 'admin'
 prometheus_basic_auth_passwd: '!s3cr3t'
 
-# Basic auth user/passwd for Alertmanager
+# Basic auth user/passwd for Alertmanager. Override with Ansible Vault variable.
 alertmanager_basic_auth_user: 'admin'
 alertmanager_basic_auth_passwd: '!s3cr3t'
+
+# Storage class for Prometheus persistent storage
+prom_storage_class: 'longhorn'
+
+# Whether to enable the Alertmanager
+prom_alertmanager_enabled: true
+
+# Whether to enable the Node Exporter
+prom_node_exporter_enabled: true
+
+# Whether to enable the Kube State Metrics
+prom_kube_state_metrics_enabled: true
 

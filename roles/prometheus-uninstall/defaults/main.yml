@@ -1,0 +1,3 @@
+---
+# Namespace for prometheus monitoring
+k3s_monitoring_namespace: monitoring

@@ -1,0 +1,74 @@
+# Tasks for uninstalling OpenSearch
+---
+- name: Remove OpenSearch Helm release
+  kubernetes.core.helm:
+    name: "{{ opensearch_cluster_name }}"
+    release_namespace: "{{ k3s_opensearch_namespace }}"
+    state: absent
+    wait: true
+
+- name: Get a list of all Ingress Routes in the OpenSearch namespace
+  kubernetes.core.k8s_info:
+    api_version: "traefik.containo.us/v1alpha1"
+    kind: IngressRoute
+    namespace: "{{ k3s_opensearch_namespace }}"
+  register: ingress_routes
+
+- name: Delete Ingress Routes in the OpenSearch namespace
+  kubernetes.core.k8s:
+    api_version: "traefik.containo.us/v1alpha1"
+    kind: IngressRoute
+    state: absent
+    name: "{{ item }}"
+    namespace: "{{ k3s_opensearch_namespace }}"
+  loop: "{{ ingress_routes | json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
+
+- name: Get a list of all Certificates in the OpenSearch namespace
+  kubernetes.core.k8s_info:
+    api_version: "cert-manager.io/v1"
+    kind: Certificate
+    namespace: "{{ k3s_opensearch_namespace }}"
+  register: certificates
+
+- name: Delete Certificates in the OpenSearch namespace
+  kubernetes.core.k8s:
+    api_version: "cert-manager.io/v1"
+    kind: Certificate
+    state: absent
+    name: "{{ item }}"
+    namespace: "{{ k3s_opensearch_namespace }}"
+  loop: "{{ certificates | json_query('resources[*].metadata.name') }}"
+
+- name: Delete PVCs created by OpenSearch
+  kubernetes.core.k8s:
+    kind: PersistentVolumeClaim
+    namespace: "{{ k3s_opensearch_namespace }}"
+    label_selectors:
+      - app.kubernetes.io/name=opensearch
+    state: absent
+
+- name: Delete OpenSearch admin secret
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    name: opensearch-admin-secret
+    namespace: "{{ k3s_opensearch_namespace }}"
+    state: absent
+
+- name: Untaint OpenSearch nodes
+  kubernetes.core.k8s_taint:
+    name: "{{ item }}"
+    taints:
+      - key: "opensearch"
+        effect: "NoSchedule"
+        state: "absent"
+  loop: "{{ opensearch_nodes }}"
+  when: opensearch_enable_node_tolerations | bool
+
+- name: Delete OpenSearch namespace
+  kubernetes.core.k8s:
+    name: "{{ k3s_opensearch_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: absent

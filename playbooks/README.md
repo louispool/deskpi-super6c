@@ -174,6 +174,7 @@ Installs several packages to k3s:
 | [Route53-ddns](../roles/route53-ddns-install/README.md) | `route53ddns` |
 | [Traefik](../roles/traefik-install/README.md)           | `traefik`     |
 | [Longhorn](../roles/longhorn-install/README.md)         | `longhorn`    |
+| [OpenSearch](../roles/opensearch-install/README.md)     | `opensearch`  |
 | [Linkerd](../roles/linkerd-install/README.md)           | `linkerd`     |
 
 ```bash

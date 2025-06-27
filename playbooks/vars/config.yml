@@ -53,6 +53,7 @@ k3s_linkerd_namespace: linkerd-control-plane
 k3s_linkerd_viz_namespace: linkerd-viz
 k3s_logging_namespace: logging
 k3s_monitoring_namespace: monitoring
+k3s_opensearch_namespace: opensearch
 k3s_minio_operator_namespace: minio-operator
 k3s_minio_tenant_namespace: minio-tenant
 
@@ -67,9 +68,12 @@ k3s_ingress_external_ip: "{{ ip_subnet_prefix|string + '.' + k3s_external_min_ip
 
 # Whether to install Linkerd and inject proxy annotations into deployments
 k3s_enable_service_mesh: false
-
 # Whether to install Longhorn
 k3s_enable_block_storage: true
+# Whether to install the kube-prometheus-stack for monitoring
+k3s_enable_monitoring: true
+# Whether to install OpenSearch and FluentBit for logging
+k3s_enable_logstack: true
 
 # IP address of the NTP Server
 ntp_server: "{{ master_node_ip }}"
@@ -82,6 +86,9 @@ nfs_server:
 # Whether an NFS Service should be configured on the Host
 local_nfs_server: true
 nfs_dir: /NFS/data
+
+# Name of the Storage Class for the NFS provisioner
+nfs_storage_class_name: nfs-client
 
 # Public domain - top level domain on the Internet
 public_domain:
@@ -121,15 +128,14 @@ longhorn_dashboard: "longhorn.{{ cluster_local_domain }}"
 prometheus_dashboard: "prometheus.{{ cluster_local_domain }}"
 alertmanager_dashboard: "alertmanager.{{ cluster_local_domain }}"
 grafana_dashboard: "grafana.{{ cluster_local_domain }}"
-kibana_dashboard: "kibana.{{ cluster_local_domain }}"
-elasticsearch: "elasticsearch.{{ cluster_local_domain }}"
-fluentd: "fluentd.{{ cluster_local_domain }}"
+opensearch_dashboard: "opensearch-dashboard.{{ cluster_local_domain }}"
+opensearch_rest_api: "opensearch.{{ cluster_local_domain }}"
 linkerd_dashboard: "linkerd.{{ cluster_local_domain }}"
 minio_console: "minio.{{ cluster_local_domain }}"
 
 public_traefik_dashboard: "traefik.{{ cluster_public_domain }}"
 public_longhorn_dashboard: "longhorn.{{ cluster_public_domain }}"
-public_kibana_dashboard: "kibana.{{ cluster_public_domain }}"
+public_opensearch_dashboard: "opensearch.{{ cluster_public_domain }}"
 public_grafana_dashboard: "grafana.{{ cluster_public_domain }}"
 public_minio_console: "minio.{{ cluster_public_domain }}"
 
@@ -137,7 +143,7 @@ public_minio_console: "minio.{{ cluster_public_domain }}"
 public_domains:
   - "{{ public_traefik_dashboard }}"
   - "{{ public_longhorn_dashboard }}"
-  - "{{ public_kibana_dashboard }}"
+  - "{{ public_opensearch_dashboard }}"
   - "{{ public_grafana_dashboard }}"
   - "{{ public_minio_console }}"
 
@@ -145,7 +151,7 @@ public_domains:
 enable_public_traefik_dashboard: false
 enable_public_longhorn_dashboard: false
 enable_public_grafana_dashboard: false
-enable_public_kibana_dashboard: false
+enable_public_opensearch_dashboard: false
 enable_public_minio_console: false
 
 # Enable the self-signed Certificate Issuer
@@ -187,3 +193,33 @@ longhorn_disk_device: nvme0n1
 longhorn_storage_path: /mnt/storage
 # Whether to allow wiping and formatting the disk device
 longhorn_prepare_disk: false
+
+# Storage class to use for Prometheus persistent storage
+prom_storage_class: "{{ nfs_storage_class_name }}"
+
+# Size of the OpenSearch cluster
+opensearch_replicas: 3
+
+# Configuration properties thatr define the resource requirements of the OpenSearch pods
+opensearch_resources_limits_memory: "5Gi"
+opensearch_resources_limits_cpu: "2000m"
+
+opensearch_resources_requests_memory: "2Gi"
+opensearch_resources_requests_cpu: "1000m"
+
+# Configures the size of the Persistent Volume Claim (PVC) for OpenSearch data storage
+opensearch_pvc_size: "30Gi"
+opensearch_storage_class: "longhorn"
+
+# Will taint the following k8s nodes with the key `opensearch=true:NoSchedule`
+# if `opensearch_enable_node_tolerations` is set to true.
+opensearch_nodes:
+  - deskpi2
+  - deskpi3
+  - deskpi4
+
+# Set to true if you want to apply a taint to certain nodes in your cluster to
+# repel general workloads and reserve those nodes for OpenSearch via
+# `kubectl taint nodes <node-name> opensearch=true:NoSchedule`
+opensearch_enable_node_tolerations: true
+
