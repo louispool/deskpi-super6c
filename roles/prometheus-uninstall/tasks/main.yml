@@ -1,5 +1,11 @@
 # Tasks for the installation of the kube-prometheus-stack (see https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#kube-prometheus-stack)
 ---
+- name: Uninstall kube-prometheus-stack Helm release
+  kubernetes.core.helm:
+    name: kube-prometheus-stack
+    namespace: "{{ k3s_monitoring_namespace }}"
+    state: absent
+
 - name: Get a list of all Ingress Routes
   kubernetes.core.k8s_info:
     api_version: "traefik.io/v1alpha1"
@@ -16,6 +22,22 @@
     namespace: "{{ k3s_monitoring_namespace }}"
   loop: "{{ ingress_routes | json_query('resources[*].metadata.name') }}"
   ignore_errors: true
+
+- name: Get a list of all Certificates in the monitoring namespace
+  kubernetes.core.k8s_info:
+    api_version: "cert-manager.io/v1"
+    kind: Certificate
+    namespace: "{{ k3s_monitoring_namespace }}"
+  register: certificates
+
+- name: Delete Certificates in the monitoring namespace
+  kubernetes.core.k8s:
+    api_version: "cert-manager.io/v1"
+    kind: Certificate
+    state: absent
+    name: "{{ item }}"
+    namespace: "{{ k3s_monitoring_namespace }}"
+  loop: "{{ certificates | json_query('resources[*].metadata.name') }}"
 
 - name: Get all PVCs in monitoring namespace
   kubernetes.core.k8s_info:
@@ -34,13 +56,7 @@
   loop: "{{ pvc_list.resources | json_query('resources[*].metadata.name') }}"
   ignore_errors: true
 
-- name: Uninstall kube-prometheus-stack Helm release
-  kubernetes.core.helm:
-    name: kube-prometheus-stack
-    namespace: "{{ k3s_monitoring_namespace }}"
-    state: absent
-
-- name: Delete monitoring namespace (optional)
+- name: Delete monitoring namespace
   kubernetes.core.k8s:
     api_version: v1
     kind: Namespace

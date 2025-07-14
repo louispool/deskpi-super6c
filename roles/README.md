@@ -37,6 +37,8 @@ This structure houses the roles used by the [Ansible Playbooks](../playbooks/REA
 - [Uninstallation of Longhorn](./longhorn-uninstall/README.md) (Storage Controller)
 - [Installation of Prometheus](./prometheus-install/README.md) (Monitoring)
 - [Uninstallation of Prometheus](./prometheus-uninstall/README.md) (Monitoring)
+- [Installation of OpenSearch](./opensearch-install/README.md) (Logging)
+- [Uninstallation of OpenSearch](./opensearch-uninstall/README.md) (Logging)
 - [Installation of Minio](./minio-install/README.md) (S3 Object Storage)
 - [Uninstallation of Minio](./minio-uninstall/README.md) (S3 Object Storage)
 - [Installation of Linkerd](./linkerd-install/README.md) (Service Mesh)

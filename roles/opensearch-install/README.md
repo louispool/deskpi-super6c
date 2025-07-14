@@ -211,6 +211,7 @@ If the Ingress is failing for some reason, you can also access the REST API dire
 ```shell
 kubectl -n opensearch exec -ti opensearch-cluster-master-0 -- curl -k -u admin http://localhost:9200/_cluster/health?pretty
 ```
+Note that in the case above we are using http instead of https, as we are accessing the REST API directly from within the pod.
 
 You can also check for errors in the logs of an OpenSearch pod:
 ```shell
