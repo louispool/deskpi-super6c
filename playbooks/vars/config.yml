@@ -205,7 +205,7 @@ opensearch_resources_limits_memory: "5Gi"
 opensearch_resources_limits_cpu: "2000m"
 
 opensearch_resources_requests_memory: "2Gi"
-opensearch_resources_requests_cpu: "1000m"
+opensearch_resources_requests_cpu: "500m"
 
 # Configures the size of the Persistent Volume Claim (PVC) for OpenSearch data storage
 opensearch_pvc_size: "30Gi"
@@ -221,5 +221,5 @@ opensearch_nodes:
 # Set to true if you want to apply a taint to certain nodes in your cluster to
 # repel general workloads and reserve those nodes for OpenSearch via
 # `kubectl taint nodes <node-name> opensearch=true:NoSchedule`
-opensearch_enable_node_tolerations: true
+opensearch_enable_node_tolerations: false
 

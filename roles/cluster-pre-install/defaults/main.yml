@@ -40,3 +40,4 @@ python_libs:
   - pyyaml
   - kubernetes
   - kubernetes-validate
+  - passlib

@@ -18,27 +18,32 @@
     kind: Namespace
     state: present
 
-- name: Configure OpenSearch Transport Layer and REST API
+- name: Set OpenSearch Password Hashes
+  ansible.builtin.set_fact:
+    opensearch_admin_password_hash: "{{ opensearch_admin_passwd | password_hash('bcrypt') }}"
+    opensearch_kibanaserver_password_hash: "{{ opensearch_kibanaserver_passwd | password_hash('bcrypt') }}"
+    opensearch_kibanaro_password_hash: "{{ opensearch_kibanaro_passwd | password_hash('bcrypt') }}"
+    opensearch_logger_password_hash: "{{ opensearch_logger_passwd | password_hash('bcrypt') }}"
+    opensearch_snapshotrestore_password_hash: "{{ opensearch_snapshotrestore_passwd | password_hash('bcrypt') }}"
+
+- name: Configure Security Config Secret, Admin Client Certificate, Transport Layer and REST API Ingress for OpenSearch
   kubernetes.core.k8s:
     definition: "{{ lookup('template', 'templates/' + item ) }}"
     state: present
   with_items:
+    - opensearch-security-config-secret.yml.j2
     - opensearch-transport-cert.yml.j2
+    - opensearch-admin-cert.yml.j2
     - opensearch-rest-api.yml.j2
 
-- name: Create OpenSearch admin credentials secret
-  kubernetes.core.k8s:
-    state: present
+- name: Wait for OpenSearch Admin TLS secret to be created
+  kubernetes.core.k8s_info:
+    kind: Secret
     namespace: "{{ k3s_opensearch_namespace }}"
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: opensearch-admin-secret
-      type: Opaque
-      stringData:
-        username: "admin"
-        password: "{{ opensearch_admin_passwd }}"
+    name: opensearch-admin-secret
+    wait: true
+    wait_timeout: 120
+    wait_sleep: 5
 
 - name: Add OpenSearch chart repo.
   kubernetes.core.helm_repository:
@@ -66,4 +71,24 @@
     wait_condition:
       type: Ready
       status: "True"
+
+- name: Wait for OpenSearch Cluster to be healthy (this may take a while)
+  uri:
+    url: "https://{{ opensearch_rest_api }}/_cluster/health"
+    method: GET
+    user: admin
+    password: "{{ opensearch_admin_passwd }}"
+    force_basic_auth: yes
+    validate_certs: yes
+    status_code: 200
+  register: cluster_status
+  retries: 10
+  delay: 15
+  until: cluster_status.status == 200 and ('status' in cluster_status.json and cluster_status.json.status in ['green', 'yellow'])
+
+- name: Print response if health check fails
+  debug:
+    var: cluster_status
+  when: cluster_status is failed
+
 

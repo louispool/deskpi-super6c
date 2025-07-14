@@ -24,13 +24,10 @@ This role does the following:
 1. Creates a namespace for the Traefik deployment.
 2. Deploys the [Traefik Helm chart](https://github.com/traefik/traefik-helm-chart#installing) with values that specify:
    - the enabling of access logs
-   - the deployment of a sidecar container for access logging
    - the enabling of a dedicated metrics service for use with Prometheus
    - the enabling of cross namespace references
-3. Generates a base64 encoded `user:password` pair using the [htpasswd](https://httpd.apache.org/docs/2.4/programs/htpasswd.html) utility.
-4. Configures [BasicAuth middleware](https://doc.traefik.io/traefik/middlewares/http/basicauth/) using the `user:password` pair.
-5. Configures [HTTP-to-HTTPS redirect middleware](https://doc.traefik.io/traefik/middlewares/http/redirectscheme/)
-6. Configures a Certificate and an [IngressRoute](https://doc.traefik.io/traefik/providers/kubernetes-crd/) to the [Traefik Dashboard](https://doc.traefik.io/traefik/operations/api/#configuration).
+3. Configures [HTTP-to-HTTPS redirect middleware](https://doc.traefik.io/traefik/middlewares/http/redirectscheme/)
+4. Configures a Certificate and an [IngressRoute](https://doc.traefik.io/traefik/providers/kubernetes-crd/) to the [Traefik Dashboard](https://doc.traefik.io/traefik/operations/api/#configuration).
 
 ### Configuration
                 
@@ -108,15 +105,15 @@ service/nginx-test       ClusterIP   10.43.22.10    <none>        80/TCP    5s
 NAME                                           CLASS    HOSTS                ADDRESS         PORTS   AGE
 ingress.networking.k8s.io/nginx-test-ingress   <none>   test.cluster.local   192.168.1.100   80      5s
 ```
-The host is a subdomain of the `cluster_local_domain` variable, and the IP address should correspond to the `k3s_ingress_external_ip`.
+The host is a subdomain of the `cluster_local_domain` variable (in the example assumed to be *deskpi.localnet*), and the IP address should correspond to the `k3s_ingress_external_ip`.
 
 You can use `curl` to test the service:
 ```shell
-while true; do curl -s http://test.cluster.local | grep "Served by pod"; sleep 1; done
+while true; do curl -s http://test.deskpi.localnet | grep "Served by pod"; sleep 1; done
 ````
 
 You should see output, similar to the example below:
-```shell    
+```html    
 <p>Served by pod: <span style="color:red">nginx-test-698664cb6b-k8qjp</span></p>
 <p>Served by pod: <span style="color:red">nginx-test-698664cb6b-j54zg</span></p>
 <p>Served by pod: <span style="color:red">nginx-test-698664cb6b-tjqg5</span></p>

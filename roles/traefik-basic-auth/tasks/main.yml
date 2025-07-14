@@ -45,6 +45,6 @@
 
 - name: Set facts for created BasicAuth resources
   ansible.builtin.set_fact:
-    basic_auth_secret_name: "{{ k3s_basic_auth_name }}-secret"
-    basic_auth_middleware_name: "{{ k3s_basic_auth_name }}"
+    basic_auth_secret_name: "{{ basic_auth_name }}-secret"
+    basic_auth_middleware_name: "{{ basic_auth_name }}"
 

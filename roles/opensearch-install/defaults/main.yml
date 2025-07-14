@@ -17,8 +17,12 @@ opensearch_rest_api: "api.opensearch.localnet"
 enable_public_opensearch_dashboard: false
 public_opensearch_dashboard:
 
-# Admin credentials. Override with Ansible Vault variable.
+# Security credentials. Override with Ansible Vault variables.
 opensearch_admin_passwd: "!s3cr3t"
+opensearch_kibanaserver_passwd: "!s3cr3t"
+opensearch_kibanaro_passwd: "!s3cr3t"
+opensearch_logger_passwd: "!s3cr3t"
+opensearch_snapshotrestore_passwd: "!s3cr3t"
 
 # Size of the OpenSearch cluster
 opensearch_replicas: 3

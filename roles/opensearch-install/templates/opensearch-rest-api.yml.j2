@@ -18,7 +18,8 @@ spec:
     - {{ opensearch_rest_api }}
   privateKey:
     algorithm: ECDSA
-
+    size: 256
+    encoding: PKCS8
 ---
 # Ingress to the OpenSearch HTTP REST API
 apiVersion: traefik.io/v1alpha1

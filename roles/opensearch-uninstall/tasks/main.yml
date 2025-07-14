@@ -1,6 +1,6 @@
 # Tasks for uninstalling OpenSearch
 ---
-- name: Remove OpenSearch Helm release
+- name: Uninstall OpenSearch with Helm
   kubernetes.core.helm:
     name: "{{ opensearch_cluster_name }}"
     release_namespace: "{{ k3s_opensearch_namespace }}"
@@ -9,14 +9,14 @@
 
 - name: Get a list of all Ingress Routes in the OpenSearch namespace
   kubernetes.core.k8s_info:
-    api_version: "traefik.containo.us/v1alpha1"
+    api_version: "traefik.io/v1alpha1"
     kind: IngressRoute
     namespace: "{{ k3s_opensearch_namespace }}"
   register: ingress_routes
 
 - name: Delete Ingress Routes in the OpenSearch namespace
   kubernetes.core.k8s:
-    api_version: "traefik.containo.us/v1alpha1"
+    api_version: "traefik.io/v1alpha1"
     kind: IngressRoute
     state: absent
     name: "{{ item }}"

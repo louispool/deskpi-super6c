@@ -27,8 +27,8 @@
       include_role:
         name: traefik-basic-auth
       vars:
-        k3s_basic_auth_namespace: "{{ k3s_traefik_namespace }}"
-        k3s_basic_auth_name: "{{ traefik_basic_auth }}"
+        basic_auth_namespace: "{{ k3s_traefik_namespace }}"
+        basic_auth_name: "{{ traefik_basic_auth }}"
         basic_auth_user: "{{ traefik_basic_auth_user }}"
         basic_auth_passwd: "{{ traefik_basic_auth_passwd }}"
 

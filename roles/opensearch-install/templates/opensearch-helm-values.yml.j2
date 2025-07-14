@@ -9,9 +9,49 @@ image:
   tag: "{{ opensearch_app_version }}"
   pullPolicy: IfNotPresent
 
-initContainer:
-  image: busybox
-  imagePullPolicy: IfNotPresent
+# Introduce staggered startup to avoid race conditions that can occur when a cluster with too many replicas all start at once
+initContainers:
+  - name: delay-init
+    image: busybox
+    command:
+      - sh
+      - -c
+      - |
+        i=${HOSTNAME##*-}
+        sleep $((i * 10 + 5))
+
+extraVolumes:
+  - name: http-tls
+    secret:
+      secretName: opensearch-http-cert-secret
+  - name: transport-tls
+    secret:
+      secretName: opensearch-transport-cert-secret
+  - name: admin-tls
+    secret:
+      secretName: opensearch-admin-secret
+
+extraVolumeMounts:
+  - name: http-tls
+    mountPath: /usr/share/opensearch/config/http-certs
+    readOnly: yes
+  - name: transport-tls
+    mountPath: /usr/share/opensearch/config/transport-certs
+    readOnly: yes
+  - name: admin-tls
+    mountPath: /usr/share/opensearch/config/admin-certs
+    readOnly: yes
+
+extraEnvs:
+  - name: DISABLE_INSTALL_DEMO_CONFIG
+    value: "true"
+
+#  Ensure the pod doesn’t fall back to pod IPs
+env:
+  - name: network.publish_host
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
 
 config:
   opensearch.yml: |
@@ -20,41 +60,54 @@ config:
     # Bind to all interfaces because we don't know what IP address Docker will assign to us.
     network.host: 0.0.0.0
 
+    # Ensure all OpenSearch nodes connect via DNS names, not pod IP
+    network.publish_host: ${HOSTNAME}.{{ opensearch_cluster_name }}-{{ opensearch_node_group }}-headless.{{ k3s_opensearch_namespace }}.svc.cluster.local
+    discovery.seed_hosts:
+      - {{ opensearch_cluster_name }}-{{ opensearch_node_group }}-headless.{{ k3s_opensearch_namespace }}.svc.cluster.local
+    cluster.initial_master_nodes:
+{% for i in range(opensearch_replicas | int) %}
+      - {{ opensearch_cluster_name }}-{{ opensearch_node_group }}-{{ i }}
+{% endfor %}
+
     plugins:
       security:
+        allow_default_init_securityindex: true
         ssl:
           http:
-            enabled: true
-            pemcert_filepath: certs/tls.crt
-            pemkey_filepath: certs/tls.key
-            pemtrustedcas_filepath: certs/ca.crt
-        allow_default_init_securityindex: true
+            enabled: false  # Disable HTTP SSL since we define a separate Ingress with TLS termination for the REST API
+            pemcert_filepath: http-certs/tls.crt
+            pemkey_filepath: http-certs/tls.key
+            pemtrustedcas_filepath: http-certs/ca.crt
+          transport:
+            pemcert_filepath: transport-certs/tls.crt
+            pemkey_filepath: transport-certs/tls.key
+            pemtrustedcas_filepath: transport-certs/ca.crt
         authcz:
           admin_dn:
             - "CN=admin,OU=client,O=org"
         nodes_dn:
-          - "CN=*.{{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+          - "CN={{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
         audit:
           type: internal_opensearch
         enable_snapshot_restore_privilege: true
         check_snapshot_restore_write_privileges: true
         restapi:
-          roles_enabled:
-            - all_access
-            - security_rest_api_access
+          roles_enabled: ["all_access", "security_rest_api_access"]
         system_indices:
           enabled: true
           indices:
-            - ".opendistro-alerting-config"
-            - ".opendistro-alerting-alert*"
-            - ".opendistro-anomaly-results*"
-            - ".opendistro-anomaly-detector*"
-            - ".opendistro-anomaly-checkpoints"
-            - ".opendistro-anomaly-detection-state"
-            - ".opendistro-reports-*"
-            - ".opendistro-notifications-*"
-            - ".opendistro-notebooks"
-            - ".opendistro-asynchronous-search-response*"
+            [
+              ".opendistro-alerting-config",
+              ".opendistro-alerting-alert*",
+              ".opendistro-anomaly-results*",
+              ".opendistro-anomaly-detector*",
+              ".opendistro-anomaly-checkpoints",
+              ".opendistro-anomaly-detection-state",
+              ".opendistro-reports-*",
+              ".opendistro-notifications-*",
+              ".opendistro-notebooks",
+              ".opendistro-asynchronous-search-response*",
+            ]
 
 replicas: {{ opensearch_replicas | default(3) }}
 
@@ -100,11 +153,9 @@ tolerations:
 
 securityConfig:
   enabled: true
-  transportCertSecret: opensearch-transport-cert-secret
-  httpCertSecret: opensearch-http-cert-secret
-  adminSecret: opensearch-admin-secret
-  auditLog:
-    enabled: false
+  config:
+    securityConfigSecret: opensearch-security-config-secret
+    dataComplete: true
 
 service:
   type: ClusterIP

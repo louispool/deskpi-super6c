@@ -1,0 +1,29 @@
+# The admin certificate is used for client authentication to administer the cluster,
+# primarily via the "securityadmin.sh" tool (or REST API clients doing mTLS).
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-admin-cert
+  namespace: {{ k3s_opensearch_namespace }}
+spec:
+  secretName: opensearch-admin-secret
+  duration: 8760h
+  renewBefore: 720h
+  commonName: admin
+  subject:
+    organizations:
+      - org
+    organizationalUnits:
+      - client
+  isCA: false
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    encoding: PKCS8
+  usages:
+    - client auth
+  issuerRef:
+    name: {{ local_tls_issuer }}
+    kind: ClusterIssuer
+    group: cert-manager.io

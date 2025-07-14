@@ -55,8 +55,8 @@
   include_role:
     name: traefik-basic-auth
   vars:
-    k3s_basic_auth_namespace: "{{ k3s_monitoring_namespace }}"
-    k3s_basic_auth_name: "{{ prometheus_basic_auth }}"
+    basic_auth_namespace: "{{ k3s_monitoring_namespace }}"
+    basic_auth_name: "{{ prometheus_basic_auth }}"
     basic_auth_user: "{{ prometheus_basic_auth_user }}"
     basic_auth_passwd: "{{ prometheus_basic_auth_passwd }}"
 
@@ -64,8 +64,8 @@
   include_role:
     name: traefik-basic-auth
   vars:
-    k3s_basic_auth_namespace: "{{ k3s_monitoring_namespace }}"
-    k3s_basic_auth_name: "{{ alertmanager_basic_auth }}"
+    basic_auth_namespace: "{{ k3s_monitoring_namespace }}"
+    basic_auth_name: "{{ alertmanager_basic_auth }}"
     basic_auth_user: "{{ alertmanager_basic_auth_user }}"
     basic_auth_passwd: "{{ alertmanager_basic_auth_passwd }}"
 

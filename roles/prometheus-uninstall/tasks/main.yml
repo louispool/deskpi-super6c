@@ -2,14 +2,14 @@
 ---
 - name: Get a list of all Ingress Routes
   kubernetes.core.k8s_info:
-    api_version: "traefik.containo.us/v1alpha1"
+    api_version: "traefik.io/v1alpha1"
     kind: IngressRoute
     namespace: "{{ k3s_monitoring_namespace }}"
   register: ingress_routes
 
 - name: Delete Ingress Routes
   kubernetes.core.k8s:
-    api_version: "traefik.containo.us/v1alpha1"
+    api_version: "traefik.io/v1alpha1"
     kind: IngressRoute
     state: absent
     name: "{{ item }}"

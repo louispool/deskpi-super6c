@@ -2,7 +2,23 @@
 #
 # https://longhorn.io/docs/1.4.0/deploy/uninstall/
 ---
-# First delete all persistent volumes and storage classes
+- name: Get a list of all Ingress Routes in the Longhorn namespace
+  kubernetes.core.k8s_info:
+    api_version: "traefik.io/v1alpha1"
+    kind: IngressRoute
+    namespace: "{{ k3s_longhorn_namespace }}"
+  register: ingress_routes
+
+- name: Delete Ingress Routes in the Longhorn namespace
+  kubernetes.core.k8s:
+    api_version: "traefik.io/v1alpha1"
+    kind: IngressRoute
+    state: absent
+    name: "{{ item }}"
+    namespace: "{{ k3s_longhorn_namespace }}"
+  loop: "{{ ingress_routes | json_query('resources[*].metadata.name') }}"
+  ignore_errors: true
+
 - name: Get a list of all Persistent Volumes
   kubernetes.core.k8s_info:
     kind: PersistentVolume

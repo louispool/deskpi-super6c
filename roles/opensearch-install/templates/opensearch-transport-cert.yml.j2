@@ -12,9 +12,15 @@ spec:
   issuerRef:
     name: {{ local_tls_issuer }}
     kind: ClusterIssuer
-  commonName: "{{ opensearch_cluster_name}}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+  commonName: "{{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"  # Must match the CN of plugins.security.nodes_dn in opensearch.yml
   dnsNames:
-    - "{{ opensearch_cluster_name}}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
-    - "*.{{ opensearch_cluster_name}}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+    - "{{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+    - "*.{{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+    - "{{ opensearch_cluster_name }}-{{ opensearch_node_group }}-headless.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+    - "*.{{ opensearch_cluster_name }}-{{ opensearch_node_group }}-headless.{{ k3s_opensearch_namespace }}.svc.cluster.local"
+    - "{{ opensearch_cluster_name }}-{{ opensearch_node_group }}-headless"
+    - "{{ opensearch_cluster_name }}-{{ opensearch_node_group }}-headless.{{ k3s_opensearch_namespace }}.svc"
   privateKey:
     algorithm: ECDSA
+    size: 256
+    encoding: PKCS8

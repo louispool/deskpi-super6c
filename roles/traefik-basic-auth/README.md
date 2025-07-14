@@ -13,18 +13,26 @@
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for configuring Traefik's [BasicAuth Middleware](https://doc.traefik.io/traefik/middlewares/http/basicauth/) using a `user:password` pair.
 
+## Synopsis
+
+This role does the following:
+
+1. Creates a secret in the specified namespace containing the BasicAuth credentials.
+2. Creates a BasicAuth Middleware Custom Resource Definition (CRD) in the specified namespace using the secret created.
+3. Sets the facts `basic_auth_secret_name` and `basic_auth_middleware_name` for use in subsequent tasks or roles.
+
 ## Configuration
 
-Configure the name of the BasicAuth Middleware CRD with the variable `k3s_basic_auth_name`:
-
+Configure the namespace to create the BasicAuth secret and middleware in, via the variable `basic_auth_namespace`:
 ```yaml
-k3s_basic_auth_name: my-basic-auth
+basic_auth_namespace: some-namespace
 ```
 
-Configure the namespace where the BasicAuth Middleware should be located via the variable `k3s_basic_auth_namespace`:
+Configure the name of the BasicAuth Middleware CRD with the variable `basic_auth_name`:
 ```yaml
-k3s_basic_auth_namespace: some-namespace
+basic_auth_name: my-basic-auth
 ```
+The name of the secret created will be `basic_auth_name` suffixed with `-secret`, so in this case it will be `my-basic-auth-secret`.
 
 Configure the user and password for the BasicAuth middleware via the variables `basic_auth_user` and `basic_auth_passwd`:
 ```yaml
@@ -44,21 +52,24 @@ To use this Role, you typically include it in your Ansible playbook, and set the
   include_role:
     name: traefik-basic-auth
   vars:
-    k3s_basic_auth_namespace: "{{ my_namespace }}"
-    k3s_basic_auth_name: "{{ my_basic_auth }}"
+    basic_auth_namespace: "{{ my_namespace }}"
+    basic_auth_name: "{{ my_basic_auth }}"
     basic_auth_user: "{{ my_basic_auth_user }}"
     basic_auth_passwd: "{{ my_basic_auth_passwd }}"
 ```
 
-This will create a BasicAuth middleware in the specified namespace with the provided user and password, which can then be used to protect your Traefik Ingress Routes,
-for example:
+This will create a BasicAuth middleware and Secret in the specified namespace with the provided user and password, which can then be used to protect your Traefik Ingress Routes.
+
+The role sets the facts `basic_auth_secret_name` and `basic_auth_middleware_name` for use in subsequent tasks or roles.
+
+For example:
 
 ```yaml
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: my-route
-  namespace: "{{ my_namespace }}"
+  namespace: "{{ basic_auth_namespace }}"
 spec:
   entryPoints:
     - web
@@ -69,8 +80,8 @@ spec:
         - name: my-service
           port: 80
       middlewares:
-        - name: "{{ my_basic_auth }}"
-          namespace: "{{ my_namespace }}"
+        - name: "{{ basic_auth_middleware_name }}"
+          namespace: "{{ basic_auth_namespace }}"
 ```
 
 
