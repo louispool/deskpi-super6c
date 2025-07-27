@@ -21,11 +21,11 @@
 - name: Set OpenSearch Password Hashes
   ansible.builtin.set_fact:
     opensearch_admin_passwd_hash: "{{ opensearch_admin_passwd | password_hash('bcrypt') }}"
-    opensearch_dashboards_admin_passwd_hash: "{{ opensearch_dashboards_admin_passwd | password_hash('bcrypt') }}"
-    opensearch_dashboards_user_passwd_hash: "{{ opensearch_dashboards_user_passwd | password_hash('bcrypt') }}"
+    opensearch_kibana_server_passwd_hash: "{{ opensearch_kibana_server_passwd | password_hash('bcrypt') }}"
+    opensearch_snapshot_restore_passd_hash: "{{ opensearch_snapshot_restore_passwd | password_hash('bcrypt') }}"
     opensearch_logger_passwd_hash: "{{ opensearch_logger_passwd | password_hash('bcrypt') }}"
     opensearch_monitoring_passwd_hash: "{{ opensearch_monitoring_passwd | password_hash('bcrypt') }}"
-    opensearch_snapshot_restore_passd_hash: "{{ opensearch_snapshot_restore_passwd | password_hash('bcrypt') }}"
+    opensearch_dashboards_user_passwd_hash: "{{ opensearch_dashboards_user_passwd | password_hash('bcrypt') }}"
 
 - name: Create credentials secret for the OpenSearch Monitoring user
   kubernetes.core.k8s:
@@ -91,7 +91,7 @@
   uri:
     url: "https://{{ opensearch_rest_api }}/_cluster/health"
     method: GET
-    user: "{{ opensearch_admin_user }}"
+    user: "admin"
     password: "{{ opensearch_admin_passwd }}"
     force_basic_auth: yes
     validate_certs: yes
@@ -117,7 +117,7 @@
         name: opensearch-rules
         namespace: "{{ k3s_monitoring_namespace }}"
         labels:
-          release: prometheus
+          release: kube-prometheus-stack
       spec:
         groups:
           - name: opensearch.rules

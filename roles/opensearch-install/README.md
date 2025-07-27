@@ -125,17 +125,14 @@ enable_public_opensearch_dashboard: true
 
 Define the usernames for the OpenSearch users:
 ```yaml
-opensearch_admin_user: "admin"
-opensearch_dashboards_admin_user: "kibanaserver"
-opensearch_dashboards_user: "kibanaro"
-opensearch_logger_user: "logger"
+opensearch_logger_user: "logstash"
 opensearch_monitoring_user: "monitor"
-opensearch_snapshot_restore_user: "snapshotrestore"
+opensearch_dashboards_user: "kibanaro"
 ```
 Define the passwords for the OpenSearch users:
 ```yaml
 opensearch_admin_passwd: "!s3cr3t"
-opensearch_dashboards_admin_passwd: "!s3cr3t"
+opensearch_kibana_server_passwd: "!s3cr3t"
 opensearch_dashboards_user_passwd: "!s3cr3t"
 opensearch_logger_passwd: "!s3cr3t"
 opensearch_monitoring_passwd: "!s3cr3t"
@@ -143,7 +140,9 @@ opensearch_snapshot_restore_passwd: "!s3cr3t"
 ```
 *Note that these should be overridden by a vault variable.*
 
-Whether to enable prometheus monitoring via plugin. **Important**, the exporter plugin must match the version of OpenSearch.
+Whether to enable prometheus monitoring via plugin. 
+**Important**, the [exporter plugin](https://github.com/opensearch-project/opensearch-prometheus-exporter), defined in the `plugins` section of the [helm values template](templates/opensearch-helm-values.yml.j2), 
+must match the version of OpenSearch.
 ```yaml
 opensearch_enable_monitoring: false
 ```

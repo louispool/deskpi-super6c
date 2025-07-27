@@ -13,27 +13,24 @@ opensearch_node_group: "master"
 # Endpoint for the OpenSearch REST API on the local network
 opensearch_rest_api: "api.opensearch.localnet"
 
-# OpenSearch Users
-opensearch_admin_user: "admin"
-opensearch_dashboards_admin_user: "kibanaserver"
-opensearch_dashboards_user: "kibanaro"
-opensearch_logger_user: "logger"
+# Custom OpenSearch Users
+opensearch_logger_user: "logstash"
 opensearch_monitoring_user: "monitor"
-opensearch_snapshot_restore_user: "snapshotrestore"
+opensearch_dashboards_user: "kibanaro"
 
 # Security credentials. Override with Ansible Vault variables.
 opensearch_admin_passwd: "!s3cr3t"
-opensearch_dashboards_admin_passwd: "!s3cr3t"
-opensearch_dashboards_user_passwd: "!s3cr3t"
+opensearch_kibana_server_passwd: "!s3cr3t"
+opensearch_snapshot_restore_passwd: "!s3cr3t"
 opensearch_logger_passwd: "!s3cr3t"
 opensearch_monitoring_passwd: "!s3cr3t"
-opensearch_snapshot_restore_passwd: "!s3cr3t"
+opensearch_dashboards_user_passwd: "!s3cr3t"
 
 # Size of the OpenSearch cluster
 opensearch_replicas: 3
 
 # Configuration properties thatr define the resource requirements of the OpenSearch pods
-opensearch_resources_limits_memory: "5Gi"
+opensearch_resources_limits_memory: "4Gi"
 opensearch_resources_limits_cpu: "2000m"
 
 opensearch_resources_requests_memory: "2Gi"

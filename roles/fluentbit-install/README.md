@@ -80,8 +80,10 @@ Configure the credentials necessary for Fluent Bit to authenticate with OpenSear
 ```yaml
 opensearch_logger_user: "logger"
 opensearch_logger_passwd: "!s3cr3t"
+```
 
-opensearch_admin_user: "admin"
+Credentials for the admin user to create the necessary ISM policy and index template.
+```yaml
 opensearch_admin_passwd: "!s3cr3t"
 ```
 

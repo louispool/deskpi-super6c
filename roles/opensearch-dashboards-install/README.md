@@ -26,7 +26,7 @@ In the context of the DeskPi Cluster, OpenSearch is used to index and search the
 ## Synopsis
 
 This role assumes the following:
-   - A namespace for the OpenSearch deployment is created.
+   - A namespace for the OpenSearch deployment has already been created.
    - The OpenSearch server is installed and running and the OpenSearch REST API is accessible via the property `opensearch_rest_api`.
 
 This role does the following:
@@ -36,7 +36,7 @@ This role does the following:
    - the OpenSearch Dashboards version to install
    - the OpenSearch Dashboards resource limits and requests
    - the OpenSearch server to connect to (via the property `opensearch_rest_api`)
-   - the credentials to connect to the OpenSearch server (via the property `opensearch_dashboards_admin_passwd`)
+   - the credentials to connect to the OpenSearch server (via the property `opensearch_kibana_server_passwd`)
 3. Exposes the OpenSearch Dashboards via:
     - an IngressRoute on the local network
     - an IngressRoute on the internet (if `enable_public_opensearch_dashboard` is set to `true`).
@@ -54,92 +54,41 @@ opensearch_app_version: "2.9.0"
 ```
 See the [note](../opensearch-install/README.md#note-on-the-version-of-opensearch) on the version of OpenSearch.
 
-Configure the name and group name of the OpenSearch cluster via the variables `opensearch_cluster_name` and `opensearch_node_group` respectively:
+The following configuration properties define the resource requirements of the OpenSearch Dashboards deployment.
+```yaml
+opensearch_dashboards_resources_limits_memory: "1Gi"
+opensearch_dashboards_resources_limits_cpu: "200m"
+
+opensearch_dashboards_requests_memory: "512Mi"
+opensearch_dashboards_requests_cpu: "100m"
+```
+
+Configure the details of OpenSearch cluster:
 ```yaml
 opensearch_cluster_name: "opensearch-cluster"
 opensearch_node_group: "master"
 ```
-   
+This is necessary for the Dashboards to communicate directly with the OpenSearch cluster using the cluster-local DNS.
 
-From these variables Kubernetes will create resources named like:
-
-```shell
-opensearch-cluster-master-0
-svc/opensearch-cluster-master
-``` 
-
-The following configuration properties taints the specified nodes in your cluster to repel general workloads and reserve those nodes for OpenSearch, and compels the scheduler to schedule the
-OpenSearch
-pods onto only the specified nodes.
-
-```yaml
-opensearch_nodes:
-  - deskpi2
-  - deskpi3
-  - deskpi4
-  
-opensearch_enable_node_tolerations: true
-```
-
-Configure the size of the OpenSearch cluster (i.e. number of instances/pods - each scheduled on a separate node) via the variable `opensearch_replicas`:
-
-```yaml
-opensearch_replicas: 3
-```
-
-The following configuration properties define the resource requirements of the OpenSearch pods. Consider the limitations of your hardware - note that the
-[OpenSearch Requirements](https://github.com/opensearch-project/helm-charts/tree/main/charts/opensearch#requirements) recommends 8GB of memory per pod, or at minimum 4GB of memory, otherwise the
-deployment will fail.
-
-```yaml
-opensearch_resources_limits_memory: "5Gi"
-opensearch_resources_limits_cpu: "2000m"
-
-opensearch_resources_requests_memory: "2Gi"
-opensearch_resources_requests_cpu: "1000m"
-```
-
-Configure the size of the Persistent Volume Claim (PVC) for OpenSearch data storage via the variable `opensearch_pvc_size` and the storage class via `opensearch_storage_class`:
-
-```yaml
-opensearch_pvc_size: "30Gi"
-opensearch_storage_class: "longhorn"
-```
-
-Define the internal endpoint for the OpenSearch REST API via the variable `opensearch_rest_api`:
-
-```yaml
-opensearch_rest_api: "api.opensearch.localnet"
-```
-
-Define the endpoint to the OpenSearch Dashboard via the variable `opensearch_dashboard`:
-
+Define the endpoint to the OpenSearch Dashboards via the variable `opensearch_dashboard`:
 ```yaml
 opensearch_dashboard: "dashboard.opensearch.localnet"
 ```
 
-Define the endpoint to the public Grafana Dashboard via the variable `public_opensearch_dashboard`:
-
+Define the endpoint to the public OpenSearch Dashboards via the variable `public_opensearch_dashboard`:
 ```yaml
 public_opensearch_dashboard: dashboard.opensearch.example.com
 ```
-
-Configure whether to enable the public Opensearch Dashboard via the variable `enable_public_opensearch_dashboard`:
-
+Configure whether to allow access to the Opensearch dashboards over the public network:
 ```yaml
-enable_public_opensearch_dashboard: true
+enable_public_opensearch_dashboard: false
 ```
 
-Defines the password for the OpenSearch admin user. The password is required, without it installation will fail.
-
+Credentials for the Opensearch Dashboards to access the Opensearch cluster. The user `kibanaserver` is hardcoded.
 ```yaml
-opensearch_admin_passwd: "!s3cr3t"
+# Security credentials. Override with Ansible Vault variables.
+opensearch_kibana_server_passwd: "!s3cr3t"
+# Must be 32 alphanumeric characters - ideally random for cryptographic strength
+opensearch_dashboards_cookie_secret: "G7fkA9Wd4MnXb2TfY8HrZqJLsE3Vc6P0"
 ```
-
-*Note that this should be overridden by a vault variable.*
-
-Whether to enable prometheus monitoring via plugin. **Important**, the exporter plugin must match the version of OpenSearch.
-
-```yaml
-opensearch_enable_monitoring: false
-```
+*Note that these should be overridden by vault variables.*

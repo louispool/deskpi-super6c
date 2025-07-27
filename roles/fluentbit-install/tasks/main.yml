@@ -20,7 +20,7 @@
   uri:
     url: "https://{{ opensearch_rest_api }}/_plugins/_ism/policies/fluentbit-retention"
     method: PUT
-    user: "{{ opensearch_admin_user }}"
+    user: "admin"
     password: "{{ opensearch_admin_passwd }}"
     force_basic_auth: yes
     validate_certs: yes
@@ -53,7 +53,7 @@
   uri:
     url: "https://{{ opensearch_rest_api }}/_index_template/fluentbit-template"
     method: PUT
-    user: "{{ opensearch_admin_user }}"
+    user: "admin"
     password: "{{ opensearch_admin_passwd }}"
     force_basic_auth: yes
     validate_certs: yes

@@ -25,7 +25,7 @@
       type: Opaque
       stringData:
         username: "kibanaserver"
-        password: "{{ opensearch_dashboards_admin_passwd }}"
+        password: "{{ opensearch_kibana_server_passwd }}"
         cookie: "{{ opensearch_dashboards_cookie_secret }}"
 
 - name: Deploy OpenSearch-Dashboards Helm chart

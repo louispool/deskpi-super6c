@@ -69,22 +69,16 @@
     basic_auth_user: "{{ alertmanager_basic_auth_user }}"
     basic_auth_passwd: "{{ alertmanager_basic_auth_passwd }}"
 
-- name: Configure IngressRoute to Prometheus Dashboard
+- name: Configure IngressRoutes to local Dashboards
   kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/prometheus-dashboard.yml.j2') }}"
+    definition: "{{ lookup('template', 'templates/' + item ) }}"
     state: present
+  with_items:
+    - prometheus-dashboard.yml.j2
+    - alertmanager-dashboard.yml.j2
+    - grafana-dashboard.yml.j2
 
-- name: Configure IngressRoute to Alertmanager Dashboard
-  kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/alertmanager-dashboard.yml.j2') }}"
-    state: present
-
-- name: Configure IngressRoute to Grafana Dashboard
-  kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/grafana-dashboard.yml.j2') }}"
-    state: present
-
-- name: Configure IngressRoute to Public Grafana Dashboard
+- name: Configure IngressRoute to public Grafana Dashboard
   kubernetes.core.k8s:
     definition: "{{ lookup('template', 'templates/grafana-dashboard-public.yml.j2') }}"
     state: present

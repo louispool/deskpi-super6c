@@ -2,6 +2,13 @@
 ---
 k3s_opensearch_namespace: "opensearch"
 
+# Configuration properties that define the resource requirements of the OpenSearch Dashboards pods
+opensearch_dashboards_resources_limits_memory: "1Gi"
+opensearch_dashboards_resources_limits_cpu: "200m"
+
+opensearch_dashboards_requests_memory: "512Mi"
+opensearch_dashboards_requests_cpu: "100m"
+
 # From these variables Kubernetes will create resources named `opensearch-cluster-master`
 opensearch_cluster_name: "opensearch-cluster"
 opensearch_node_group: "master"
@@ -17,13 +24,6 @@ public_opensearch_dashboard:
 enable_public_opensearch_dashboard: false
 
 # Security credentials. Override with Ansible Vault variables.
-opensearch_dashboards_admin_passwd: "!s3cr3t"
-# Must be 32 alphanumeric characters - idealy random for cryptographic strength
+opensearch_kibana_server_passwd: "!s3cr3t"
+# Must be 32 alphanumeric characters - ideally random for cryptographic strength
 opensearch_dashboards_cookie_secret: "G7fkA9Wd4MnXb2TfY8HrZqJLsE3Vc6P0"
-
-# Configuration properties thatr define the resource requirements of the OpenSearch pods
-opensearch_dashboards_resources_limits_memory: "2Gi"
-opensearch_dashboards_resources_limits_cpu: "1000m"
-
-opensearch_dashboards_requests_memory: "512Mi"
-opensearch_dashboards_requests_cpu: "100m"

@@ -203,14 +203,14 @@ opensearch_app_version: "2.9.0"
 opensearch_replicas: 3
 
 # Configuration properties thatr define the resource requirements of the OpenSearch pods
-opensearch_resources_limits_memory: "5Gi"
+opensearch_resources_limits_memory: "6Gi"
 opensearch_resources_limits_cpu: "2000m"
 
 opensearch_resources_requests_memory: "2Gi"
 opensearch_resources_requests_cpu: "500m"
 
 # Configures the size of the Persistent Volume Claim (PVC) for OpenSearch data storage
-opensearch_pvc_size: "30Gi"
+opensearch_pvc_size: "100Gi"
 opensearch_storage_class: "longhorn"
 
 # Will taint the following k8s nodes with the key `opensearch=true:NoSchedule`

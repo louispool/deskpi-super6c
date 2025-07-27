@@ -146,6 +146,8 @@ serviceMonitor:
 prometheusRule:
   enabled: true
   namespace: {{ k3s_monitoring_namespace }}
+  additionalLabels:
+    - release: kube-prometheus-stack
   rules:
     - alert: NoOutputBytesProcessed
       expr: rate(fluentbit_output_proc_bytes_total[5m]) == 0
