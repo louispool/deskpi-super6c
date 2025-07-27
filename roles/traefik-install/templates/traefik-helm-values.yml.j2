@@ -42,6 +42,9 @@ metrics:
 
 # Enables access logs (see https://doc.traefik.io/traefik/observability/access-logs/)
 logs:
+  general:
+    # Generate logs formatted in json
+    format: json
   access:
     # Enable access log
     enabled: true

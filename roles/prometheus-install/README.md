@@ -17,7 +17,8 @@
 
 Prometheus is an open-source systems monitoring and alerting toolkit. This role uses Helm to install the 
 [Kube-Prometheus stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) onto our k3s cluster.
-
+e systems monitoring and alerting toolkit. This role uses Helm to install the
+[Kube-Prometheus stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
 The `kube-prometheus-stack` is a comprehensive Helm chart that deploys a full monitoring stack for Kubernetes. It includes:
 
 - [Prometheus](https://prometheus.io/): Collects and stores metrics from Kubernetes and applications.

@@ -1,0 +1,166 @@
+# Values for the fluentbit HELM chart
+# https://github.com/fluent/helm-charts/blob/main/charts/fluent-bit/values.yaml
+---
+service:
+  type: ClusterIP
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "2020"
+    prometheus.io/path: "/api/v1/metrics/prometheus"
+
+resources:
+  limits:
+    memory: 200Mi
+    cpu: 200m
+  requests:
+    memory: 100Mi
+    cpu: 100m
+
+# Set the flush time in `seconds.nanoseconds`.
+# The engine loop uses a Flush timeout to define when it's required to flush the records
+# ingested by input plugins through the defined output plugins.
+flush: 1
+
+# Set the logging verbosity level. Allowed values are: off, error, warn, info, debug, and trace.
+# Values are cumulative. If debug is set, it will include error, warning, info, and debug
+logLevel: info
+
+# TCP Port for the HTTP Server.
+metricsPort: 2020
+
+# https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file
+config:
+  # https://docs.fluentbit.io/manual/pipeline/inputs
+  inputs: |
+    # https://docs.fluentbit.io/manual/pipeline/inputs/tail
+    # Collect logs from container log files in the /var/log/containers directory
+    [INPUT]
+        name             tail
+        path             /var/log/containers/*.log
+        multiline.parser docker, cri
+        tag              kube.*
+        refresh_interval 5
+        mem_buf_limit    10MB
+        skip_long_lines  on
+        db               /var/log/flb_kube.db
+
+    # https://docs.fluentbit.io/manual/pipeline/inputs/systemd
+    # Collect logs from systemd journal for kubelet and containerd services
+    [INPUT]
+        name           systemd
+        tag            sys.*
+        systemd_filter _SYSTEMD_UNIT=kubelet.service
+        systemd_filter _SYSTEMD_UNIT=containerd.service
+        read_from_tail on
+        max_entries    1000
+        db             /var/log/flb_system.db
+
+  # https://docs.fluentbit.io/manual/pipeline/filters
+  filters: |
+    # https://docs.fluentbit.io/manual/pipeline/filters/kubernetes
+    # Enrich logs with Kubernetes metadata
+    # Setting 'labels' to 'on' will include Kubernetes labels in the logs and flatten them into top-level keys
+    # e.g. "kubernetes.labels.app" becomes "kubernetes_labels_app"
+    [FILTER]
+        name        kubernetes
+        match       kube.*
+        merge_log   on
+        keep_log    off
+        labels      on
+        annotations off
+
+    # Filter out overly verbose logs from kube-probe
+    [FILTER]
+        name      grep
+        match     kube.*
+        exclude   kubernetes.container_name kube-probe
+
+    # Use namespace or app label to construct the log index
+    # The log index must end with '-logs' otherwise fluent-bit will not have the permissions to write to it
+    [FILTER]
+        name                modify
+        match               kube.*
+        add_if_key_missing  log_namespace $kubernetes_namespace_name
+        add_if_key_missing  log_app       $kubernetes_labels_app
+        set                 log_index     ${log_app}-logs
+
+  # https://docs.fluentbit.io/manual/pipeline/outputs
+  outputs: |
+    # Send logs to OpenSearch (see https://docs.fluentbit.io/manual/pipeline/outputs/elasticsearch)
+    [OUTPUT]
+        name            es
+        match           kube.*
+        host            {{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local
+        port            9200
+        http_user       {{ opensearch_logger_user}}
+        http_passwd     {{ opensearch_logger_passwd }}
+        index           $log_index
+        type            _doc
+        time_key        @timestamp
+        logstash_format on
+        tls             off
+        tls.verify      off
+
+    [OUTPUT]
+        name            es
+        match           sys.*
+        host            {{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local
+        port            9200
+        http_user       {{ opensearch_logger_user}}
+        http_passwd     {{ opensearch_logger_passwd }}
+        index           system-logs
+        type            _doc
+        time_key        @timestamp
+        logstash_format on
+        tls             off
+        tls.verify      off
+
+serviceMonitor:
+  enabled: true
+  namespace: {{ k3s_monitoring_namespace }}
+  interval: 10s
+  scrapeTimeout: 10s
+  # Metric relabel configs to apply to samples before ingestion.
+  metricRelabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_cluster]
+      targetLabel: cluster
+      action: replace
+  # Relabel configs to apply to samples after ingestion.
+  relabelings:
+    - sourceLabels: [ __meta_kubernetes_namespace ]
+      targetLabel: namespace
+      action: replace
+    - sourceLabels: [ __meta_kubernetes_pod_name ]
+      targetLabel: pod
+      action: replace
+    - sourceLabels: [ __meta_kubernetes_pod_container_name ]
+      targetLabel: container
+      action: replace
+    - sourceLabels: [ __meta_kubernetes_pod_node_name ]
+      targetLabel: nodename
+      action: replace
+    - sourceLabels: [ __meta_kubernetes_service_name ]
+      targetLabel: service
+      action: replace
+
+prometheusRule:
+  enabled: true
+  namespace: {{ k3s_monitoring_namespace }}
+  rules:
+    - alert: NoOutputBytesProcessed
+      expr: rate(fluentbit_output_proc_bytes_total[5m]) == 0
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Fluent Bit output is not processing data{% raw %}
+        message: |
+          Fluent Bit instance {{ $labels.instance }} output plugin {{ $labels.name }} has not processed any bytes for 15 minutes.{% endraw %}
+
+dashboards:
+  enabled: true
+  namespace: {{ k3s_monitoring_namespace }}
+  # These fields are used to tell Grafana's sidecar dashboard importer to pick up dashboards from ConfigMaps or Secrets that match a specific label.
+  # You can check  what the label and value should by running `kubectl get deployment -n monitoring -l app.kubernetes.io/name=grafana -o yaml | grep -A 1 LABEL`
+  labelKey: grafana_dashboard
+  labelValue: "1"

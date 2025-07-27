@@ -197,6 +197,8 @@ longhorn_prepare_disk: false
 # Storage class to use for Prometheus persistent storage
 prom_storage_class: "{{ nfs_storage_class_name }}"
 
+# Last version to work with Raspberry Pi 4
+opensearch_app_version: "2.9.0"
 # Size of the OpenSearch cluster
 opensearch_replicas: 3
 

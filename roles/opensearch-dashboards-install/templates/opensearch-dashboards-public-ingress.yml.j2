@@ -1,0 +1,39 @@
+# Exposes the OpenSearch Dashboards on the public network.
+---
+# Create a certificate for TLS using cert-manager
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-dashboards-pub-cert
+  namespace: {{ k3s_opensearch_namespace }}
+spec:
+  secretName: opensearch-dashboards-pub-cert-secret
+  duration: 2160h # 90 days
+  renewBefore: 360h # Renew 15 days before expiration
+  issuerRef:
+    name: {{ public_tls_issuer}}
+    kind: ClusterIssuer
+  commonName: {{ public_opensearch_dashboard }}
+  dnsNames:
+    - {{ public_opensearch_dashboard }}
+  privateKey:
+    algorithm: ECDSA
+
+---
+# Traefik v2 IngressRoute CRD
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: opensearch-dashboards-public
+  namespace: {{ k3s_opensearch_namespace }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ public_opensearch_dashboard }}`)
+      services:
+        - name: opensearch-dashboards
+          port: 5601
+  tls:
+    secretName: opensearch-dashboards-pub-cert-secret

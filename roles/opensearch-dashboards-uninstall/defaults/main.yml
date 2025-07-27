@@ -1,0 +1,3 @@
+# Default variables used by the opensearch-dashboards-uninstall role
+---
+k3s_opensearch_namespace: "opensearch"

@@ -1,4 +1,4 @@
-# Role definition for installing [OpenSearch](https://opensearch.org/)
+# Role definition for installing [OpenSearch](https://opensearch.org/), a distributed search and analytics engine.
 
 ```
 ├── roles
@@ -8,8 +8,10 @@
 |  |  ├── tasks 
 |  |  |  ├── main.yml  
 |  |  ├── templates
+|  |  |  ├── opensearch-admin-cert.yml.j2
 |  |  |  ├── opensearch-helm-values.yml.j2
 |  |  |  ├── opensearch-rest-api.yml.j2
+|  |  |  ├── opensearch-security-config-secret.yml.j2
 |  |  |  ├── opensearch-transport-cert.yml.j2
 ```
 
@@ -30,19 +32,17 @@ In the context of the DeskPi Cluster, OpenSearch is used to index and search the
 ## Synopsis
 
 This role does the following:
-1. Creates a namespace for the OpenSearch deployment.
-2. Deploys the [OpenSearch Helm chart](https://opensearch.org/docs/latest/install-and-configure/helm/) with values that specify:
+1. If configured, taints nodes for OpenSearch to repel general workloads and reserve those nodes for OpenSearch.
+2. Creates a namespace for the OpenSearch deployment.
+3. Deploys the [OpenSearch Helm chart](https://docs.opensearch.org/docs/latest/install-and-configure/install-opensearch/helm/) with values that specify:
    - the OpenSearch cluster name and node group
    - the OpenSearch version to install
-   - Certificates for the OpenSearch Transport Layer, Rest API and cluster administration
+   - certificates for the OpenSearch Transport Layer, Rest API and cluster administration
    - the OpenSearch cluster size (i.e. number of replicas)
    - the OpenSearch resource limits and requests
    - the OpenSearch PVC size and storage class
-3. Configures the OpenSearch REST API and Transport Layer certificates.
-4. Exposes the OpenSearch REST API via an IngressRoute on the local network
-5. Exposes the OpenSearch Dashboards via:
-   - an IngressRoute on the local network
-   - an IngressRoute on the internet (if `enable_public_opensearch_dashboard` is set to `true`).
+4. Configures the Certificates for the OpenSearch REST API and Transport Layer.
+5. Exposes the OpenSearch REST API via an IngressRoute on the local network
 
 ## Configuration
 
@@ -123,11 +123,25 @@ Configure whether to enable the public Opensearch Dashboard via the variable `en
 enable_public_opensearch_dashboard: true
 ```
 
-Defines the password for the OpenSearch admin user. The password is required, without it installation will fail.
+Define the usernames for the OpenSearch users:
+```yaml
+opensearch_admin_user: "admin"
+opensearch_dashboards_admin_user: "kibanaserver"
+opensearch_dashboards_user: "kibanaro"
+opensearch_logger_user: "logger"
+opensearch_monitoring_user: "monitor"
+opensearch_snapshot_restore_user: "snapshotrestore"
+```
+Define the passwords for the OpenSearch users:
 ```yaml
 opensearch_admin_passwd: "!s3cr3t"
+opensearch_dashboards_admin_passwd: "!s3cr3t"
+opensearch_dashboards_user_passwd: "!s3cr3t"
+opensearch_logger_passwd: "!s3cr3t"
+opensearch_monitoring_passwd: "!s3cr3t"
+opensearch_snapshot_restore_passwd: "!s3cr3t"                
 ```
-*Note that this should be overridden by a vault variable.*
+*Note that these should be overridden by a vault variable.*
 
 Whether to enable prometheus monitoring via plugin. **Important**, the exporter plugin must match the version of OpenSearch.
 ```yaml
@@ -207,7 +221,7 @@ Expected output (example):
 ```
 Look for the `status` field to be `green`, which indicates that the cluster is healthy and all primary and replica shards are allocated.
 
-If the Ingress is failing for some reason, you can also access the REST API directly via the OpenSearch pod:
+If the Ingress is failing for some reason, you can also access the REST API directly via the pod itself
 ```shell
 kubectl -n opensearch exec -ti opensearch-cluster-master-0 -- curl -k -u admin http://localhost:9200/_cluster/health?pretty
 ```

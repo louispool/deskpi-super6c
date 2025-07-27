@@ -29,6 +29,10 @@
       tags: ["always"]
 
   roles:
+    - role: opensearch-dashboards-uninstall
+      tags: ['opensearch-dashboards']
+      when: k3s_enable_logstack
+
     - role: opensearch-uninstall
       tags: ['opensearch', 'logstack']
       when: k3s_enable_logstack

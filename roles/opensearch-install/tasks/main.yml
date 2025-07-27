@@ -20,11 +20,26 @@
 
 - name: Set OpenSearch Password Hashes
   ansible.builtin.set_fact:
-    opensearch_admin_password_hash: "{{ opensearch_admin_passwd | password_hash('bcrypt') }}"
-    opensearch_kibanaserver_password_hash: "{{ opensearch_kibanaserver_passwd | password_hash('bcrypt') }}"
-    opensearch_kibanaro_password_hash: "{{ opensearch_kibanaro_passwd | password_hash('bcrypt') }}"
-    opensearch_logger_password_hash: "{{ opensearch_logger_passwd | password_hash('bcrypt') }}"
-    opensearch_snapshotrestore_password_hash: "{{ opensearch_snapshotrestore_passwd | password_hash('bcrypt') }}"
+    opensearch_admin_passwd_hash: "{{ opensearch_admin_passwd | password_hash('bcrypt') }}"
+    opensearch_dashboards_admin_passwd_hash: "{{ opensearch_dashboards_admin_passwd | password_hash('bcrypt') }}"
+    opensearch_dashboards_user_passwd_hash: "{{ opensearch_dashboards_user_passwd | password_hash('bcrypt') }}"
+    opensearch_logger_passwd_hash: "{{ opensearch_logger_passwd | password_hash('bcrypt') }}"
+    opensearch_monitoring_passwd_hash: "{{ opensearch_monitoring_passwd | password_hash('bcrypt') }}"
+    opensearch_snapshot_restore_passd_hash: "{{ opensearch_snapshot_restore_passwd | password_hash('bcrypt') }}"
+
+- name: Create credentials secret for the OpenSearch Monitoring user
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ k3s_opensearch_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: opensearch-monitoring-creds
+      type: Opaque
+      stringData:
+        username: "{{ opensearch_monitoring_user }}"
+        password: "{{ opensearch_monitoring_passwd }}"
 
 - name: Configure Security Config Secret, Admin Client Certificate, Transport Layer and REST API Ingress for OpenSearch
   kubernetes.core.k8s:
@@ -76,7 +91,7 @@
   uri:
     url: "https://{{ opensearch_rest_api }}/_cluster/health"
     method: GET
-    user: admin
+    user: "{{ opensearch_admin_user }}"
     password: "{{ opensearch_admin_passwd }}"
     force_basic_auth: yes
     validate_certs: yes
@@ -85,10 +100,45 @@
   retries: 10
   delay: 15
   until: cluster_status.status == 200 and ('status' in cluster_status.json and cluster_status.json.status in ['green', 'yellow'])
+  ignore_errors: yes # We handle the failure gracefully below
 
 - name: Print response if health check fails
-  debug:
-    var: cluster_status
+  fail:
+    msg: "Cluster failed health check with status: {{ cluster_status }}"
   when: cluster_status is failed
+
+- name: Create PrometheusRule for OpenSearch metrics
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PrometheusRule
+      metadata:
+        name: opensearch-rules
+        namespace: "{{ k3s_monitoring_namespace }}"
+        labels:
+          release: prometheus
+      spec:
+        groups:
+          - name: opensearch.rules
+            rules:
+              - alert: OpenSearchNodeDown
+                expr: up{job="opensearch"} == 0
+                for: 1m
+                labels:
+                  severity: critical
+                annotations:
+                  summary: OpenSearch node is down
+                  description: No response from OpenSearch metrics endpoint
+              - alert: OpenSearchHighHeapUsage
+                expr: opensearch_jvm_memory_used_bytes{area="heap"} / opensearch_jvm_memory_committed_bytes{area="heap"} > 0.9
+                for: 2m
+                labels:
+                  severity: warning
+                annotations:
+                  summary: JVM heap usage is over 90%
+                  description: OpenSearch instance is using a high percentage of its heap
+  when: opensearch_enable_monitoring and k3s_monitoring_namespace is defined
+
 
 

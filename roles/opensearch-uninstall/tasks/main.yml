@@ -1,5 +1,9 @@
 # Tasks for uninstalling OpenSearch
 ---
+- name: Uninstall OpenSearch Dashboards
+  include_role:
+    name: opensearch-dashboards-uninstall
+
 - name: Uninstall OpenSearch with Helm
   kubernetes.core.helm:
     name: "{{ opensearch_cluster_name }}"
@@ -48,13 +52,29 @@
       - app.kubernetes.io/name=opensearch
     state: absent
 
-- name: Delete OpenSearch admin secret
+- name: Get a list of all Secrets in the OpenSearch namespace
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ k3s_opensearch_namespace }}"
+  register: secrets
+
+- name: Delete all Secrets in the OpenSearch namespace
   kubernetes.core.k8s:
     api_version: v1
     kind: Secret
-    name: opensearch-admin-secret
-    namespace: "{{ k3s_opensearch_namespace }}"
     state: absent
+    name: "{{ item }}"
+    namespace: "{{ k3s_opensearch_namespace }}"
+  loop: "{{ secrets | json_query('resources[*].metadata.name') }}"
+
+- name: Remove PrometheusRule for OpenSearch metrics
+  kubernetes.core.k8s:
+    api_version: monitoring.coreos.com/v1
+    kind: PrometheusRule
+    state: absent
+    name: opensearch-rules
+    namespace: "{{ k3s_monitoring_namespace }}"
 
 - name: Untaint OpenSearch nodes
   kubernetes.core.k8s_taint:

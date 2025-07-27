@@ -1,0 +1,105 @@
+# Tasks for the installation of FluentBit (see https://github.com/fluent/helm-charts/tree/main/charts/fluent-bit)
+# Requires that OpenSearch is already installed and running
+---
+- name: Validate that the OpenSearch Rest API is reachable
+  uri:
+    url: "https://{{ opensearch_rest_api }}/_cluster/health"
+    method: GET
+    user: "{{ opensearch_logger_user }}"
+    password: "{{ opensearch_logger_passwd }}"
+    force_basic_auth: yes
+    validate_certs: yes
+    status_code: 200
+  register: cluster_status
+  retries: 10
+  delay: 15
+  until: cluster_status.status == 200 and ('status' in cluster_status.json and cluster_status.json.status in ['green', 'yellow'])
+  ignore_errors: no # Fail if the OpenSearch Rest API is not reachable
+
+- name: Create ISM policy for Fluent Bit log retention
+  uri:
+    url: "https://{{ opensearch_rest_api }}/_plugins/_ism/policies/fluentbit-retention"
+    method: PUT
+    user: "{{ opensearch_admin_user }}"
+    password: "{{ opensearch_admin_passwd }}"
+    force_basic_auth: yes
+    validate_certs: yes
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      policy:
+        description: "Retention policy for Fluent Bit log indexes"
+        default_state: "hot"
+        states:
+          - name: "hot"
+            actions:
+              - rollover:
+                  min_size: "{{ log_rollover_size }}"
+            transitions:
+              - state_name: "delete"
+                conditions:
+                  min_index_age: "{{ log_retention_period }}"
+          - name: "delete"
+            actions:
+              - delete: {}
+            transitions: []
+  register: ism_policy_result
+  retries: 5
+  delay: 5
+  until: ism_policy_result.status == 200 or ism_policy_result.status == 201
+
+- name: Create index template to apply ISM policy
+  uri:
+    url: "https://{{ opensearch_rest_api }}/_index_template/fluentbit-template"
+    method: PUT
+    user: "{{ opensearch_admin_user }}"
+    password: "{{ opensearch_admin_passwd }}"
+    force_basic_auth: yes
+    validate_certs: yes
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      index_patterns:
+        - "*-logs"
+      template:
+        settings:
+          plugins.index_state_management.policy_id: "fluentbit-retention"
+  register: ism_template_result
+  retries: 5
+  delay: 5
+  until: ism_template_result.status == 200 or ism_template_result.status == 201
+
+- name: Create the Logging namespace
+  kubernetes.core.k8s:
+    name: "{{ k3s_logging_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Add Fluent chart repo.
+  kubernetes.core.helm_repository:
+    name: fluent
+    repo_url: "https://fluent.github.io/helm-charts"
+
+- name: Deploy Fluent Bit Helm chart
+  kubernetes.core.helm:
+    name: fluent-bit
+    chart_ref: fluent/fluent-bit
+    release_namespace: "{{ k3s_logging_namespace }}"
+    update_repo_cache: true
+    state: present
+    values: "{{ lookup('template', 'templates/fluentbit-helm-values.yml.j2') | from_yaml }}"
+    wait: yes
+
+- name: Wait for Pods to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ k3s_logging_namespace }}"
+    wait: yes
+    wait_sleep: 10
+    wait_timeout: 600
+    wait_condition:
+      type: Ready
+      status: "True"

@@ -1,0 +1,15 @@
+# Tasks for uninstalling the OpenSearch Dashboards
+---
+- name: Uninstall OpenSearch Dashboards with Helm
+  kubernetes.core.helm:
+    name: opensearch-dashboards
+    release_namespace: "{{ k3s_opensearch_namespace }}"
+    state: absent
+    wait: true
+
+- name: Delete Opensearch-Dashboards credentials secret
+  kubernetes.core.k8s:
+    state: absent
+    namespace: "{{ k3s_opensearch_namespace }}"
+    kind: Secret
+    name: opensearch-dashboards-creds

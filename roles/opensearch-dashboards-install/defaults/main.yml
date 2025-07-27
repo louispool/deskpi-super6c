@@ -1,0 +1,29 @@
+# Default variables used by the opensearch-dashboards-install role
+---
+k3s_opensearch_namespace: "opensearch"
+
+# From these variables Kubernetes will create resources named `opensearch-cluster-master`
+opensearch_cluster_name: "opensearch-cluster"
+opensearch_node_group: "master"
+
+# Last version to work with Raspberry Pi 4
+opensearch_app_version: "2.9.0"
+
+# Endpoint for the OpenSearch Dashboard on the local network
+opensearch_dashboard: "dashboard.opensearch.localnet"
+# Endpoint for the OpenSearch Dashboard on the public network
+public_opensearch_dashboard:
+# Whether to allow access to the Opensearch dashboards over the public network
+enable_public_opensearch_dashboard: false
+
+# Security credentials. Override with Ansible Vault variables.
+opensearch_dashboards_admin_passwd: "!s3cr3t"
+# Must be 32 alphanumeric characters - idealy random for cryptographic strength
+opensearch_dashboards_cookie_secret: "G7fkA9Wd4MnXb2TfY8HrZqJLsE3Vc6P0"
+
+# Configuration properties thatr define the resource requirements of the OpenSearch pods
+opensearch_dashboards_resources_limits_memory: "2Gi"
+opensearch_dashboards_resources_limits_cpu: "1000m"
+
+opensearch_dashboards_requests_memory: "512Mi"
+opensearch_dashboards_requests_cpu: "100m"

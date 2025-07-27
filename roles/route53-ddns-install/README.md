@@ -21,7 +21,8 @@ This role does the following:
 
 1. Configures the AWS environment for Route53 DNS updates.
 2. Creates a managed IAM policy for the Route53 DDNS updates and attaches it to the IAM user.
-3. Generates a script and cronjob to update Route53 DNS records.
+3. Generates a script to `/usr/local/bin/update_route53_ddns.sh` and 
+4. Creates cronjob to update Route53 DNS records every 5 minutes.
                                                                 
 ## Configuration
 

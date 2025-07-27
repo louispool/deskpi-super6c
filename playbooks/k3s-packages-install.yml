@@ -83,9 +83,17 @@
       when: k3s_enable_block_storage
 
     - role: prometheus-install
-      tags: ['prometheus']
+      tags: ['prometheus', 'monitoring']
       when: k3s_enable_monitoring
 
     - role: opensearch-install
       tags: ['opensearch', 'logstack']
+      when: k3s_enable_logstack
+
+    - role: opensearch-dashboards-install
+      tags: ['opensearch-dashboards', 'opensearch', 'logstack']
+      when: k3s_enable_logstack
+
+    - role: fluentbit-install
+      tags: ['fluentbit', 'logstack']
       when: k3s_enable_logstack

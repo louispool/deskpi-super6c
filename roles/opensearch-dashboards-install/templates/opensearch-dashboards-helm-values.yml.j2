@@ -1,0 +1,36 @@
+# OpenSearch Dashboards Helm Chart Values (see https://github.com/opensearch-project/helm-charts/blob/main/charts/opensearch-dashboards/values.yaml)
+---
+image:
+  tag: "{{ opensearch_app_version }}" # Use the same version as OpenSearch
+
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: {{ opensearch_dashboards_resources_limits_cpu }}
+    memory: {{ opensearch_dashboards_resources_limits_memory }}
+  requests:
+    cpu: {{ opensearch_dashboards_requests_cpu }}
+    memory: {{ opensearch_dashboards_requests_memory }}
+
+opensearchHosts: "http://{{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local:9200"
+
+opensearchAccount:
+  secret: "opensearch-dashboards-creds"
+
+config:
+  opensearch_dashboards.yml: |
+
+    # Listen on all interfaces
+    server.host: "0.0.0.0"
+    server.name: "opensearch-dashboards"
+    server.ssl.enabled: false
+
+    # Disregard validity of SSL certificates
+    opensearch.ssl.verificationMode: none
+
+    opensearchDashboards.branding:
+      applicationTitle: "OpenSearch Dashboards"
+
+    logging.dest: stdout
+    logging.verbose: true

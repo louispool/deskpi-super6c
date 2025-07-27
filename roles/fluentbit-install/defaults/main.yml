@@ -1,0 +1,36 @@
+# Default variables used by the fluentbit-install role
+---
+# Namespace to install Fluent Bit and its dependencies
+k3s_logging_namespace: "logging"
+# Namespace where the monitoring stack is installed (e.g., Prometheus, Grafana)
+k3s_monitoring_namespace: "monitoring"
+# Namespace where the OpenSearch cluster is installed
+k3s_opensearch_namespace: "opensearch"
+
+# OpenSearch cluster naming details
+# Necessary for fluentbit pods to communicate directly with the OpenSearch cluster pods using the cluster-local DNS
+opensearch_cluster_name: "opensearch-cluster"
+opensearch_node_group: "master"
+
+# Endpoint for the OpenSearch REST API on the local network
+opensearch_rest_api: "api.opensearch.localnet"
+
+# Credentials necessary for fluentbit to create and write logs to OpenSearch
+opensearch_logger_user: "logger"
+opensearch_logger_passwd: "!s3cr3t"
+
+opensearch_admin_user: "admin"
+opensearch_admin_passwd: "!s3cr3t"
+
+# Size at which the log index will be rotated
+log_rollover_size: "5gb"
+# How long to keep the logs before they are deleted
+log_retention_period: "7d"
+
+
+
+
+
+
+
+

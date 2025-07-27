@@ -5,9 +5,7 @@ clusterName: {{ opensearch_cluster_name }}
 nodeGroup: {{ opensearch_node_group }}
 
 image:
-  repository: opensearchproject/opensearch
   tag: "{{ opensearch_app_version }}"
-  pullPolicy: IfNotPresent
 
 # Introduce staggered startup to avoid race conditions that can occur when a cluster with too many replicas all start at once
 initContainers:
@@ -161,15 +159,19 @@ service:
   type: ClusterIP
 
 {% if opensearch_enable_monitoring is sameas true %}
-# Installs the prometheus-exporter plugin needed for serving metrics. Important: the versions must match.
+# Installs the prometheus-exporter plugin needed for serving metrics.
+# NOTE: OpenSearch plugins much match exactly in major.minor.path version to the OpenSearch instance it's running in, e.g. plugins versions 2.8.0.x work only with OpenSearch 2.8.0,
 # At the time of writing there is no exporter plugin matching v3.0.0 of OpenSearch.
 plugins:
   enabled: true
   installList:
-    - https://github.com/Virtimo/prometheus-exporter-plugin-for-opensearch/releases/download/v{{ opensearch_app_version }}/prometheus-exporter-{{ opensearch_app_version}}.zip
-
-metrics:
+    # For releases up to v2.17.1
+    - https://github.com/opensearch-project/opensearch-prometheus-exporter/releases/download/{{ opensearch_app_version }}.0/prometheus-exporter-{{ opensearch_app_version }}.0.zip
+    # For releases from v2.18.0 to v.2.19.1
+    # - https://github.com/Virtimo/prometheus-exporter-plugin-for-opensearch/releases/download/{{ opensearch_app_version }}/prometheus-exporter-{{ opensearch_app_version}}.0.zip
+serviceMonitor:
   enabled: true
-  service:
-    type: ClusterIP
+  basicAuth:
+    enabled: true
+    existingSecret: opensearch-monitoring-creds
 {% endif %}

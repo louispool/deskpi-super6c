@@ -10,19 +10,24 @@ opensearch_chart_version: "2.34.0"
 opensearch_cluster_name: "opensearch-cluster"
 opensearch_node_group: "master"
 
-opensearch_dashboard: "dashboard.opensearch.localnet"
+# Endpoint for the OpenSearch REST API on the local network
 opensearch_rest_api: "api.opensearch.localnet"
 
-# Whether to allow access to the Opensearch dashboards over the public network
-enable_public_opensearch_dashboard: false
-public_opensearch_dashboard:
+# OpenSearch Users
+opensearch_admin_user: "admin"
+opensearch_dashboards_admin_user: "kibanaserver"
+opensearch_dashboards_user: "kibanaro"
+opensearch_logger_user: "logger"
+opensearch_monitoring_user: "monitor"
+opensearch_snapshot_restore_user: "snapshotrestore"
 
 # Security credentials. Override with Ansible Vault variables.
 opensearch_admin_passwd: "!s3cr3t"
-opensearch_kibanaserver_passwd: "!s3cr3t"
-opensearch_kibanaro_passwd: "!s3cr3t"
+opensearch_dashboards_admin_passwd: "!s3cr3t"
+opensearch_dashboards_user_passwd: "!s3cr3t"
 opensearch_logger_passwd: "!s3cr3t"
-opensearch_snapshotrestore_passwd: "!s3cr3t"
+opensearch_monitoring_passwd: "!s3cr3t"
+opensearch_snapshot_restore_passwd: "!s3cr3t"
 
 # Size of the OpenSearch cluster
 opensearch_replicas: 3
@@ -39,7 +44,7 @@ opensearch_pvc_size: "30Gi"
 opensearch_storage_class: "longhorn"
 
 # Whether to enable prometheus monitoring via plugin. Important, the exporter plugin must match OpenSearch's version.
-opensearch_enable_monitoring: false
+opensearch_enable_monitoring: true
 
 # If you have applied the corresponding taint to certain nodes in your cluster to
 # repel general workloads and reserve those nodes for OpenSearch via

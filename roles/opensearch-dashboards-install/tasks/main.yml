@@ -1,0 +1,49 @@
+# Tasks for the installation of the OpenSearch Dashboards (see https://github.com/opensearch-project/helm-charts/blob/main/charts/opensearch-dashboards/README.md)
+# Requirement is that OpenSearch is already installed and running
+---
+- name: Check that the OpenSearch namespace exists
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ k3s_opensearch_namespace }}"
+  register: ns_info
+
+- name: Fail if namespace does not exist
+  fail:
+    msg: "Namespace '{{ k3s_opensearch_namespace }}' does not exist."
+  when: ns_info.resources | length == 0
+
+- name: Create Opensearch-Dashboards credentials secret
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ k3s_opensearch_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: opensearch-dashboards-creds
+      type: Opaque
+      stringData:
+        username: "kibanaserver"
+        password: "{{ opensearch_dashboards_admin_passwd }}"
+        cookie: "{{ opensearch_dashboards_cookie_secret }}"
+
+- name: Deploy OpenSearch-Dashboards Helm chart
+  kubernetes.core.helm:
+    name: opensearch-dashboards
+    chart_ref: opensearch/opensearch-dashboards
+    release_namespace: "{{ k3s_opensearch_namespace }}"
+    create_namespace: false
+    values: "{{ lookup('template', 'opensearch-dashboards-helm-values.yml.j2') | from_yaml }}"
+    update_repo_cache: true
+    state: present
+    wait: true
+
+- name: Configure IngressRoutes to Dashboards
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/' + item ) }}"
+    state: present
+  with_items:
+    - opensearch-dashboards-ingress.yml.j2
+    - opensearch-dashboards-public-ingress.yml.j2
+
