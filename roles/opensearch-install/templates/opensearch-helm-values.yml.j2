@@ -171,6 +171,7 @@ plugins:
     # - https://github.com/Virtimo/prometheus-exporter-plugin-for-opensearch/releases/download/{{ opensearch_app_version }}/prometheus-exporter-{{ opensearch_app_version}}.0.zip
 serviceMonitor:
   enabled: true
+  interval: {{ opensearch_metrics_scrape_interval | default('30s') }}
   basicAuth:
     enabled: true
     existingSecret: opensearch-monitoring-creds

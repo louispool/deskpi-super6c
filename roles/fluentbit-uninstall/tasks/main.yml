@@ -1,0 +1,84 @@
+# Tasks for uninstalling Fluent Bit from the cluster
+---
+# Remove Fluent Bit Helm release
+- name: Uninstall Fluent Bit Helm chart
+  kubernetes.core.helm:
+    name: fluent-bit
+    release_namespace: "{{ k3s_logging_namespace }}"
+    state: absent
+    wait: true
+
+- name: Get a list of all ConfigMaps in the Logging namespace
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ k3s_logging_namespace }}"
+  register: configmaps
+
+- name: Delete all ConfigMaps in the Logging namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    state: absent
+    name: "{{ item }}"
+    namespace: "{{ k3s_logging_namespace }}"
+  loop: "{{ configmaps | json_query('resources[*].metadata.name') }}"
+
+# Delete logging namespace (only if it's dedicated to Fluent Bit)
+- name: Delete logging namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ k3s_logging_namespace }}"
+    state: absent
+
+# Delete the log indices
+- name: Get all OpenSearch indices
+  uri:
+    url: "https://{{ opensearch_rest_api }}/_cat/indices?format=json"
+    method: GET
+    user: "admin"
+    password: "{{ opensearch_admin_passwd }}"
+    force_basic_auth: yes
+    validate_certs: yes
+    return_content: yes
+    body_format: json
+  register: opensearch_indices
+
+- name: Delete all Fluent Bit indices
+  uri:
+    url: "https://{{ opensearch_rest_api }}/{{ item.index }}"
+    method: DELETE
+    user: "admin"
+    password: "{{ opensearch_admin_passwd }}"
+    force_basic_auth: yes
+    validate_certs: yes
+    status_code: [200, 404]
+  loop: "{{ opensearch_indices.content | default('[]') | from_json | selectattr('index', 'search', '^logs-|fluent-bit|logstash|system-logs') | list }}"
+  loop_control:
+    label: "{{ item.index }}"
+  when: opensearch_indices is defined and opensearch_indices.content is defined
+
+# Delete Fluent Bit ISM policy from OpenSearch
+- name: Delete Fluent Bit ISM policy
+  uri:
+    url: "https://{{ opensearch_rest_api }}/_plugins/_ism/policies/fluentbit-retention"
+    method: DELETE
+    user: "admin"
+    password: "{{ opensearch_admin_passwd }}"
+    force_basic_auth: yes
+    validate_certs: yes
+    status_code: [200, 404]
+  register: delete_ism_policy_result
+
+# Delete Fluent Bit index template from OpenSearch
+- name: Delete Fluent Bit index template
+  uri:
+    url: "https://{{ opensearch_rest_api }}/_index_template/fluentbit-template"
+    method: DELETE
+    user: "admin"
+    password: "{{ opensearch_admin_passwd }}"
+    force_basic_auth: yes
+    validate_certs: yes
+    status_code: [200, 404]
+  register: delete_index_template_result

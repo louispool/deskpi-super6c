@@ -1,0 +1,57 @@
+# Lua scripts for Fluent Bit configuration
+# See https://docs.fluentbit.io/manual/data-pipeline/filters/lua
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentbit-lua-scripts
+  namespace: {{ k3s_logging_namespace }}
+  labels:
+    app.kubernetes.io/name: fluent-bit
+data:
+  pretty_print.lua: |
+    function table_to_string(t, indent)
+        if not indent then
+            indent = 0
+        end
+        local str = ""
+        for k, v in pairs(t) do
+            str = str .. string.rep("  ", indent) .. tostring(k) .. ": "
+            if type(v) == "table" then
+                str = str .. "\n" .. table_to_string(v, indent + 1)
+            else
+                str = str .. tostring(v) .. "\n"
+            end
+        end
+        return str
+    end
+
+    function pretty_print(tag, timestamp, record)
+        print("\n--- BEGIN RECORD ---\n" .. table_to_string(record) .. "--- END RECORD ---\n")
+        return 0, record
+    end
+  extract_kubernetes.lua: |
+    function extract_kubernetes(tag, timestamp, record)
+        local kubernetes = record["kubernetes"]
+        if kubernetes then
+            record["k8s_namespace"] = kubernetes["namespace_name"]
+            record["k8s_pod"] = kubernetes["pod_name"]
+            record["k8s_container"] = kubernetes["container_name"]
+            local labels = kubernetes["labels"]
+            if labels then
+                if labels["app"] then
+                    record["k8s_app"] = labels["app"]
+                elseif labels["app.kubernetes.io/name"] then
+                    record["k8s_app"] = labels["app.kubernetes.io/name"]
+                elseif labels["app.kubernetes.io/instance"] then
+                    record["k8s_app"] = labels["app.kubernetes.io/instance"]
+                else
+                    record["k8s_app"] = record["k8s_container"]
+                end
+            else
+                record["k8s_app"] = record["k8s_container"]
+            end
+            record["log_prefix"] = "logs-" .. record["k8s_app"]
+        end
+        return 2, timestamp, record
+    end

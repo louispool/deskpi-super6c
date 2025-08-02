@@ -29,7 +29,7 @@
     kind: PersistentVolumeClaim
     state: absent
     name: "{{ item }}"
-  loop: "{{ pvc_list.resources | selectattr('spec.storageClassName', '==', 'longhorn') | map(attribute='metadata.name')}}"
+  loop: "{{ pvc_list.resources | selectattr('spec.storageClassName', '==', 'longhorn') | map(attribute='metadata.name') }}"
 
 - name: Delete Longhorn Storage Class
   kubernetes.core.k8s:

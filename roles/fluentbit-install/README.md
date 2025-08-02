@@ -99,6 +99,134 @@ log_retention_period: "7d"
 Log rollover and retention are configured via an Index State Management (ISM) policy in OpenSearch, which is created by this role.
 When an index reaches the specified size, it is rolled over to a new index. The old index is renamed and retained for the specified period before being deleted.
 
+### [Fluent Bit Configuration File](https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file)
+
+The Fluent Bit configuration file is templated using Jinja2 and can be found in the [`templates/fluentbit-helm-values.yml.j2`](templates/fluentbit-helm-values.yml.j2) file. After installation, you can 
+find the rendered configuration in the `fluent-bit` ConfigMap in the `logging` namespace. 
+
+To effect changes you can edit the ConfigMap and restart the Fluent Bit pods, since Fluent Bit is installed as a DaemonSet, it will restart automatically after pod deletion.
+```shell
+kubectl delete pod -l app.kubernetes.io/name=fluent-bit -n {{ k3s_logging_namespace }}
+```
+        
+#### A note on Variables and Record Accessors
+
+The documentation is not clear on this, however, from my own experience I have determined that *variables* refer only to environment variables, while *record accessors* refer to fields in the log. 
+
+Environment [variables](https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/variables) can be accessed via the `${VAR_NAME}` syntax (note the braces), while 
+[record accessors](https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/record-accessor) use the `$field` syntax and `$field['sub-field']` to access a sub-field in a 
+nested structure.
+
+For example, given you are using the [`kubernetes` filter plugin](https://docs.fluentbit.io/manual/data-pipeline/filters/kubernetes) to enrich logs with Kubernetes metadata, you can access the 
+namespace of the pod that emitted the log record using the syntax: 
+```
+$kubernetes['namespace_name']
+```
+
+When setting key-value pairs in a [Filter Plugin](https://docs.fluentbit.io/manual/data-pipeline/filters) like `modify` you are not setting variables, but rather modifying the log record itself. 
+
+I have also discovered that accessing sub-fields in a nested structure using the `$field['sub-field']` syntax is not supported in all cases. Often, you can only access the top-level fields 
+of the log record - therefore it is recommended to use [lua scripts](templates/fluentbit-lua-configmap.yaml.j2) to manipulate the log record - if you need to access sub-fields in a nested structure.
+
+Additionally, unless a configuration parameter of plugin explicitly states that it supports *record accessor* syntax, you cannot assign a value to that parameter using the `$field['sub-field']` syntax.
+
+For example, the `index` parameter in the `elasticsearch` output plugin does not support *record accessor* syntax, so given that you have set a log record called `log_prefix` the following will **not** work:
+```
+  Name  es
+  Match *
+  Host  192.168.2.3
+  Port  9200
+  index: $log_prefix
+```
+
+It will set the index name to the literal string **"$log_prefix"**, to which Elasticsearch will respond with a Bad Request error. Instead, you should enable `logstash_format` and set the `logstash_prefix_key` - 
+which accepts the record accessors.
+```
+  Name  es
+  Match *
+  Host  192.168.2.3
+  Port  9200
+  logstash_format: on
+  logstash_prefix_key: $log_prefix
+```
+
+## Testing
+            
+To verify that Fluent Bit is functioning correctly after installation, follow these steps:
+
+#### 1. Check Fluent-Bit Pods Are Running:
+```shell
+kubectl get pods -n {{ k3s_logging_namespace }}
+```
+All pods should show STATUS: Running and READY: 1/1 (or more if multi-container).
+To see logs:
+```shell
+kubectl logs -n {{ k3s_logging_namespace }} -l app.kubernetes.io/name=fluent-bit
+```
+Look for signs of successful input/output processing — e.g., entries like:
+```
+[info] [output:es:es.0] HTTP status=200
+```
+
+#### 2. Check Logs Are Being Collected
+   
+If you're collecting logs from containers:
+```shell
+kubectl logs -n kube-system -l app.kubernetes.io/name=fluent-bit
+```
+You should see log records being parsed and processed, e.g.:
+```
+[info] [input:tail:tail.0] inotify_fs_add(): ... name=/var/log/containers/*.log
+```
+If you enabled systemd as an input, also look for:
+```
+[info] [input:systemd:systemd.0] Successfully opened journal
+```
+
+#### 3. Verify Indexes in OpenSearch
+
+Run this via API or with curl:
+```
+curl -u admin:your-password -k "https://{{ opensearch_rest_api }}/_cat/indices?v"
+```
+
+Look for indices like:
+```plaintext
+logs-<app-name>-YYYY.MM.DD
+```            
+Or whatever your configured pattern.
+
+#### 4. Check OpenSearch Index Template
+```shell
+curl -u admin:your-password -k "https://{{ opensearch_rest_api }}/_index_template/fluentbit-template?pretty"
+```
+You should see a template with:
+
+```json
+"settings": {
+"plugins.index_state_management.policy_id": "fluentbit-retention"
+}
+```
+
+#### 5. Confirm Log Entries in OpenSearch
+
+Use OpenSearch Dashboards or this query:
+```shell    
+curl -u admin:your-password -k "https://{{ opensearch_rest_api }}/logs-*/_search?pretty" -H 'Content-Type: application/json' -d '{ "size": 1, "sort": [{ "@timestamp": "desc" }] }'
+```
+You should get recent log events.
+
+#### 6. Grafana Integration (Optional)
+
+If you have imported a Fluent Bit dashboard in Grafana:
+
+- Navigate to it
+- Check panels like "Logs Ingested", "Error Rate", etc.
+
+If panels show `No data`, it's often a sign of:
+
+- Metric output not being enabled in Fluent Bit
+- ServiceMonitor misconfiguration
 
 
 

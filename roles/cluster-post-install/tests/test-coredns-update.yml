@@ -31,7 +31,7 @@
 
     - name: Parse coredns manifest YAML
       ansible.builtin.set_fact:
-        coredns_manifest_parsed: "{{ coredns_manifest_raw.content | b64decode | from_yaml_all }}"
+        coredns_manifest_parsed: "{{ coredns_manifest_raw.content | b64decode | from_yaml }}"
 
     - name: Update coredns manifest data
       ansible.builtin.set_fact:

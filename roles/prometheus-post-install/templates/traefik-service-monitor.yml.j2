@@ -3,16 +3,16 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  name: traefik-service-monitor
+  namespace: {{ k3s_traefik_namespace }}
   labels:
     app: traefik
-    release: monitoring
-  name: traefik-prometheus-service-monitor
-  namespace: {{ k3s_traefik_namespace }}
+    release: kube-prometheus-stack
 spec:
-  jobLabel: app.kubernetes.io/name
   endpoints:
     - port: metrics
       path: /metrics
+      interval: {{ traefik_metrics_scrape_interval | default('30s') }}
   namespaceSelector:
     matchNames:
       - {{ k3s_traefik_namespace }}

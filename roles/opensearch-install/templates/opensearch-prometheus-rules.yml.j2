@@ -1,0 +1,32 @@
+# Prometheus rules for OpenSearch monitoring
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: opensearch-rules
+  namespace: "{{ k3s_monitoring_namespace }}"
+  labels:
+    release: kube-prometheus-stack
+    prometheus: opensearch
+    role: alert-rules
+spec:
+  groups:
+    - name: opensearch.rules
+      rules:
+        - alert: OpenSearchNodeDown
+          expr: up{job="opensearch"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: OpenSearch node is down
+            description: No response from OpenSearch metrics endpoint
+
+        - alert: OpenSearchHighHeapUsage
+          expr: opensearch_jvm_memory_used_bytes{area="heap"} / opensearch_jvm_memory_committed_bytes{area="heap"} > 0.9
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: JVM heap usage is over 90%
+            description: OpenSearch instance is using a high percentage of its heap

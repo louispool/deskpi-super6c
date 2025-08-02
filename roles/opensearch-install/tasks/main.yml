@@ -43,9 +43,9 @@
 
 - name: Configure Security Config Secret, Admin Client Certificate, Transport Layer and REST API Ingress for OpenSearch
   kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/' + item ) }}"
+    definition: "{{ lookup('template', 'templates/' + item) | from_yaml_all }}"
     state: present
-  with_items:
+  loop:
     - opensearch-security-config-secret.yml.j2
     - opensearch-transport-cert.yml.j2
     - opensearch-admin-cert.yml.j2
@@ -75,6 +75,12 @@
     state: present
     values: "{{ lookup('template', 'templates/opensearch-helm-values.yml.j2') | from_yaml }}"
     wait: yes
+    atomic: yes
+    timeout: "10m0s"
+  register: helm_result
+  retries: 3
+  delay: 60
+  until: helm_result is succeeded
 
 - name: Wait for Pods to be ready
   kubernetes.core.k8s_info:
@@ -109,36 +115,23 @@
 
 - name: Create PrometheusRule for OpenSearch metrics
   kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'templates/opensearch-prometheus-rules.yml.j2') | from_yaml_all }}"
     state: present
-    definition:
-      apiVersion: monitoring.coreos.com/v1
-      kind: PrometheusRule
-      metadata:
-        name: opensearch-rules
-        namespace: "{{ k3s_monitoring_namespace }}"
-        labels:
-          release: kube-prometheus-stack
-      spec:
-        groups:
-          - name: opensearch.rules
-            rules:
-              - alert: OpenSearchNodeDown
-                expr: up{job="opensearch"} == 0
-                for: 1m
-                labels:
-                  severity: critical
-                annotations:
-                  summary: OpenSearch node is down
-                  description: No response from OpenSearch metrics endpoint
-              - alert: OpenSearchHighHeapUsage
-                expr: opensearch_jvm_memory_used_bytes{area="heap"} / opensearch_jvm_memory_committed_bytes{area="heap"} > 0.9
-                for: 2m
-                labels:
-                  severity: warning
-                annotations:
-                  summary: JVM heap usage is over 90%
-                  description: OpenSearch instance is using a high percentage of its heap
+
   when: opensearch_enable_monitoring and k3s_monitoring_namespace is defined
 
-
-
+- name: Upload OpenSearch Grafana dashboard
+  uri:
+    url: "https://{{ grafana_dashboard }}/api/dashboards/db"
+    method: POST
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_passwd }}"
+    force_basic_auth: true
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      dashboard: "{{ lookup('file', 'files/opensearch-grafana-dashboard.json') | from_json }}"
+      overwrite: true
+    validate_certs: false
+  when: opensearch_enable_monitoring and k3s_monitoring_namespace is defined

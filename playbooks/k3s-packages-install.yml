@@ -53,7 +53,7 @@
   pre_tasks:
     - name: Include vault variables
       include_vars: "vars/vault.yml"
-      tags: ["always"]
+      tags: ['always']
 
     - name: Ensure Helm Diff Plugin is installed
       kubernetes.core.helm_plugin:
@@ -84,6 +84,10 @@
 
     - role: prometheus-install
       tags: ['prometheus', 'monitoring']
+      when: k3s_enable_monitoring
+
+    - role: prometheus-post-install
+      tags: ['prometheus-post', 'prometheus', 'monitoring']
       when: k3s_enable_monitoring
 
     - role: opensearch-install

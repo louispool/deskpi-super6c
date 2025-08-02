@@ -13,7 +13,7 @@
 
 - name: Parse CoreDNS manifest YAML
   ansible.builtin.set_fact:
-    coredns_manifest_parsed: "{{ coredns_manifest_raw.content | b64decode | from_yaml_all }}"
+    coredns_manifest_parsed: "{{ coredns_manifest_raw.content | b64decode | from_yaml }}"
   no_log: true
 
 - name: Update CoreDNS deployment replicas to 2

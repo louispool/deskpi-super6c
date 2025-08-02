@@ -11,7 +11,8 @@
 │  |  |  |  ├── main.yml  
 │  |  |  ├── templates
 │  |  |  |  ├── longhorn-helm-values.yml.j2
-│  |  |  |  ├── longhorn-ui-ingress.yml.j2
+│  |  |  |  ├── longhorn-dashboard.yml.j2
+│  |  |  |  ├── longhorn-dashboard-public.yml.j2
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for

@@ -1,0 +1,53 @@
+# Prometheus rules for Traefik monitoring
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: traefik-rules
+  namespace: {{ k3s_monitoring_namespace }}
+  labels:
+    release: kube-prometheus-stack
+    prometheus: traefik
+    role: alert-rules
+spec:
+  groups:
+    - name: traefik.rules
+      rules:{% raw %}
+        - alert: TraefikDown
+          expr: up{job="traefik"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Traefik is down"
+            description: "Traefik instance {{ $labels.instance }} is not responding for more than 2 minutes."
+
+        - alert: TraefikHigh5xxRate
+          expr: |
+            rate(traefik_service_requests_total{code=~"5.."}[5m]) > 0.05
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High rate of 5xx errors"
+            description: "Traefik is returning a high rate of 5xx errors on {{ $labels.service }}."
+
+        - alert: TraefikLatencyHigh
+          expr: |
+            histogram_quantile(0.95, sum(rate(traefik_service_request_duration_seconds_bucket[5m])) by (le, service)) > 1
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Traefik high latency"
+            description: "Traefik 95th percentile latency is over 1s on service {{ $labels.service }}."
+
+        - alert: TraefikConfigReloadFailure
+          expr: |
+            increase(traefik_config_reloads_failure_total[5m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Traefik failed to reload config"
+            description: "There were configuration reload errors in the past 5 minutes."{% endraw %}

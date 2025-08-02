@@ -16,6 +16,11 @@ resources:
     memory: 100Mi
     cpu: 100m
 
+rbac:
+  create: true
+  nodeAccess: true
+  eventsAccess: false
+
 # Set the flush time in `seconds.nanoseconds`.
 # The engine loop uses a Flush timeout to define when it's required to flush the records
 # ingested by input plugins through the defined output plugins.
@@ -27,6 +32,17 @@ logLevel: info
 
 # TCP Port for the HTTP Server.
 metricsPort: 2020
+
+# Volumes and mounts for Lua scripts
+extraVolumeMounts:
+  - name: lua-scripts
+    mountPath: /fluent-bit/scripts
+    readOnly: true
+
+extraVolumes:
+  - name: lua-scripts
+    configMap:
+      name: fluentbit-lua-scripts
 
 # https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file
 config:
@@ -40,80 +56,118 @@ config:
         multiline.parser docker, cri
         tag              kube.*
         refresh_interval 5
-        mem_buf_limit    10MB
+        mem_buf_limit    20MB
         skip_long_lines  on
         db               /var/log/flb_kube.db
 
     # https://docs.fluentbit.io/manual/pipeline/inputs/systemd
-    # Collect logs from systemd journal for kubelet and containerd services
+    # Collect logs from systemd journal for system services
     [INPUT]
-        name           systemd
-        tag            sys.*
-        systemd_filter _SYSTEMD_UNIT=kubelet.service
-        systemd_filter _SYSTEMD_UNIT=containerd.service
-        read_from_tail on
-        max_entries    1000
-        db             /var/log/flb_system.db
+        name              systemd
+        tag               sys.*
+        systemd_filter    _SYSTEMD_UNIT=k3s.service
+        systemd_filter    _SYSTEMD_UNIT=ssh.service
+        systemd_filter    _SYSTEMD_UNIT=cron.service
+        systemd_filter    _SYSTEMD_UNIT=dnsmasq.service
+        systemd_filter    _SYSTEMD_UNIT=dbus.service
+        read_from_tail    on
+        max_entries       5000
+        strip_underscores on
+        db                /var/log/flb_systemd.db
 
   # https://docs.fluentbit.io/manual/pipeline/filters
   filters: |
     # https://docs.fluentbit.io/manual/pipeline/filters/kubernetes
     # Enrich logs with Kubernetes metadata
-    # Setting 'labels' to 'on' will include Kubernetes labels in the logs and flatten them into top-level keys
-    # e.g. "kubernetes.labels.app" becomes "kubernetes_labels_app"
     [FILTER]
-        name        kubernetes
-        match       kube.*
-        merge_log   on
-        keep_log    off
-        labels      on
-        annotations off
+        name                  kubernetes
+        match                 kube.*
+        buffer_size           256k
+        merge_log             on
+        keep_log              off
+        labels                on
+        annotations           off
+        namespace_labels      off
+        namespace_annotations off
+
+    # Extract Kubernetes metadata into top-level fields
+    # k8s_namespace, k8s_pod, k8s_app, k8s_container and log_prefix
+    [FILTER]
+        name      lua
+        match     kube.*
+        script    /fluent-bit/scripts/extract_kubernetes.lua
+        call      extract_kubernetes
 
     # Filter out overly verbose logs from kube-probe
     [FILTER]
         name      grep
         match     kube.*
-        exclude   kubernetes.container_name kube-probe
+        exclude   k8s_container kube-probe
 
-    # Use namespace or app label to construct the log index
-    # The log index must end with '-logs' otherwise fluent-bit will not have the permissions to write to it
+    # Remove unnecessary fields from the logs
     [FILTER]
-        name                modify
-        match               kube.*
-        add_if_key_missing  log_namespace $kubernetes_namespace_name
-        add_if_key_missing  log_app       $kubernetes_labels_app
-        set                 log_index     ${log_app}-logs
+        name      modify
+        match     kube.*
+        remove    kubernetes
+        remove    _p
+
+    # For debugging purposes, prints all kube logs to stdout
+    #[FILTER]
+    #    name      lua
+    #    match     kube.*
+    #    script    /fluent-bit/scripts/pretty_print.lua
+    #    call      pretty_print
 
   # https://docs.fluentbit.io/manual/pipeline/outputs
   outputs: |
     # Send logs to OpenSearch (see https://docs.fluentbit.io/manual/pipeline/outputs/elasticsearch)
     [OUTPUT]
-        name            es
-        match           kube.*
-        host            {{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local
-        port            9200
-        http_user       {{ opensearch_logger_user}}
-        http_passwd     {{ opensearch_logger_passwd }}
-        index           $log_index
-        type            _doc
-        time_key        @timestamp
-        logstash_format on
-        tls             off
-        tls.verify      off
+        name               opensearch
+        match              kube.*
+        host               {{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local
+        port               9200
+        http_user          {{ opensearch_logger_user}}
+        http_passwd        {{ opensearch_logger_passwd }}
+        index              $log_prefix
+        tls                off
+        tls.verify         off
+
+        # Enabling the logstash format will override the index name
+        # for more information see https://docs.fluentbit.io/manual/data-pipeline/outputs/opensearch
+        logstash_format     off
+        logstash_prefix_key $log_prefix
+
+        # These are required to avoid issues with OpenSearch 2.x
+        suppress_type_name on
+        replace_dots       on
+
+        # Set to 'on' to enable error tracing in the logs
+        trace_error        off
+        trace_output       off
 
     [OUTPUT]
-        name            es
-        match           sys.*
-        host            {{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local
-        port            9200
-        http_user       {{ opensearch_logger_user}}
-        http_passwd     {{ opensearch_logger_passwd }}
-        index           system-logs
-        type            _doc
-        time_key        @timestamp
-        logstash_format on
-        tls             off
-        tls.verify      off
+        name                opensearch
+        match               sys.*
+        host                {{ opensearch_cluster_name }}-{{ opensearch_node_group }}.{{ k3s_opensearch_namespace }}.svc.cluster.local
+        port                9200
+        http_user           {{ opensearch_logger_user}}
+        http_passwd         {{ opensearch_logger_passwd }}
+        index               system-logs
+        tls                 off
+        tls.verify          off
+
+        # Enabling the logstash format will override the index name
+        # for more information see https://docs.fluentbit.io/manual/data-pipeline/outputs/opensearch
+        logstash_format     off
+        logstash_prefix     system-logs
+
+        # These are required to avoid issues with OpenSearch 2.x
+        suppress_type_name  on
+        replace_dots        on
+
+        # Set to 'on' to enable error tracing in the logs
+        trace_error         off
+        trace_output        off
 
 serviceMonitor:
   enabled: true
@@ -147,15 +201,17 @@ prometheusRule:
   enabled: true
   namespace: {{ k3s_monitoring_namespace }}
   additionalLabels:
-    - release: kube-prometheus-stack
-  rules:
+    release: kube-prometheus-stack
+    prometheus: fluentbit
+    role: alert-rules
+  rules:{% raw %}
     - alert: NoOutputBytesProcessed
       expr: rate(fluentbit_output_proc_bytes_total[5m]) == 0
       for: 15m
       labels:
         severity: warning
       annotations:
-        summary: Fluent Bit output is not processing data{% raw %}
+        summary: Fluent Bit output is not processing data
         message: |
           Fluent Bit instance {{ $labels.instance }} output plugin {{ $labels.name }} has not processed any bytes for 15 minutes.{% endraw %}
 

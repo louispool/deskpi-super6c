@@ -1,4 +1,4 @@
-# Role definition for installing [Prometheus](https://prometheus.io/) Monitoring
+# Role definition for installing [Prometheus](https://prometheus.io/), a powerful open-source monitoring and alerting toolkit.
 
 ```
 ├── roles
@@ -8,8 +8,10 @@
 |  |  ├── tasks 
 |  |  |  ├── main.yml  
 |  |  ├── templates
+|  |  |  ├── alertmanager-dashboard.yml.j2
 |  |  |  ├── grafana-dashboard.yml.j2
 |  |  |  ├── grafana-dashboard-public.yml.j2
+|  |  |  ├── prometheus-dashboard.yml.j2
 |  |  |  ├── prometheus-helm-values.yml.j2
 ```
                   
@@ -17,8 +19,7 @@
 
 Prometheus is an open-source systems monitoring and alerting toolkit. This role uses Helm to install the 
 [Kube-Prometheus stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) onto our k3s cluster.
-e systems monitoring and alerting toolkit. This role uses Helm to install the
-[Kube-Prometheus stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+
 The `kube-prometheus-stack` is a comprehensive Helm chart that deploys a full monitoring stack for Kubernetes. It includes:
 
 - [Prometheus](https://prometheus.io/): Collects and stores metrics from Kubernetes and applications.
@@ -78,16 +79,28 @@ Configure whether to enable the [Alertmanager](https://prometheus.io/docs/alerti
 ```yaml
 prom_alertmanager_enabled: true
 ```
-
 Configure whether to enable the [Node Exporter](https://github.com/prometheus/node_exporter) via the variable `prom_node_exporter_enabled`:
 ```yaml
 prom_node_exporter_enabled: true
 ```
-
 Configure whether to enable [Kube State Metrics](https://github.com/kubernetes/kube-state-metrics) via the variable `prom_kube_state_metrics_enabled`:
 ```yaml
 prom_kube_state_metrics_enabled: true
 ```
+
+Define the StorageClass for the Prometheus persistent volume via the variable `prometheus_storage_class`:
+```yaml
+prometheus_storage_class: longhorn
+```
+Specify the # Size of the Persistent Volume Claim (PVC) for Prometheus data storage:
+```yaml
+prom_storage_size: '30Gi'
+```
+Define the retention period for Prometheus data via the variable `prom_retention`:
+```yaml
+prom_retention: '7d'
+```
+This is the time period for which Prometheus will retain data before deleting it.
 
 Define the internal endpoint for the Prometheus UI via the variable `prometheus_dashboard`:
 ```yaml
@@ -98,6 +111,13 @@ Define the internal endpoint for the Alertmanager UI via the variable `alertmana
 ```yaml
 alertmanager_dashboard: dashboard.alertmanager.localnet
 ```
+
+The admin credentials for Grafana can be configured via the variables:
+```yaml
+grafana_admin_user: admin
+grafana_admin_passwd:  passwd  
+```
+Consider using Ansible Vault to encrypt these credentials for security.
 
 Access to the Prometheus UI is restricted via basic auth, the user and password can be configured as follows:        
 ```yaml
@@ -117,20 +137,106 @@ Define the endpoint to Grafana via the variable `grafana_dashboard`:
 ```yaml
 grafana_dashboard: dashboard.grafana.localnet
 ```
-
 Define the endpoint to the public Grafana dashboard via the variable `public_grafana_dashboard`:
 ```yaml
 public_grafana_dashboard: dashboard.grafana.example.com
 ```
-
 Configure whether to enable the public Grafana dashboard via the variable `enable_public_grafana_dashboard`:
 ```yaml
 enable_public_grafana_dashboard: true
 ```
 
-The admin credentials for Grafana can be configured via the variables:
+## Scrape Targets
+
+To scrape metrics from services running in the cluster you define a `ServiceMonitor` resource.
+
+A `ServiceMonitor` is a Kubernetes custom resource provided by the Prometheus Operator that declaratively specifies how to scrape metrics from a service. 
+It tells Prometheus where to find metrics endpoints, how often to scrape them, and how to label the resulting metrics. 
+
+To enable monitoring for your application, ensure it exposes a Prometheus-compatible /metrics endpoint and create a `ServiceMonitor` like the example below:
 ```yaml
-grafana_admin_user: admin
-grafana_admin_passwd:  passwd  
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: my-app
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: my-app
+  namespaceSelector:
+    matchNames:
+      - my-app-namespace
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
 ```
-Consider using Ansible Vault to encrypt these credentials for security.
+This configuration tells Prometheus (installed via the kube-prometheus-stack Helm chart) to scrape metrics from the metrics port on any Service labeled `app: my-app` in the `my-app-namespace` namespace.
+Make sure the Service and the corresponding metrics endpoint are available, and that the **release label matches your Prometheus release name**.
+
+## Alerting Rules
+
+A `PrometheusRule` is a Kubernetes custom resource used to define Prometheus alerting and recording rules. These rules allow you to trigger alerts based on specific metric conditions or precompute
+time-series expressions. They are managed by the Prometheus Operator and automatically picked up by Prometheus instances configured to watch the rule's namespace. 
+
+Here's a simple example that defines a high CPU usage alert:
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: app-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: app.rules
+      rules:
+        - alert: HighCpuUsage
+          expr: rate(container_cpu_usage_seconds_total{pod="my-app"}[5m]) > 0.8
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage detected on my-app"
+            description: "Container my-app is using over 80% CPU for more than 2 minutes."
+```
+This rule triggers a `HighCpuUsage` alert if the `my-app` pod exceeds 80% CPU usage for 2 minutes. Make sure the **release label matches your Prometheus installation** for proper rule discovery.
+
+## Importing Grafana Dashboards
+
+Grafana dashboards can be provisioned declaratively by storing them in Kubernetes `ConfigMaps`. 
+
+To get started, download a dashboard JSON from [Grafana’s official dashboard library](https://grafana.com/grafana/dashboards/), or export one from your Grafana instance. 
+Save the JSON file locally (e.g., `traefik-dashboard.json`) and create a ConfigMap so that Grafana’s sidecar can pick it up automatically:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  traefik-dashboard.json: |
+    {
+      "__inputs": [],
+      "title": "Traefik Metrics",
+      ...
+    }
+```
+Note the label `grafana_dashboard: "1"`. Grafana must be deployed with the sidecar dashboard loader (enabled by default in `kube-prometheus-stack`). 
+This setup automatically scans for labeled ConfigMaps and imports the dashboards into Grafana.
+
+### Why replace uid and id?
+In Grafana, each dashboard has a unique identifier (`uid`) and an internal ID (`id`). When importing dashboards, you may need to replace these identifiers for the following reasons:
+
+- `uid` must be unique across your Grafana instance. If you're uploading a dashboard with a `uid` that already exists (e.g. from a previous dashboard or provisioned one), Grafana may reject it or refuse to
+overwrite it.
+- `id` is a Grafana.com identifier and should be omitted when uploading to your own instance. Grafana will auto-assign an internal ID.
+
+
+

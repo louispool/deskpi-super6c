@@ -55,3 +55,6 @@ opensearch_nodes:
   - deskpi3
   - deskpi4
 
+# This is the interval at which Prometheus will scrape metrics from OpenSearch.
+opensearch_metrics_scrape_interval: "30s"
+

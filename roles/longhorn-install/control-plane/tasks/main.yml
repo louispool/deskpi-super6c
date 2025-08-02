@@ -22,6 +22,13 @@
     release_namespace: "{{ k3s_longhorn_namespace }}"
     state: present
     values: "{{ lookup('template', 'templates/longhorn-helm-values.yml.j2') | from_yaml }}"
+    wait: yes
+    atomic: yes
+    timeout: "10m0s"
+  register: helm_result
+  retries: 3
+  delay: 60
+  until: helm_result is succeeded
 
 - name: Wait for Pods to be ready
   kubernetes.core.k8s_info:

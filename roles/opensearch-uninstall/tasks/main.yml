@@ -68,12 +68,36 @@
     namespace: "{{ k3s_opensearch_namespace }}"
   loop: "{{ secrets | json_query('resources[*].metadata.name') }}"
 
+- name: Get a list of all ConfigMaps in the OpenSearch namespace
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ k3s_opensearch_namespace }}"
+  register: configmaps
+
+- name: Delete all ConfigMaps in the OpenSearch namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    state: absent
+    name: "{{ item }}"
+    namespace: "{{ k3s_opensearch_namespace }}"
+  loop: "{{ configmaps | json_query('resources[*].metadata.name') }}"
+
 - name: Remove PrometheusRule for OpenSearch metrics
   kubernetes.core.k8s:
     api_version: monitoring.coreos.com/v1
     kind: PrometheusRule
     state: absent
     name: opensearch-rules
+    namespace: "{{ k3s_monitoring_namespace }}"
+
+- name: Remove ServiceMonitor for OpenSearchmetrics
+  kubernetes.core.k8s:
+    api_version: monitoring.coreos.com/v1
+    kind: ServiceMonitor
+    state: absent
+    name: "{{ opensearch_cluster_name }}-{{ opensearch_node_group }}-service-monitor"
     namespace: "{{ k3s_monitoring_namespace }}"
 
 - name: Untaint OpenSearch nodes

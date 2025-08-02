@@ -10,6 +10,7 @@
 |  |  ├── templates
 |  |  |  ├── opensearch-admin-cert.yml.j2
 |  |  |  ├── opensearch-helm-values.yml.j2
+|  |  |  ├── opensearch-prometheus-rules.yml.j2
 |  |  |  ├── opensearch-rest-api.yml.j2
 |  |  |  ├── opensearch-security-config-secret.yml.j2
 |  |  |  ├── opensearch-transport-cert.yml.j2
@@ -41,8 +42,11 @@ This role does the following:
    - the OpenSearch cluster size (i.e. number of replicas)
    - the OpenSearch resource limits and requests
    - the OpenSearch PVC size and storage class
+   - a ServiceMonitor for Prometheus monitoring
 4. Configures the Certificates for the OpenSearch REST API and Transport Layer.
 5. Exposes the OpenSearch REST API via an IngressRoute on the local network
+6. Defines Prometheus Rules for Alerting.
+7. Uploads a Dashboard for OpenSearch to Grafana.
 
 ## Configuration
 

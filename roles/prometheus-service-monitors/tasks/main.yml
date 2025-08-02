@@ -1,8 +1,0 @@
----
-- name: Configure ServiceMonitors for Prometheus
-  kubernetes.core.k8s:
-    definition: "{{ lookup('template', 'templates/' + item) }}"
-    state: present
-  with_items:
-    - longhorn-service-monitor.yml.j2
-    - traefik-service-monitor.yml.j2

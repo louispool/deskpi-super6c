@@ -35,6 +35,13 @@
         create_namespace: yes
         state: present
         values: "{{ lookup('template', './templates/ceph-operator-values.yaml') | from_yaml }}"
+        wait: yes
+        atomic: yes
+        timeout: "10m0s"
+      register: helm_result
+      retries: 3
+      delay: 60
+      until: helm_result is succeeded
 
     # See https://rook.io/docs/rook/v1.10/Helm-Charts/ceph-cluster-chart/
     - name: Deploy the Ceph Storage Cluster.
@@ -45,3 +52,10 @@
         create_namespace: yes
         state: present
         values: "{{ lookup('template', './templates/ceph-cluster-values.yaml') | from_yaml }}"
+        wait: yes
+        atomic: yes
+        timeout: "10m0s"
+      register: helm_result
+      retries: 3
+      delay: 60
+      until: helm_result is succeeded

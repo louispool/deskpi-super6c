@@ -63,10 +63,17 @@
 
     - name: Deploy Prometheus + Grafana.
       kubernetes.core.helm:
-        name: deskpi-cluster
+        name: kube-prometheus-stack
         chart_ref: prometheus-community/kube-prometheus-stack
         namespace: default
         state: present
         values:
           alertmanager:
             enabled: false
+        wait: yes
+        atomic: yes
+        timeout: "10m0s"
+      register: helm_result
+      retries: 3
+      delay: 60
+      until: helm_result is succeeded

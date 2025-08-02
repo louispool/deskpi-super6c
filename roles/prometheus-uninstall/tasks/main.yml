@@ -53,7 +53,7 @@
     name: "{{ item }}"
     namespace: "{{ k3s_monitoring_namespace }}"
     state: absent
-  loop: "{{ pvc_list.resources | json_query('resources[*].metadata.name') }}"
+  loop: "{{ pvc_list | json_query('resources[*].metadata.name') }}"
   ignore_errors: true
 
 - name: Delete monitoring namespace
@@ -82,13 +82,3 @@
     - servicemonitors.monitoring.coreos.com
     - thanosrulers.monitoring.coreos.com
   ignore_errors: true
-
-
-
-
-
-
-
-
-
-

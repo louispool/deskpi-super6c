@@ -1,0 +1,18 @@
+# Defaults for the prometheus-post-install role
+---
+k3s_monitoring_namespace: "monitoring"
+
+# URL of the Grafana instance to use for monitoring dashboards.
+grafana_dashboard: "dashboard.grafana.localnet"
+
+# Admin credentials for Grafana. Override with Ansible Vault variable.
+grafana_admin_user: 'admin'
+grafana_admin_passwd: '!s3cr3t'
+
+# Whether longhorn is installed
+k3s_enable_block_storage: true
+
+# Scrape intervals for metrics
+traefik_metrics_scrape_interval: "15s"
+longhorn_metrics_scrape_interval: "30s"
+
