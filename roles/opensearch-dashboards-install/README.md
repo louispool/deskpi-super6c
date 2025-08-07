@@ -23,6 +23,8 @@ In the context of the DeskPi Cluster, OpenSearch is used to index and search the
 
 **Note**: this role is designed to be used in conjunction with the [OpenSearch Install](../opensearch-install) role, which installs the OpenSearch server.
 
+*Refer to the [Usage Guide](../opensearch-install/USAGE.md) after installation of the complete logstack for information on how to use OpenSearch Dashboards to examine logs.*
+
 ## Synopsis
 
 This role assumes the following:

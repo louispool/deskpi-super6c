@@ -135,3 +135,22 @@
       overwrite: true
     validate_certs: false
   when: opensearch_enable_monitoring and k3s_monitoring_namespace is defined
+
+- name: Trigger the OpenSearch SQL plugin to become responsive
+  uri:
+    url: "https://{{ opensearch_rest_api }}/_plugins/_sql"
+    method: POST
+    user: "admin"
+    password: "{{ opensearch_admin_password }}"
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body: '{"query": "SHOW TABLES LIKE \"%\""}'
+    force_basic_auth: yes
+    validate_certs: yes
+    return_content: yes
+    status_code: 200
+  register: sql_plugin_check
+  retries: 10
+  delay: 10
+  until: sql_plugin_check.status == 200 and '"schema"' in sql_plugin_check.content
