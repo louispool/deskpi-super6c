@@ -1,23 +1,74 @@
-# DeskPI Super6c
+# DeskPi Super6C 
 
-### Useful Links
-- [DeskPi Super6c](https://github.com/DeskPi-Team/super6c)
-- [Ricsanfre's Pi Cluster](https://picluster.ricsanfre.com/)
-- [rpi4cluster.com](https://rpi4cluster.com/)
-- [Jeff Geerling's DeskPi Super6c Cluster](https://github.com/geerlingguy/deskpi-super6c-cluster)
-- [Jeff Geerling's Raspberry Pi Cluster Ep. 2](https://www.jeffgeerling.com/blog/2020/raspberry-pi-cluster-episode-2-setting-cluster)
-- [Network Chuck's Raspberry Pi k3s Cluster](https://learn.networkchuck.com/courses/take/ad-free-youtube-videos/lessons/26093614-i-built-a-raspberry-pi-super-computer-ft-kubernetes-k3s-cluster-w-rancher)
-- [The DIY Life: Turing Pi 2 Cluster](https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/)
+This repository contains [Ansible](https://docs.ansible.com/ansible/latest/index.html) playbooks to provision and set up a Kubernetes cluster on the [DeskPi Super6C](https://wiki.deskpi.com/super6c/) board, which supports up to 6 
+[Raspberry Pi Compute Modules](https://www.raspberrypi.com/documentation/computers/compute-module.html) (CM4 or CM5).
 
+## Structure of this Project
 
+>`├── inventory`<br>
+>`│ ├── `[`README.md`](inventory/README.md)<br>
+>`│ ├── ...`<br>
+>`├── playbooks`<br>
+>`│ ├── `[`README.md`](playbooks/README.md)<br>
+>`│ ├── ...`<br>
+>`├── roles`<br>
+>`│ ├── `[`README.md`](roles/README.md)<br>
+>`│ ├── ...`<br>
+>`├── ansible.cfg`<br>
+>`├── requirements.yml`<br>
+ `├── ...`<br>
+         
+- [Inventory](inventory/README.md): Contains the Ansible inventory of hosts in the DeskPi cluster, as well as the group and host variables.
+- [Playbooks](playbooks/README): Contains the Ansible playbooks to provision and set up the DeskPi cluster.
+- [Roles](roles/README.md): Contains the Ansible roles used by the playbooks to provision and set up the DeskPi cluster.
+- [ansible.cfg](ansible.cfg): The Ansible configuration file, which contains the default settings for Ansible.
+- [requirements.yml](requirements.yml): Contains the Ansible collections required by the playbooks.
+       
 # 1. Board Assembly
 
-Assembly is described on the DeskPi Super6c's [github page](https://github.com/DeskPi-Team/super6c#how-to-assemble).
+Assembly is described on the DeskPi Super6c's [wiki page](https://wiki.deskpi.com/super6c/#how-to-install-cm4-module). 
+              
+Some notes on the assembly:
+- Heatsinks can be screwed directly into the board.
+- The official Raspberry Pi heatsinks do not fit the Super6C board layout due to screw placement.
+- As such you should purchase heatsinks that are specifically designed for the DeskPi Super6C board - DeskPi's [ITX Case Kit for the Super6C](https://deskpi.com/products/deskpi-itx-case-kit-for-deskpi-super6c-raspberry-pi-cm4-cluster-mini-itx-board) 
+  comes with such heatsinks, but specifically only for the CM4.
+- Heatsinks designed for the CM4 do not fit the CM5, so you will need to purchase those separately, for example, [these from DeskPi](https://deskpi.com/products/deskpi-aluminum-cnc-heatsink-for-raspberry-pi-cm5-module-without-cooling-fan) fit the CM5 
+  and can screw directly into the board.
+- The three 12V fans that come included with the [ITX Case Kit](https://deskpi.com/products/deskpi-itx-case-kit-for-deskpi-super6c-raspberry-pi-cm4-cluster-mini-itx-board) are useless, extremely noisy with almost no airflow. 
+
+  I replaced them with three [Noctua NF-A4x20 PWM](https://noctua.at/de/nf-a4x20-pwm) fans, which are much quieter and have a higher airflow. The connectors on the board are 4-pin, though they do not support PWM, 
+  so you can use any 12V 4-pin fan, it will just always run at full speed.
+- The DeskPi Super6C comes with a 90W 12V power supply, which is **insufficient** to power the board when populated with CM5's (instead of CM4's) and a full complement of NVMe SSD's. 
+  
+  I personally recommend using a 12V@10A 120W or better power supply, also take note of the connector type, which should be a 5.5mm outer / 2.5mm inner barrel plug.
+                           
+### Power Delivery (PD) negotiation on the CM5
+
+When you boot into the OS for the first time on a **CM5** you may be greeted with the following message:
+```
+This power supply is not capable of supplying 5A; power to peripherals will be restricted
+```
+Raspberry Pi 5 uses a utility called `pemmican-cli` to check whether the power supply has officially negotiated the ability to deliver 5 A at boot. If that handshake doesn’t happen, the Pi issues the 
+warning above.
+
+This doesn’t inherently mean that the power supply can’t deliver — just that the Pi didn't verify it can. Without that handshake, the system limits peripheral current (like USB ports), even if the power supply 
+could actually handle more.
+           
+You can manually check for undervoltage warnings by running the following command:
+```bash
+vcgencmd get_throttled
+```
+If the output is `throttled=0x0`, then there are no undervoltage warnings.
+
+#### References
+- https://dashaun.com/posts/korifi-v0_14_0-on-raspberry-pi
+- https://pemmican.readthedocs.io/_/downloads/en/stable/pdf/
 
 # 2. OS Installation
                      
-There are several ways we can install the OS to the Compute Modules (CM4) on the DeskPi Super6c, depending on whether the CM4 has eMMC storage or not.
-For the most part, we will be using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) tool to flash the OS to the CM4's.
+There are several ways we can install the OS to the Compute Modules (CM) on the DeskPi Super6C, depending on whether the CMs has eMMC storage or not.
+For the most part, we will be using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) tool to flash the OS to the CM's.
 
 Take note that [K3s](https://docs.k3s.io/) requires a 64-bit OS. Additionally, some storage solutions, such as [Rook Ceph](https://rook.io/), require a Linux distribution shipped 
 with the `lvm2` package, which is not included in the Raspberry Pi OS distributions. 
@@ -45,7 +96,7 @@ Note that **CM4#1**'s usb connector is on the back of the [board  where the IO p
 10. Select the newly discovered raspberry mass storage device to write to.
 11. NOTE: In `Advanced options`, be sure to 
 	* set the **hostname** of your Pi to something unique and memorable (I chose `deskpi` followed by a number, e.g. `deskpi1`)  
-	* enable **passwordless** SSH 
+    * enable **passwordless** SSH by pasting the public key of your (passwordless) SSH key pair.  
 	* set a common **username** for all your Pi's (I chose `deskpi`), as well as an optional password. 
 	* configure Wireless LAN, if it is supported by your CM (optional)
 12. Repeat this for all CMs - the headless CM's do not need a desktop environment, so the 64-bit lite version of Raspberry Pi OS should be sufficient. Remember to change the hostname for every CM.
@@ -55,7 +106,7 @@ Note that **CM4#1**'s usb connector is on the back of the [board  where the IO p
 2. If you did not enable SSH via the Imager, to enable it you can create a blank file called `ssh` in the root of the boot image.
 3. When `ssh`'ing into the CM's, recall the user that you set during installation, in my case the `ssh` command would be something like: `ssh deskpi@deskpi1`
 4. At least on my monitor, I did not get a video signal, so for the CM in the first slot I had to replace `dtoverlay=vc4-kms-v3d`with `dtoverlay=vc4-fkms-v3d` (note the additional "f") in the `config.txt` file. I figured this out from this [comment](https://forums.raspberrypi.com/viewtopic.php?t=323920#p1939139) on the raspberry forums.
-5. Even though it's not explicitly stated, and the documentation on the Super6c github misleadingly states in the [TroubleShooting Section](https://github.com/DeskPi-Team/super6c#troubleshooting) that
+5. Even though it's not explicitly stated, and the documentation on the Super6C GitHub misleadingly states in the [TroubleShooting Section](https://github.com/DeskPi-Team/super6c#troubleshooting) that
 	> "If your CM4 module has eMMC on board, the SSD drive and **TF card** can be external mass storage."
    
     You **cannot** mount an [SD Card to a CM with eMMC](https://www.reddit.com/r/retroflag_gpi/comments/snesyy/is_it_impossible_to_mount_the_sd_card_with_an/).
@@ -65,7 +116,7 @@ Note that **CM4#1**'s usb connector is on the back of the [board  where the IO p
 - https://www.raspberrypi.com/documentation/computers/compute-module.html#flashing-the-compute-module-emmc
 - https://www.jeffgeerling.com/blog/2020/usb-20-ports-not-working-on-compute-module-4-check-your-overlays
 
-## Method 2: Non-eMMC (CM4 Lite)
+## Method 2: Non-eMMC (CM "Lite" edition)
 
 This method would be used for the CM4 Lite versions, which do not have eMMC storage. But is relatively simple and can be done with the Raspberry Pi Imager tool.
 
@@ -74,7 +125,7 @@ This method would be used for the CM4 Lite versions, which do not have eMMC stor
 3. Select the SD Card to write to.
 4. NOTE: In `Advanced options`, be sure to
     * set the **hostname** of your Pi to something unique and memorable (I chose `deskpi` followed by a number, e.g. `deskpi1`)
-    * enable **passwordless** SSH
+   * enable **passwordless** SSH by pasting the public key of your (passwordless) SSH key pair.
     * set a common **username** for all your Pi's (I chose `deskpi`), as well as an optional password.
     * configure Wireless LAN, if it is supported by your CM **(optional)**
 5. Once completed, insert the SD Card into the CM's card slot.  
@@ -82,12 +133,12 @@ This method would be used for the CM4 Lite versions, which do not have eMMC stor
                                                 
 See the [Notes](#notes) section above for additional information.
 
-## Method 3: Installing the OS to the NVMe SSD
+## Method 3: NVMe SSD
 
 You should ensure that you have enough disk space to accommodate the OS as well as the Kubernetes installation on the CM4. If you only have, say, 8GB of free space on the eMMC (or SD Card) of the CM4, 
 the Kubernetes node may issue disk pressure warnings and may evict pods deployed on that node.
 
-If your CM4s have **inadequate** disk storage on the eMMC (or SD Card) you may consider installing the OS to an NVMe SSD with sufficient storage. To do this we have to install the OS to the NVMe drive 
+If your CM's have **inadequate** disk storage on the eMMC (or SD Card) you may consider installing the OS to an NVMe SSD with sufficient storage. To do this we have to install the OS to the NVMe drive 
 and update the boot order according to the [NVMe boot documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#nvme-ssd-boot).
 
 ### Installing the OS to the NVMe SSD
@@ -101,10 +152,15 @@ There are a number of ways to accomplish this, unfortunately, they are a bit mor
    - Use the [RPi Imager CLI](https://github.com/raspberrypi/rpi-imager/issues/460#issuecomment-1180525160)<br> 
      `rpi-imager --cli <image file to write> <destination drive device>` or    
    - Use [SDM](https://github.com/gitbls/sdm), a Raspberry Pi SSD/SD Card Image Manager utility.
+4. When installing the OS follow the steps as described in [Method 1](#method-1-emmc) and [Method 2](#method-2-non-emmc-cm-lite-edition) above, and in `Advanced options` be sure to
+   * set the **hostname** of your Pi to something unique and memorable (I chose `deskpi` followed by a number, e.g. `deskpi1`)
+   * enable **passwordless** SSH by pasting the public key of your (passwordless) SSH key pair.
+   * set a common **username** for all your Pi's (I chose `deskpi`), as well as an optional password.
+   * configure Wireless LAN, if it is supported by your CM (optional)
+   
+### Changing the Boot Order (CM4)
 
-### Updating the Boot Order
-
-To update the boot order, we have to use Raspberry Pi's [usbboot/rpiboot](https://github.com/raspberrypi/usbboot) utility.
+To update the boot order for the CM4, we have to use Raspberry Pi's [usbboot/rpiboot](https://github.com/raspberrypi/usbboot) utility.
 
 We will have to make/compile the utility, so ensure that you have the correct build packages installed:
 ```bash
@@ -142,6 +198,48 @@ See the [Notes](#notes) section above for additional information.
 
 - https://www.jeffgeerling.com/blog/2021/raspberry-pi-can-boot-nvme-ssds-now
 - https://notenoughtech.com/raspberry-pi/it-took-me-2-months-to-boot-cm4-from-nvme
+
+### Changing the Boot Order (CM5)
+
+For the CM5 you can change the boot order by using the `raspi-config` tool or by using the `rpi-eeprom-config` tool, both of which are available on Raspberry Pi OS. What I did was to connect the CM5 
+to an IO board, such as the [Raspberry Pi IO Board](https://www.raspberrypi.com/products/compute-module-5-io-board/), boot Raspberry Pi OS from the eMMC or SD Card, and then run the 
+following commands:
+```shell    
+sudo rpi-eeprom-config --edit
+```
+Change the `BOOT_ORDER` line to the following:
+```
+BOOT_ORDER=0xf416
+```
+Read Raspberry Pi's documentation on [BOOT_ORDER](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#BOOT_ORDER) for the details. The pertinent bit is the **6** at the end.
+
+Also add the following line:
+```
+PCIE_PROBE=1
+```
+- Press Ctrl-O, then enter, to write the change to the file.
+- Press Ctrl-X to exit nano, the editor.
+
+Alternatively, you can run `raspi-config` to set the boot order
+```
+sudo raspi-config
+```
+Then select *6 Advanced Opitions* => *A4 Boot Order* => *B2 NVMe/USB Boot* answer *Yes*.
+
+You must reboot CM to make the changes take effect.
+```
+sudo reboot
+```
+
+#### References
+- https://wiki.geekworm.com/NVMe_SSD_boot_with_the_Raspberry_Pi_5
+- https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#nvme-ssd-boot
+- https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#boot-from-pcie 
+
+### Other ways of changing the Boot Order
+
+You can also change the boot order by installing the Bootloader image `NVMe/USB Boot` under `Bootloader (Pi 5 family)` (for CM5) or `Bootloader (Pi 5 family)` (for CM4), found in the 
+`Misc utility images` section of the Raspberry Pi Imager tool to an SD Card, and then boot the CM from that SD Card.
 
 # 3. Cluster Preparation
 
@@ -213,11 +311,9 @@ ssh deskpi@deskpi1
 ```
 Assuming `deskpi` is username you defined for your Pi's during [Step 2](#step-2--install-the-os) and the value of `ansible_user` in the `inventory/group_vars/cluster.yml` file.
 
-### Consider assigning the Static IPs in your DHCP server directly
+Consider assigning the Static IPs in your DHCP server directly, this can typically be done via your router configuration. 
 
-This can typically be done via your router configuration. 
-
-### Use Ansible Vault for sensitive data
+## Ansible Vault
                          
 Sensitive data such as passwords, API keys, etc. should be stored in an encrypted file using [Ansible Vault](https://docs.ansible.com/ansible/latest/user_guide/vault.html).
 
@@ -251,6 +347,11 @@ ansible-playbook playbooks/k3s-pre-install.yml --vault-password-file ~/.vault_pa
 ##### 3. Set the `ANSIBLE_VAULT_PASSWORD_FILE` environment variable:
 ```shell
 export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass.txt
+```
+
+##### 4. Set the `vault_password_file` property in the [`ansible.cfg`](ansible.cfg) file:
+```ini
+vault_password_file = ./vault_pass.txt
 ```
 
 # 4. [Cluster Provisioning](playbooks/README.md) 
@@ -502,3 +603,14 @@ ansible-playbook playbooks/update-route53-ddns.yml
 ```
 
 (Run from the project root directory)
+
+# Useful Links
+
+- [DeskPi Super6c](https://github.com/DeskPi-Team/super6c)
+- [Ricsanfre's Pi Cluster](https://picluster.ricsanfre.com/)
+- [rpi4cluster.com](https://rpi4cluster.com/)
+- [Jeff Geerling's DeskPi Super6c Cluster](https://github.com/geerlingguy/deskpi-super6c-cluster)
+- [Jeff Geerling's Raspberry Pi Cluster Ep. 2](https://www.jeffgeerling.com/blog/2020/raspberry-pi-cluster-episode-2-setting-cluster)
+- [Network Chuck's Raspberry Pi k3s Cluster](https://learn.networkchuck.com/courses/take/ad-free-youtube-videos/lessons/26093614-i-built-a-raspberry-pi-super-computer-ft-kubernetes-k3s-cluster-w-rancher)
+- [The DIY Life: Turing Pi 2 Cluster](https://www.the-diy-life.com/raspberry-pi-cm4-cluster-running-kubernetes-turing-pi-2/)
+

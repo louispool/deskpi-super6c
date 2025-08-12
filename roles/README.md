@@ -3,20 +3,20 @@
 ```
 ├── roles
 │  ├── <role-name>
-│  |  ├── defaults
-|  |  |  ├── main.yml
-│  |  ├── files
-│  |  |  ├── ...
-│  |  ├── handlers
-|  |  |  ├── main.yml
-│  |  ├── tasks
-|  |  |  ├── main.yml
-│  |  ├── vars
-|  |  |  ├── main.yml
-│  |  ├── templates
-|  |  |  ├── *.yml.j2
-│  |  ├── tests
-│  |  |  ├── ...
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── files
+│  │  │  ├── ...
+│  │  ├── handlers
+│  │  │  ├── main.yml
+│  │  ├── tasks
+│  │  │  ├── main.yml
+│  │  ├── vars
+│  │  │  ├── main.yml
+│  │  ├── templates
+│  │  │  ├── *.yml.j2
+│  │  ├── tests
+│  │  │  ├── ...
 ```
 
 This structure houses the roles used by the [Ansible Playbooks](../playbooks/README.md).
@@ -39,6 +39,8 @@ This structure houses the roles used by the [Ansible Playbooks](../playbooks/REA
 - [Uninstallation of Prometheus](./prometheus-uninstall/README.md) (Monitoring)
 - [Installation of OpenSearch](./opensearch-install/README.md) (Logging)
 - [Uninstallation of OpenSearch](./opensearch-uninstall/README.md) (Logging)
+- [Installation of FluentBit](./fluentbit-install/README.md) (Logging)
+- [Uninstallation of fluentbit](./fluentbit-uninstall/README.md) (Logging)
 - [Installation of Minio](./minio-install/README.md) (S3 Object Storage)
 - [Uninstallation of Minio](./minio-uninstall/README.md) (S3 Object Storage)
 - [Installation of Linkerd](./linkerd-install/README.md) (Service Mesh)
@@ -48,6 +50,7 @@ This structure houses the roles used by the [Ansible Playbooks](../playbooks/REA
 
 - [DNS Server installation](./dnsmasq/README.md)
 - [NTP Server/Client installation](./chrony/README.md)
+- [NFS Storage Class installation](./nfs-storage/README.md)
 - [HELM installation](./helm/README.md)
 - [Traefik Basic Auth Middleware](./traefik-basic-auth/README.md)
 - [Setting up Route53 DDNS](./route53-ddns-install/README.md)

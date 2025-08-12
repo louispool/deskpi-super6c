@@ -107,6 +107,11 @@
   notify:
     - Reboot host
 
+# Format the SD Card to ext4
+- name: Format SD Card to ext4
+  include_tasks: sdcard.yml
+  when: format_sdcard
+
 # Set up the Linux Control Groups
 - name: Enable Control Groups
   include_tasks: control_groups.yml

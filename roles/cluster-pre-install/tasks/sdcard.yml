@@ -1,0 +1,18 @@
+# Check and format SD Card to ext4
+---
+- name: Find SD card device (usually /dev/mmcblk0)
+  ansible.builtin.shell: |
+    lsblk -ndo NAME,TYPE | grep 'disk' | grep -E '^mmcblk[0-9]'
+  register: sdcard_device
+  changed_when: false
+
+- name: Set fact for SD card device path
+  ansible.builtin.set_fact:
+    sdcard_path: "/dev/{{ sdcard_device.stdout }}"
+  when: sdcard_device.stdout != ""
+
+- name: Format SD card to ext4
+  community.general.filesystem:
+    fstype: ext4
+    dev: "{{ sdcard_path }}"
+  when: sdcard_device.stdout != ""

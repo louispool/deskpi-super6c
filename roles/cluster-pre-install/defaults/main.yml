@@ -3,8 +3,11 @@
 # Whether Ubuntu was installed as the OS on the Desk Pi
 ubuntu_os: true
 
+# Whether to format the available SD card to ext4
+format_sdcard: true
+
 # Whether to reduce the memory allocated to the GPU
-reduce_gpu_mem: true
+reduce_gpu_mem: false
 
 # In Ubuntu cmdline.txt and config.txt is located in a different location to Raspberry Pi OS
 cmdline_txt_path: "{{ '/boot/firmware/cmdline.txt' if ubuntu_os else '/boot/cmdline.txt' }}"
@@ -27,6 +30,7 @@ software_packages:
   - raspi-config
   - ntpsec-ntpdate
   - jq
+  - yq
   - gawk
 
 # Specific software packages required for Ubuntu installations
