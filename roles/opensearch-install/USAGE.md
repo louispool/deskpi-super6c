@@ -117,37 +117,6 @@ For dashboards and time-series charts:
 - Go to "Visualize" in the left-hand menu.
 - Create a Lens visualization or TSVB (time-series visual builder).
 
-For example, a line chart of count() over time:
-
-X-axis: @timestamp, interval: 1m
-
-Y-axis: count
-
-Filter: kubernetes.container_name: traefik
-
-Or a more advanced chart using filters:
-
-Group by log_level.keyword or kubernetes.labels.app for aggregation.
-
-🛠️ Example Use Case
-“Show me how many 5xx errors Traefik generated per minute in the last 2 hours”
-
-In Discover:
-Search:
-
-text
-Copy
-Edit
-kubernetes.container_name:traefik AND http.status_code:[500 TO 599]
-In Lens:
-Index: logs-traefik-*
-
-Filters:
-
-http.status_code between 500 and 599
-
-X-axis: Date histogram on @timestamp, 1m interval
-
-Y-axis: Count
+**TBD**
 
 
