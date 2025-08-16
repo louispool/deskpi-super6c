@@ -1,7 +1,13 @@
 # Variables used by the playbooks
 ---
-# Whether Ubuntu was installed as the OS on the Desk Pi
+# Whether Ubuntu Server was installed as the OS
 ubuntu_os: true
+# Whether to format the available SD card to ext4
+format_sdcard: true
+# Whether to reduce the memory allocated to the GPU
+reduce_gpu_mem: false
+# This tells the firmware of the CM5 “I know my PSU can handle it, skip your safety limit.”
+disable_cm5_pd_current_limit: true
 
 # k3s config directory
 k3s_config_dir: /etc/rancher/k3s
@@ -79,13 +85,14 @@ k3s_enable_logstack: true
 ntp_server: "{{ master_node_ip }}"
 # IP Address of the DNS Server
 dns_server: "{{ master_node_ip }}"
+# IP address dnsmasq should listen on
+dnsmasq_listen_address: "{{ master_node_ip }}"
 
-# IP address of the NFS Server (leave empty if `local_nfs_server` is true)
-nfs_server:
-
-# Whether an NFS Service should be configured on the Host
+# Whether an NFS Service should be configured on the Host of the control plane
 local_nfs_server: true
 nfs_dir: /NFS/data
+# IP address of the NFS Server (leave empty if `local_nfs_server` is true)
+nfs_server:
 
 # Name of the Storage Class for the NFS provisioner
 nfs_storage_class_name: nfs-client
@@ -96,12 +103,12 @@ public_domain:
 cluster_public_domain: deskpi.{{ public_domain }}
 
 # Top level domain for the Local Network
-local_domain: localnet
+local_domain: local
 # Subdomain of the cluster on the Local Network
 cluster_local_domain: deskpi.{{ local_domain }}
 
 # Additional DNS entries for dnsmasq
-additional_dns_hosts:
+base_additional_dns_hosts:
   ntp_server:
     desc: "NTP Server"
     hostname: ntp
@@ -110,10 +117,18 @@ additional_dns_hosts:
     desc: "DNS Server"
     hostname: dns
     ip: "{{ dns_server }}"
+
+nas_additional_dns_host:
   nas_server:
     desc: "NAS Server"
     hostname: nas
-    ip: "{{ master_node_ip if local_nfs_server else nfs_server }}"
+    ip: "{{ master_node_ip }}"
+
+additional_dns_hosts: >-
+  {{
+    base_additional_dns_hosts
+    | combine( nas_additional_dns_host if local_nfs_server else {} )
+  }}
 
 # DHCP range used by dnsmasq (should not overlap range of IP addresses used by MetalLB)
 dhcp_range_min_ip_octet: 200

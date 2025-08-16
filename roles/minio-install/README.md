@@ -3,13 +3,13 @@
 ```
 ├── roles
 │  ├── minio-install
-|  |  ├── defaults
-|  |  |  ├── main.yml
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
-|  |  ├── templates
-|  |  |  ├── minio-helm-operator-values.yml.j2
-|  |  |  ├── minio-helm-tenant-values.yml.j2
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
+│  │  ├── templates
+│  │  │  ├── minio-helm-operator-values.yml.j2
+│  │  │  ├── minio-helm-tenant-values.yml.j2
 ```
 
 [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) definition for installing [*MinIO*](https://min.io/docs/minio/kubernetes/upstream/operations/install-deploy-manage/deploy-operator-helm.html), an s3 object store.

@@ -3,8 +3,8 @@
 ```
 ├── roles
 │  ├── longhorn-uninstall
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for [uninstalling Longhorn](https://longhorn.io/docs/1.4.0/deploy/uninstall/).

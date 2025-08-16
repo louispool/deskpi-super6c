@@ -3,13 +3,13 @@
 ```
 ├── inventory
 │ ├── group_vars
-| |  ├── cluster.yml
+│ │  ├── cluster.yml
 │ ├── host_vars
 │ ├── hosts.yml
 ```
 This structure houses the inventory of hosts in the DeskPi cluster.
 
-### Configuration of the cluster
+## Configuration of the cluster
 
 1. Update the [`hosts.yml`](./hosts.yml) file
     - with the hostnames of the Pi's in your cluster
@@ -51,6 +51,12 @@ all:
 ```
 
 Then the master node has the hostname `deskpi1` and the ip address: `192.168.1.200` and the last node in the cluster has the hostname `deskpi6` and the ip address `192.168.1.205`.
+
+### Note
+
+Keep in mind that this is not how Ansible resolves the ip address of the hosts in the inventory. It sees the hosts as `deskpi1`, `deskpi2`, etc. and relies on your DNS server to resolve the hostname
+to the correct IP address. If you do not have a DNS server, you can add the hostnames and IP addresses to the `/etc/hosts` file if you are launching Ansible on a Linux host, or the
+`C:\Windows\System32\drivers\etc\hosts` file if you are using Windows.
 
 ### References
 

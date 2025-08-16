@@ -3,10 +3,10 @@
 ```
 ├── roles
 │  ├── cluster-post-install
-|  |  ├── handlers
-|  |  |  ├── main.yml
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
+│  │  ├── handlers
+│  │  │  ├── main.yml
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for the various tasks that prepare the DeskPi cluster **after**

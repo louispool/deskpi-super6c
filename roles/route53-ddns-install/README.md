@@ -2,15 +2,15 @@
 ```
 ├── roles
 │  ├── route53-ddns-install
-|  |  ├── defaults
-|  |  |  ├── main.yml
-|  |  ├── tasks
-|  |  |  ├── main.yml 
-|  |  |  ├── setup-aws-env.yml
-|  |  |  ├── setup-route53-ddns.yml
-|  |  ├── templates
-|  |  |  ├── route53-ddns.sh.j2
-|  |  |  ├── route53-iam-policy.json.j2
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── tasks
+│  │  │  ├── main.yml 
+│  │  │  ├── setup-aws-env.yml
+│  │  │  ├── setup-route53-ddns.yml
+│  │  ├── templates
+│  │  │  ├── route53-ddns.sh.j2
+│  │  │  ├── route53-iam-policy.json.j2
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for setting up Dynamic DNS for [AWS Route53](https://aws.amazon.com/route53/).

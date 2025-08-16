@@ -1,13 +1,13 @@
 # Default variables used by the Cluster Preparation role
 ---
 # Whether Ubuntu was installed as the OS on the Desk Pi
-ubuntu_os: true
-
+ubuntu_os: false
 # Whether to format the available SD card to ext4
-format_sdcard: true
-
+format_sdcard: false
 # Whether to reduce the memory allocated to the GPU
-reduce_gpu_mem: false
+reduce_gpu_mem: true
+# This tells the firmware of the CM5 “I know my PSU can handle it, skip your safety limit.”
+disable_cm5_pd_current_limit: false
 
 # In Ubuntu cmdline.txt and config.txt is located in a different location to Raspberry Pi OS
 cmdline_txt_path: "{{ '/boot/firmware/cmdline.txt' if ubuntu_os else '/boot/cmdline.txt' }}"

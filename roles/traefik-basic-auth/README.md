@@ -3,12 +3,12 @@
 ```
 ├── roles
 │  ├── traefik-basic-auth
-|  |  ├── defaults
-|  |  |  ├── main.yml
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
-|  |  ├── templates
-|  |  |  ├── basic-auth-middleware.yml.j2
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
+│  │  ├── templates
+│  │  │  ├── basic-auth-middleware.yml.j2
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for configuring Traefik's [BasicAuth Middleware](https://doc.traefik.io/traefik/middlewares/http/basicauth/) using a `user:password` pair.

@@ -10,7 +10,7 @@ dnsmasq_listen_address: ''
 dnsmasq_conf_dir: '/etc/dnsmasq.d/'
 
 # Top Level Domain
-local_domain: localnet
+local_domain: local
 # Sub-Domain for the cluster
 cluster_local_domain: cluster.local
 

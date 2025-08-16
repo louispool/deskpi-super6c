@@ -29,7 +29,7 @@
 - name: Operations after k3s cluster installation.
   hosts: control_plane
 
-  gather_facts: true
+  gather_facts: false # Do not gather facts here, as we will do it in the pre_tasks
   become: true
 
   collections:
@@ -43,6 +43,10 @@
     - vars/config.yml
 
   pre_tasks:
+    - name: Gather facts
+      ansible.builtin.setup:
+      tags: ["always"]
+
     - name: Include vault variables
       include_vars: "vars/vault.yml"
       tags: ["always"]

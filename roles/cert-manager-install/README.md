@@ -3,15 +3,15 @@
 ```
 ├── roles
 │  ├── cert-manager-install
-|  |  ├── defaults
-|  |  |  ├── main.yml
-|  |  ├── tasks
-|  |  |  ├── main.yml 
-|  |  |  ├── setup-self-signed-ca.yml
-|  |  |  ├── setup-lets-encrypt-ca.yml  
-|  |  ├── templates
-|  |  |  ├── self-signed-ca.yml.j2
-|  |  |  ├── lets-encrypt-ca.yml.j2
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── tasks
+│  │  │  ├── main.yml 
+│  │  │  ├── setup-self-signed-ca.yml
+│  │  │  ├── setup-lets-encrypt-ca.yml  
+│  │  ├── templates
+│  │  │  ├── self-signed-ca.yml.j2
+│  │  │  ├── lets-encrypt-ca.yml.j2
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for installing the [cert-manager](https://cert-manager.io/) package, which automates the management, issuance, and renewal of TLS certificates.

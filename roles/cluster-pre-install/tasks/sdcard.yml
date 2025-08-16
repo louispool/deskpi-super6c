@@ -2,7 +2,7 @@
 ---
 - name: Find SD card device (usually /dev/mmcblk0)
   ansible.builtin.shell: |
-    lsblk -ndo NAME,TYPE | grep 'disk' | grep -E '^mmcblk[0-9]'
+    lsblk -ndo NAME | grep -E '^mmcblk[0-9]$'
   register: sdcard_device
   changed_when: false
 

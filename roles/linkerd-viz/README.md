@@ -3,15 +3,15 @@
 ```
 ├── roles
 │  ├── linkerd-install
-|  |  ├── linkerd-viz
-|  |  |  ├── defaults
-|  |  |  |  ├── main.yml
-|  |  |  ├── tasks 
-|  |  |  |  ├── main.yml  
-|  |  |  ├── templates
-|  |  |  |  ├── linkerd-viz-ingress.yml.j2
-|  |  |  |  ├── linkerd-viz-namespace.yml.j2
-|  |  |  |  ├── linkerd-viz-prometheus.yml.j2
+│  │  ├── linkerd-viz
+│  │  │  ├── defaults
+│  │  │  │  ├── main.yml
+│  │  │  ├── tasks 
+│  │  │  │  ├── main.yml  
+│  │  │  ├── templates
+│  │  │  │  ├── linkerd-viz-ingress.yml.j2
+│  │  │  │  ├── linkerd-viz-namespace.yml.j2
+│  │  │  │  ├── linkerd-viz-prometheus.yml.j2
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for installing Linkerd's ["viz" extension](https://linkerd.io/2.12/features/dashboard/) a full on-cluster metricsstack, including CLI tools and a web dashboard.

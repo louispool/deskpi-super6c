@@ -3,14 +3,14 @@
 ```
 ├── roles
 │  ├── dnsmasq
-|  |  ├── defaults
-|  |  |  ├── main.yml
-|  |  ├── handlers 
-|  |  |  ├── main.yml  
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
-|  |  ├── templates
-|  |  |  ├── dnsmasq.conf.j2
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── handlers 
+│  │  │  ├── main.yml  
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
+│  │  ├── templates
+│  │  │  ├── dnsmasq.conf.j2
 ```
 
 [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) definition for setting up a DNS server, using [*dnsmasq*](https://thekelleys.org.uk/dnsmasq/doc.html), a lightweight DNS, TFTP, PXE, router advertisement and DHCP server, intended for small networks.
@@ -49,7 +49,7 @@ upstream_dns_servers:
             
 The two variables for the local domain name, `local_domain` and `cluster_local_domain` define your local network's domain:
 ```yaml
-local_domain: 'localnet'
+local_domain: 'local'
 cluster_local_domain: 'cluster.local'
 ```
     
@@ -102,6 +102,20 @@ ansible-playbook roles/dnsmasq/tests/test-dnsmasq-conf.yml
 To clean up resources created by the test, run the following command:
 ```shell
 ansible-playbook roles/dnsmasq/tests/cleanup.yml
+```
+  
+To verify the `dnsmasq` service is running, you can run the following command on the host where the role was applied:
+```shell
+systemctl status dnsmasq
+```
+
+To validate that the DNS server is working correctly, you can use the `dig` command, on the host itself::
+```shell
+dig @localhost google.com
+```
+And from the other hosts in the cluster:
+```shell
+dig @<dns-server-ip> google.com
 ```
 
 ### References

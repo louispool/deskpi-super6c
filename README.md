@@ -24,7 +24,7 @@ This repository contains [Ansible](https://docs.ansible.com/ansible/latest/index
 - [ansible.cfg](ansible.cfg): The Ansible configuration file, which contains the default settings for Ansible.
 - [requirements.yml](requirements.yml): Contains the Ansible collections required by the playbooks.
        
-# 1. Board Assembly
+# Board Assembly
 
 Assembly is described on the DeskPi Super6c's [wiki page](https://wiki.deskpi.com/super6c/#how-to-install-cm4-module). 
               
@@ -61,14 +61,17 @@ vcgencmd get_throttled
 ```
 If the output is `throttled=0x0`, then there are no undervoltage warnings.
 
+There is a task in the [`cluster-pre-install`](roles/cluster-pre-install) role, executed via the [`k3s-pre-install.yml`](playbooks/k3s-pre-install.yml) playbook that will inhibit the message and remove 
+the power restrictions on the USB ports. You can enable this by setting the `disable_cm5_pd_current_limit` variable to `true` in [`config.yml`](playbooks/vars/config.yml).
+
 #### References
 - https://dashaun.com/posts/korifi-v0_14_0-on-raspberry-pi
 - https://pemmican.readthedocs.io/_/downloads/en/stable/pdf/
 
-# 2. OS Installation
+# OS Installation
                      
 There are several ways we can install the OS to the Compute Modules (CM) on the DeskPi Super6C, depending on whether the CMs has eMMC storage or not.
-For the most part, we will be using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) tool to flash the OS to the CM's.
+For the most part, we will be using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) tool to flash the OS to the CMs.
 
 Take note that [K3s](https://docs.k3s.io/) requires a 64-bit OS. Additionally, some storage solutions, such as [Rook Ceph](https://rook.io/), require a Linux distribution shipped 
 with the `lvm2` package, which is not included in the Raspberry Pi OS distributions. 
@@ -99,12 +102,12 @@ Note that **CM4#1**'s usb connector is on the back of the [board  where the IO p
     * enable **passwordless** SSH by pasting the public key of your (passwordless) SSH key pair.  
 	* set a common **username** for all your Pi's (I chose `deskpi`), as well as an optional password. 
 	* configure Wireless LAN, if it is supported by your CM (optional)
-12. Repeat this for all CMs - the headless CM's do not need a desktop environment, so the 64-bit lite version of Raspberry Pi OS should be sufficient. Remember to change the hostname for every CM.
+12. Repeat this for all CMs - the headless CMs do not need a desktop environment, so the 64-bit lite version of Raspberry Pi OS should be sufficient. Remember to change the hostname for every CM.
 
 ### Notes
 1. You may need to enable USB2.0 support for the CM in the first slot by adding `dtoverlay=dwc2,dr_mode=host` to the `config.txt` file in the root of the boot image.
 2. If you did not enable SSH via the Imager, to enable it you can create a blank file called `ssh` in the root of the boot image.
-3. When `ssh`'ing into the CM's, recall the user that you set during installation, in my case the `ssh` command would be something like: `ssh deskpi@deskpi1`
+3. When `ssh`'ing into the CMs, recall the user that you set during installation, in my case the `ssh` command would be something like: `ssh deskpi@deskpi1`
 4. At least on my monitor, I did not get a video signal, so for the CM in the first slot I had to replace `dtoverlay=vc4-kms-v3d`with `dtoverlay=vc4-fkms-v3d` (note the additional "f") in the `config.txt` file. I figured this out from this [comment](https://forums.raspberrypi.com/viewtopic.php?t=323920#p1939139) on the raspberry forums.
 5. Even though it's not explicitly stated, and the documentation on the Super6C GitHub misleadingly states in the [TroubleShooting Section](https://github.com/DeskPi-Team/super6c#troubleshooting) that
 	> "If your CM4 module has eMMC on board, the SSD drive and **TF card** can be external mass storage."
@@ -128,8 +131,8 @@ This method would be used for the CM4 Lite versions, which do not have eMMC stor
    * enable **passwordless** SSH by pasting the public key of your (passwordless) SSH key pair.
     * set a common **username** for all your Pi's (I chose `deskpi`), as well as an optional password.
     * configure Wireless LAN, if it is supported by your CM **(optional)**
-5. Once completed, insert the SD Card into the CM's card slot.  
-6. Repeat this for all CMs - the headless CM's do not need a desktop environment, so the 64-bit lite version of Raspberry Pi OS should be sufficient. Remember to change the hostname for every CM.
+5. Once completed, insert the SD Card into the CMs card slot.  
+6. Repeat this for all CMs - the headless CMs do not need a desktop environment, so the 64-bit lite version of Raspberry Pi OS should be sufficient. Remember to change the hostname for every CM.
                                                 
 See the [Notes](#notes) section above for additional information.
 
@@ -138,7 +141,7 @@ See the [Notes](#notes) section above for additional information.
 You should ensure that you have enough disk space to accommodate the OS as well as the Kubernetes installation on the CM4. If you only have, say, 8GB of free space on the eMMC (or SD Card) of the CM4, 
 the Kubernetes node may issue disk pressure warnings and may evict pods deployed on that node.
 
-If your CM's have **inadequate** disk storage on the eMMC (or SD Card) you may consider installing the OS to an NVMe SSD with sufficient storage. To do this we have to install the OS to the NVMe drive 
+If your CMs have **inadequate** disk storage on the eMMC (or SD Card) you may consider installing the OS to an NVMe SSD with sufficient storage. To do this we have to install the OS to the NVMe drive 
 and update the boot order according to the [NVMe boot documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#nvme-ssd-boot).
 
 ### Installing the OS to the NVMe SSD
@@ -241,7 +244,7 @@ sudo reboot
 You can also change the boot order by installing the Bootloader image `NVMe/USB Boot` under `Bootloader (Pi 5 family)` (for CM5) or `Bootloader (Pi 5 family)` (for CM4), found in the 
 `Misc utility images` section of the Raspberry Pi Imager tool to an SD Card, and then boot the CM from that SD Card.
 
-# 3. Cluster Preparation
+# Cluster Preparation
 
 Before starting this section, you should ensure that you have successfully installed the OS on all the CM4's, that they are connected to the network, and you can `ssh` onto all of them.
 
@@ -332,31 +335,67 @@ ansible-vault edit playbooks/vars/vault.yml
         
 You must provide the vault password when running the playbooks. 
 
-This can be done via one the following methods: 
+This can be done via **one** of the following methods: 
 
 ##### 1. Prompting for the password:
 ```shell
 ansible-playbook playbooks/k3s-pre-install.yml --ask-vault-pass
 ```
 
-##### 2. Store the password in a file and provide the file as an argument:
+##### 2. Storing the password in a file and providing the file as an argument:
 ```shell
 ansible-playbook playbooks/k3s-pre-install.yml --vault-password-file ~/.vault_pass.txt
 ```
 
-##### 3. Set the `ANSIBLE_VAULT_PASSWORD_FILE` environment variable:
+##### 3. Setting the `ANSIBLE_VAULT_PASSWORD_FILE` environment variable:
 ```shell
 export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass.txt
 ```
 
-##### 4. Set the `vault_password_file` property in the [`ansible.cfg`](ansible.cfg) file:
+##### 4. Setting the `vault_password_file` property in the [`ansible.cfg`](ansible.cfg) file:
 ```ini
 vault_password_file = ./vault_pass.txt
 ```
+            
+### Note
 
-# 4. [Cluster Provisioning](playbooks/README.md) 
+If Ansible fails to parse or decrypt the `vault.yml` file, it will throw an error similar to the following, typically during the "_Include vault variables_" step:
 
-## 4.1 Pre-installation Playbook
+```shell
+TASK [Include vault variables] ************************************************************************************************************************************************************************************************************************************************
+fatal: [deskpi1]: FAILED! =>
+    censored: 'the output has been hidden due to the fact that ''no_log: true'' was specified
+        for this result'
+    changed: false
+```
+
+Frustratingly, you cannot uncensor the output, even if you explicitly set `no_log: false` in the task that includes the `vault.yml` file. Typically, though, this error indicates that there was a
+problem
+accessing or parsing the `vault.yml` file.
+
+To verify this, you can try the following:
+
+1. Ensure that you are able to view and decrypt the `vault.yml` file by running the following command:
+
+```shell
+ansible-vault view playbooks/vars/vault.yml
+```
+
+2. Dump the contents of the `vault.yml` file to a temporary file and parse it using `yamllint` or `yq`:
+
+```shell
+ansible-vault view playbooks/vars/vault.yml > /tmp/vault.yml
+yamllint /tmp/vault.yml
+````
+
+It should reveal any syntax errors in the `vault.yml` file, such as missing colons, incorrect indentation, or other YAML syntax issues.
+
+As an example, in one case I personally experienced, one of the passwords in the `vault.yml` had a backslash (`\`) in it, which is a special character in YAML (and should be escaped with another
+backslash, i.e. `\\`) which is why in this particular instance the "Include vault variables" task failed.
+
+# [Cluster Provisioning](playbooks/README.md) 
+
+## [Pre-installation Playbook](playbooks/README.md#k3s-pre-install)
 
 It might be prudent to **manually** update and upgrade all software packages on each DeskPi after installation of the OS, at least once, before running the playbooks:
 
@@ -374,19 +413,22 @@ ansible-playbook playbooks/k3s-pre-install.yml
 ```
 
 This playbook will, on every host in the cluster:
-
 - Execute the [Cluster Preparation](roles/cluster-pre-install/README.md) role
 - Configure an [NTP Client](roles/chrony/README.md)
 
 On the Control Plane / Master Node this playbook will also:
-
 - Configure an [NTP Server](roles/chrony/README.md)
 - Set up a [DNS Server](roles/dnsmasq/README.md)
 
-The reboot task may time out if the ip addresses of the CM4's were changed during the playbook run. 
+The reboot task may time out if the ip addresses of the CMs were changed during the playbook run. 
 Consequently, you may have to flush your dns cache before you will be able to connect to them again. 
 
-## 4.2 [k3s](https://k3s.io/) Installation  Playbook
+The playbook uses tags to allow you to run only specific tasks. For example, to run only the task that installs the DNS Server to the control plane, you can run the playbook as follows:
+```shell
+ansible-playbook playbooks/k3s-pre-install.yml --limit control_plane --tags "dns"
+```
+
+## [K3s Installation Playbook](playbooks/README.md#k3s-install)
 
 ### Configuration
 
@@ -410,7 +452,7 @@ The cluster configuration is largely contained within [config.yml](playbooks/var
 
 ### Installation
 
-Run the [k3s-install](playbooks/README.md#k3s-install) playbook from the **project root directory**:
+Run the [k3s-install](playbooks/k3s-install.yml) playbook from the **project root directory**:
 
 ```bash
 ansible-playbook playbooks/k3s-install.yml
@@ -453,9 +495,9 @@ root@deskpi1:~# cat k3s_install_log.txt
 [INFO]  systemd: Starting k3s
 ```
 
-## 4.3 Post-installation Playbook
+## [Post-installation Playbook](playbooks/README.md#k3s-post-install)
 
-After k3s has been successfully set up on your cluster, you must run the [k3s post-install](playbooks/README.md#k3s-post-install) playbook.
+After k3s Kas been successfully set up on your cluster, you must run the [k3s post-install](playbooks/k3s-post-install.yml) playbook.
 
 ### Synopsis
 
@@ -470,6 +512,7 @@ This playbook does the following:
 ### Configuration
 
 Configuration variables can be found in the [vars/config.yml](vars/config.yml).
+
 To configure the host as a local NFS Server, set the fact:
 ```yaml
 local_nfs_server: true
@@ -501,20 +544,23 @@ For example, to install specifically only **Helm** you can run the playbook as f
 ```bash
 ansible-playbook playbooks/k3s-post-install.yml --tags "helm" 
 ```
-## 4.4 Additional Packages
+## [Additional Packages](playbooks/README.md#k3s-packages-install)
+   
+Once k3s has been successfully installed, you can install additional packages to the cluster.
 
-Packages for k3s are declared in the [`k3s-packages-install`](playbooks/README.md#k3s-packages-install) playbook, they are tagged 
-and can be played individually via the `--tags` argument for `ansible-playbook`.
+Packages for K3s are declared in the [`k3s-packages-install`](playbooks/README.md#k3s-packages-install) playbook. 
 
-| Package                                              | Tag           |
-|------------------------------------------------------|---------------|
-| [MetalLB](roles/metallb-install/README.md)           | `metallb`     |
-| [Cert-Manager](roles/cert-manager-install/README.md) | `certmanager` |
-| [Route53-DDNS](roles/route53-ddns-install/README.md) | `route53ddns` |
-| [Traefik](roles/traefik-install/README.md)           | `traefik`     |
-| [Longhorn](roles/longhorn-install/README.md)         | `longhorn`    |
-| [Prometheus](roles/prometheus-install/README.md)     | `prometheus`  |
-| [Linkerd](roles/linkerd-install/README.md)           | `linkerd`     |
+| Package                                                 | Purpose                  | Tag                          |
+|:--------------------------------------------------------|:-------------------------|:-----------------------------|
+| [MetalLB](../roles/metallb-install/README.md)           | Load Balancer            | `metallb`                    |
+| [Cert-Manager](../roles/cert-manager-install/README.md) | Certificate Management   | `certmanager`                |
+| [Route53-ddns](../roles/route53-ddns-install/README.md) | Dynamic DNS for Route53  | `certmanager`, `route53ddns` |
+| [Traefik](../roles/traefik-install/README.md)           | Ingress Controller       | `traefik`                    |
+| [Longhorn](../roles/longhorn-install/README.md)         | Block Storage Controller | `longhorn`                   |
+| [Prometheus](../roles/prometheus-install/README.md)     | Monitoring and Alerting  | `prometheus`, `monitoring`   |
+| [OpenSearch](../roles/opensearch-install/README.md)     | Search and Analytics     | `opensearch`, `logstack`     |
+| [Fluentbit](../roles/opensearch-install/README.md)      | Logs scraping            | `fluentbit`, `logstack`      |
+| [Linkerd](../roles/linkerd-install/README.md)           | Service Mesh             | `linkerd`                    |
 
 ### Installation
 

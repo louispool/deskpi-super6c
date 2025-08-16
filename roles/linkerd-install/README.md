@@ -3,14 +3,14 @@
 ```
 ├── roles
 │  ├── linkerd-install
-|  |  ├── control-plane
-|  |  |  ├── defaults
-|  |  |  |  ├── main.yml
-|  |  |  ├── tasks 
-|  |  |  |  ├── main.yml  
-|  |  |  ├── templates
-|  |  |  |  ├── linkerd-identity-issuer.yml.j2
-|  |  |  |  ├── linkerd-namespace.yml.j2
+│  │  ├── control-plane
+│  │  │  ├── defaults
+│  │  │  │  ├── main.yml
+│  │  │  ├── tasks 
+│  │  │  │  ├── main.yml  
+│  │  │  ├── templates
+│  │  │  │  ├── linkerd-identity-issuer.yml.j2
+│  │  │  │  ├── linkerd-namespace.yml.j2
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for installing [Linkerd](https://linkerd.io/), a service mesh for Kubernetes. It makes running services easier and safer by giving you runtime debugging, observability, reliability, and security.

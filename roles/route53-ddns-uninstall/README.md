@@ -3,8 +3,8 @@
 ```
 ├── roles
 │  ├── route53-ddns-uninstall
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles)

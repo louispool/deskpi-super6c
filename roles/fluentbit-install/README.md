@@ -3,12 +3,12 @@
 ```
 ├── roles
 │  ├── fluentbit-install
-|  |  ├── defaults
-|  |  |  ├── main.yml
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
-|  |  ├── templates
-|  |  |  ├── fluentbit-helm-values.yml.j2
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
+│  │  ├── templates
+│  │  │  ├── fluentbit-helm-values.yml.j2
 ```
 
 ## About

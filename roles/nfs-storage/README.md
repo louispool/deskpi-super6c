@@ -3,11 +3,11 @@
 ```
 ├── roles
 │  ├── nfs-storage
-|  |  ├── defaults
-|  |  |  ├── main.yml
-|  |  ├── tasks 
-|  |  |  ├── configure_local_nfs_server.yml
-|  |  |  ├── main.yml  
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── tasks 
+│  │  │  ├── configure_local_nfs_server.yml
+│  │  │  ├── main.yml  
 ```
 
 This [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) definition leverages the [nfs-subdir-external-provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) to create a kubernetes storage class that can dynamically 
@@ -51,8 +51,8 @@ For example, to show the NFS exports for a local NFS server the command would be
 /sbin/showmount -e localhost
 ```
 
-Note that `showmount`queries the `mountd` service on the server (usually via port 111 and then a dynamic port) to list exported directories. 
-`mountd` is part of NFSv3, not NFSv4, therefore, if you are using NFSv4, you may not see any exports listed with `showmount` since NFSv4 doesn't use `mountd`.<br> 
+Please note that `showmount`queries the `mountd` service on the server (usually via port 111 and then a dynamic port) to list exported directories. 
+<br>`mountd` is part of NFSv3, **not NFSv4**, therefore, if you are using NFSv4, you may not see any exports listed with `showmount` since NFSv4 doesn't use `mountd`.<br> 
 Instead, exports are presented as a single unified filesystem (usually under **/export**, or **/**, depending on the server).
 
 To test what’s available, try mounting directly:
@@ -60,6 +60,8 @@ To test what’s available, try mounting directly:
 sudo mount -t nfs4 <ip_address_of_nfs>:/ /mnt/test
 ls /mnt/test
 ```
+                                            
+Also note that these commands require the `nfs-common` package to be installed on the client machine.
 
 ## Testing
             
@@ -92,6 +94,12 @@ And then applying the file:
 ```bash
 kubectl apply -f test-pvc.yaml
 ```
+
+You can check the status of the persistent volume claim by running:
+```bash
+kubectl get pvc test-pvc
+```
+You should see the persistent volume claim created and bound to a volume.
 
 ## References
 

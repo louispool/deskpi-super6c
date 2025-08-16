@@ -2,13 +2,23 @@
 ---
 - name: Apply netplan
   ansible.builtin.command: sudo netplan apply
-  async: 45
+  async: 120
   poll: 0
+  any_errors_fatal: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  timeout: 120
 
 - name: Restart systemd-resolved
   ansible.builtin.service:
     name: systemd-resolved
     state: restarted
+  async: 120
+  poll: 0
+  any_errors_fatal: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  timeout: 120
 
 - name: Reboot host
   ansible.builtin.reboot:
@@ -18,3 +28,7 @@
     pre_reboot_delay: 0
     post_reboot_delay: 30
     test_command: whoami
+  any_errors_fatal: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  timeout: 120

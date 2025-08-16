@@ -21,6 +21,28 @@
   notify:
     - Reboot host
 
+# With the 12V barrel-jack feed via the Super6C, there’s no PD chip to negotiate with the Pi,
+# therefore we need to disable the USB-PD current limit on CM5s.
+- name: Ensure pemmican config directory exists
+  ansible.builtin.file:
+    path: /etc/xdg/pemmican
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: disable_cm5_pd_current_limit
+
+- name: Disable CM5 USB-PD current limit
+  ansible.builtin.file:
+    path: /etc/xdg/pemmican/max_current.inhibit
+    state: touch
+    owner: root
+    group: root
+    mode: '0644'
+  when: disable_cm5_pd_current_limit
+  notify:
+    - Reboot host
+
 # Get a list of packages installed
 - name: Gather the installed packages and their versions
   package_facts:

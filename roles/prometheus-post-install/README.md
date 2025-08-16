@@ -2,16 +2,16 @@
 ```
 ├── roles
 │  ├── prometheus-post-install
-|  |  ├── files
-|  |  |  ├── longhorn-grafana-dashboard.json
-|  |  |  ├── traefik-grafana-dashboard.json
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
-|  |  ├── templates
-|  |  |  ├── longhorn-prometheus-rules.yml.j2
-|  |  |  ├── longhorn-service-monitor.yml.j2
-|  |  |  ├── traefik-prometheus-rules.yml.j2
-|  |  |  ├── traefik-service-monitor.yml.j2
+│  │  ├── files
+│  │  │  ├── longhorn-grafana-dashboard.json
+│  │  │  ├── traefik-grafana-dashboard.json
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
+│  │  ├── templates
+│  │  │  ├── longhorn-prometheus-rules.yml.j2
+│  │  │  ├── longhorn-service-monitor.yml.j2
+│  │  │  ├── traefik-prometheus-rules.yml.j2
+│  │  │  ├── traefik-service-monitor.yml.j2
 ```
 
 This structure houses the [Ansible Role](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles) for the various tasks that should be run *after* installing Prometheus Monitoring on the DeskPi cluster.

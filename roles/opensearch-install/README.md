@@ -3,17 +3,17 @@
 ```
 ├── roles
 │  ├── opensearch-install
-|  |  ├── defaults
-|  |  |  ├── main.yml
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
-|  |  ├── templates
-|  |  |  ├── opensearch-admin-cert.yml.j2
-|  |  |  ├── opensearch-helm-values.yml.j2
-|  |  |  ├── opensearch-prometheus-rules.yml.j2
-|  |  |  ├── opensearch-rest-api.yml.j2
-|  |  |  ├── opensearch-security-config-secret.yml.j2
-|  |  |  ├── opensearch-transport-cert.yml.j2
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
+│  │  ├── templates
+│  │  │  ├── opensearch-admin-cert.yml.j2
+│  │  │  ├── opensearch-helm-values.yml.j2
+│  │  │  ├── opensearch-prometheus-rules.yml.j2
+│  │  │  ├── opensearch-rest-api.yml.j2
+│  │  │  ├── opensearch-security-config-secret.yml.j2
+│  │  │  ├── opensearch-transport-cert.yml.j2
 ```
 
 ## About

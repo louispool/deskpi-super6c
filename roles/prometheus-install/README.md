@@ -3,16 +3,16 @@
 ```
 ├── roles
 │  ├── prometheus-install
-|  |  ├── defaults
-|  |  |  ├── main.yml
-|  |  ├── tasks 
-|  |  |  ├── main.yml  
-|  |  ├── templates
-|  |  |  ├── alertmanager-dashboard.yml.j2
-|  |  |  ├── grafana-dashboard.yml.j2
-|  |  |  ├── grafana-dashboard-public.yml.j2
-|  |  |  ├── prometheus-dashboard.yml.j2
-|  |  |  ├── prometheus-helm-values.yml.j2
+│  │  ├── defaults
+│  │  │  ├── main.yml
+│  │  ├── tasks 
+│  │  │  ├── main.yml  
+│  │  ├── templates
+│  │  │  ├── alertmanager-dashboard.yml.j2
+│  │  │  ├── grafana-dashboard.yml.j2
+│  │  │  ├── grafana-dashboard-public.yml.j2
+│  │  │  ├── prometheus-dashboard.yml.j2
+│  │  │  ├── prometheus-helm-values.yml.j2
 ```
                   
 ## About
