@@ -550,45 +550,47 @@ Once k3s has been successfully installed, you can install additional packages to
 
 Packages for K3s are declared in the [`k3s-packages-install`](playbooks/README.md#k3s-packages-install) playbook. 
 
-| Package                                                 | Purpose                  | Tag                          |
-|:--------------------------------------------------------|:-------------------------|:-----------------------------|
-| [MetalLB](../roles/metallb-install/README.md)           | Load Balancer            | `metallb`                    |
-| [Cert-Manager](../roles/cert-manager-install/README.md) | Certificate Management   | `certmanager`                |
-| [Route53-ddns](../roles/route53-ddns-install/README.md) | Dynamic DNS for Route53  | `certmanager`, `route53ddns` |
-| [Traefik](../roles/traefik-install/README.md)           | Ingress Controller       | `traefik`                    |
-| [Longhorn](../roles/longhorn-install/README.md)         | Block Storage Controller | `longhorn`                   |
-| [Prometheus](../roles/prometheus-install/README.md)     | Monitoring and Alerting  | `prometheus`, `monitoring`   |
-| [OpenSearch](../roles/opensearch-install/README.md)     | Search and Analytics     | `opensearch`, `logstack`     |
-| [Fluentbit](../roles/opensearch-install/README.md)      | Logs scraping            | `fluentbit`, `logstack`      |
-| [Linkerd](../roles/linkerd-install/README.md)           | Service Mesh             | `linkerd`                    |
+| Package                                                | Purpose                  | Tag                          |
+|:-------------------------------------------------------|:-------------------------|:-----------------------------|
+| [MetalLB](./roles/metallb-install/README.md)           | Load Balancer            | `metallb`                    |
+| [Cert-Manager](./roles/cert-manager-install/README.md) | Certificate Management   | `certmanager`                |
+| [Route53-ddns](./roles/route53-ddns-install/README.md) | Dynamic DNS for Route53  | `certmanager`, `route53ddns` |
+| [Traefik](./roles/traefik-install/README.md)           | Ingress Controller       | `traefik`                    |
+| [Longhorn](./roles/longhorn-install/README.md)         | Block Storage Controller | `longhorn`                   |
+| [Prometheus](./roles/prometheus-install/README.md)     | Monitoring and Alerting  | `prometheus`, `monitoring`   |
+| [OpenSearch](./roles/opensearch-install/README.md)     | Search and Analytics     | `opensearch`, `logstack`     |
+| [Fluentbit](./roles/opensearch-install/README.md)      | Logs scraping            | `fluentbit`, `logstack`      |
+| [Linkerd](./roles/linkerd-install/README.md)           | Service Mesh             | `linkerd`                    |
 
 ### Installation
-
 ```bash
 ansible-playbook playbooks/k3s-packages-install.yml 
 ```
 
 Packages can be individually installed with the corresponding `tag`, for example:
-
 ```bash
 ansible-playbook playbooks/k3s-packages-install.yml --tags "metallb,certmanager,traefik" 
 ```
                  
-## 5. Uninstallation
+# Uninstallation
 
-## 5.1 [Uninstalling Packages](playbooks/README.md#k3s-packages-uninstall)
+## [Uninstalling Packages](playbooks/README.md#k3s-packages-uninstall)
 
-Remove the packages installed to k3s with the [`k3s-packages-uninstall`](playbooks/README.md#k3s-packages-uninstall) playbook, they are tagged 
+Remove the packages installed to K3s with the [`k3s-packages-uninstall`](playbooks/README.md#k3s-packages-uninstall) playbook, they are tagged 
 and can be played individually via the `--tags` argument for `ansible-playbook`.
 
-| Package                                                | Tag           |
-|--------------------------------------------------------|---------------|
-| [MetalLB](roles/metallb-uninstall/README.md)           | `metallb`     |
-| [Cert-Manager](roles/cert-manager-uninstall/README.md) | `certmanager` |
-| [Route53-DDNS](roles/route53-ddns-uninstall/README.md) | `route53ddns` |
-| [Traefik](roles/traefik-uninstall/README.md)           | `traefik`     |
-| [Longhorn](roles/longhorn-uninstall/README.md)         | `longhorn`    |
-| [Linkerd](roles/linkerd-uninstall/README.md)           | `linkerd`     |
+| Package                                                                        | Tag(s)                       |
+|:-------------------------------------------------------------------------------|:-----------------------------|
+| [MetalLB](./roles/metallb-uninstall/README.md)                                 | `metallb`                    |
+| [Cert-Manager](./roles/cert-manager-uninstall/README.md)                       | `certmanager`                |
+| [Route53-DDNS](./roles/route53-ddns-uninstall/README.md)                       | `certmanager`, `route53ddns` |
+| [Traefik](./roles/traefik-uninstall/README.md)                                 | `traefik`                    |
+| [Longhorn](./roles/longhorn-uninstall/README.md)                               | `longhorn`                   |
+| [Prometheus](./roles/prometheus-uninstall/README.md)                           | `prometheus`                 |
+| [OpenSearch](./roles/opensearch-uninstall/README.md)[^1]                       | `opensearch`, `logstack`     |
+| [OpenSearch Dashboards](./roles/opensearch-dashboards-uninstall/README.md)[^2] | `opensearch-dashboards`      |
+| [Fluentbit](./roles/fluentbit-uninstall/README.md)                             | `fluentbit`, `logstack`      |
+| [Linkerd](./roles/linkerd-uninstall/README.md)                                 | `linkerd`                    |
 
 ```bash
 ansible-playbook playbooks/k3s-packages-uninstall.yml 
@@ -600,7 +602,7 @@ Packages can be individually uninstalled with the corresponding `tag`, for examp
 ansible-playbook playbooks/k3s-packages-uninstall.yml --tags "metallb,certmanager,traefik" 
 ```
 
-## 5.2 Uninstalling k3s
+## Uninstalling k3s
 
 You can uninstall k3s by running the [k3s-uninstall](playbooks/README.md#k3s-uninstall) playbook:
 
@@ -608,7 +610,7 @@ You can uninstall k3s by running the [k3s-uninstall](playbooks/README.md#k3s-uni
 ansible-playbook playbooks/k3s-uninstall.yml
 ```
 
-## Additional Playbooks
+# Additional Playbooks
 
 ### [update-deskpis.yml](playbooks/update-deskpis.yml)
 
