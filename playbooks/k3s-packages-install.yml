@@ -14,7 +14,7 @@
 - name: Install various packages to k3s (affects all hosts in the cluster)
   hosts: cluster
 
-  gather_facts: true
+  gather_facts: false # Do not gather facts here, as we will do it in the pre_tasks
   become: true
 
   vars_files:
@@ -25,6 +25,10 @@
     K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
   pre_tasks:
+    - name: Gather facts
+      ansible.builtin.setup:
+      tags: ["always"]
+
     - name: Include vault variables
       include_vars: "vars/vault.yml"
       tags: ["always"]
@@ -37,7 +41,7 @@
 - name: Install various packages to k3s (via the control plane).
   hosts: control_plane
 
-  gather_facts: true
+  gather_facts: false # Do not gather facts here, as we will do it in the pre_tasks
   become: true
 
   collections:
@@ -51,6 +55,10 @@
     K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
   pre_tasks:
+    - name: Gather facts
+      ansible.builtin.setup:
+      tags: ["always"]
+
     - name: Include vault variables
       include_vars: "vars/vault.yml"
       tags: ['always']

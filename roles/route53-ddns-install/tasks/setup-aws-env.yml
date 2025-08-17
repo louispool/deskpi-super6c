@@ -1,16 +1,58 @@
 # This file contains tasks to setup AWS CLI and set the AWS credentials as environment variables on the host.
 #
 ---
-- name: Ensure AWS CLI is installed
-  package:
-    name: awscli
+- name: Ensure AWS credentials lines in `'/etc/environment'`
+  ansible.builtin.lineinfile:
+    path: /etc/environment
+    regexp: '^{{ item.key }}='
+    line: "{{ item.key }}={{ item.value }}"
+    create: true
+  loop:
+    - { key: 'AWS_ACCESS_KEY_ID',     value: '{{ aws_access_key_id }}' }
+    - { key: 'AWS_SECRET_ACCESS_KEY', value: '{{ aws_secret_access_key }}' }
+    - { key: 'AWS_DEFAULT_REGION',    value: '{{ aws_region }}' }
+  no_log: true
+
+- name: Check if AWS CLI already installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/aws
+  register: aws_cli_binary
+
+- name: Ensure prerequisites for AWS CLI v2 (aarch64)
+  ansible.builtin.package:
+    name:
+      - curl
+      - unzip
     state: present
 
-- name: Set AWS credentials as environment variables
-  lineinfile:
-    path: /etc/environment
-    line: "{{ item }}"
-    create: yes
-  with_items:
-    - "AWS_ACCESS_KEY_ID={{ aws_access_key_id }}"
-    - "AWS_SECRET_ACCESS_KEY={{ aws_secret_access_key }}"
+- name: Download AWS CLI v2 bundle (aarch64)
+  ansible.builtin.get_url:
+    url: https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip
+    dest: /tmp/awscliv2.zip
+    mode: '0644'
+  when: not aws_cli_binary.stat.exists
+
+- name: Unpack AWS CLI v2 bundle
+  ansible.builtin.unarchive:
+    src: /tmp/awscliv2.zip
+    dest: /tmp
+    remote_src: true
+    creates: /tmp/aws/install
+  when: not aws_cli_binary.stat.exists
+
+- name: Install AWS CLI v2
+  ansible.builtin.command: ./aws/install -i /usr/local/aws-cli -b /usr/local/bin
+  args:
+    chdir: /tmp
+    creates: /usr/local/bin/aws
+  when: not aws_cli_binary.stat.exists
+
+- name: Verify AWS CLI installed
+  ansible.builtin.command: aws --version
+  register: awscli_version
+  changed_when: false
+
+- name: Report AWS CLI version
+  ansible.builtin.debug:
+    msg: >-
+      AWS CLI {{ 'installed' if not aws_cli_binary.stat.exists else 'already present' }}: {{ awscli_version.stdout }}

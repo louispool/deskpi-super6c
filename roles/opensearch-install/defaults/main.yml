@@ -2,7 +2,7 @@
 ---
 k3s_opensearch_namespace: "opensearch"
 
-# Last version to work with Raspberry Pi 4
+# Last version to work with Raspberry Pi 4 is 2.9.0
 opensearch_app_version: "2.9.0"
 opensearch_chart_version: "2.34.0"
 
@@ -34,7 +34,7 @@ opensearch_resources_limits_memory: "4Gi"
 opensearch_resources_limits_cpu: "2000m"
 
 opensearch_resources_requests_memory: "2Gi"
-opensearch_resources_requests_cpu: "1000m"
+opensearch_resources_requests_cpu: "500m"
 
 # Configures the size of the Persistent Volume Claim (PVC) for OpenSearch data storage
 opensearch_pvc_size: "30Gi"

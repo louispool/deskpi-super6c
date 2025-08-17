@@ -112,18 +112,18 @@ root@deskpi1:~# cat k3s_install_log.txt
 [INFO]  systemd: Starting k3s
 ```
 
-### [k3s-uninstall](k3s-uninstall.yml)
+## [k3s-uninstall](k3s-uninstall.yml)
 
 You can uninstall K3s by running the [`k3s-uninstall.yml`](playbooks/k3s-uninstall.yml) playbook from the **project root**:
 ```bash
 ansible-playbook playbooks/k3s-uninstall.yml
 ```
 
-### [k3s-post-install](k3s-post-install.yml)
+## [k3s-post-install](k3s-post-install.yml)
 
 This playbook executes several operations and installs several packages after K3s has been successfully installed to the deskpi cluster. 
 
-#### Synopsis
+### Synopsis
 
 This playbook does the following:   
 
@@ -132,7 +132,7 @@ This playbook does the following:
 - Creates an [NFS Storage Class](../roles/nfs-storage/README.md), based on an NFS export, on the Control Plane.
 - Updates [CoreDNS](https://docs.k3s.io/networking/networking-services#coredns) to use a replica count of 2 (required by Longhorn) and forward DNS requests to public DNS servers (needed for Let's Encrypt to work).
 
-#### Configuration
+### Configuration
 
 Configuration variables can be found in the [vars/config.yml](vars/config.yml).
 
@@ -150,7 +150,7 @@ In both cases ensure the path to the share is correct:
 nfs_path: <path_to_share>
 ```
 
-#### Installation
+### Installation
 
 After K3s has been successfully set up on your cluster, you can run the post-install playbook from the **project root**:
 
@@ -166,7 +166,7 @@ For example, to install specifically only **Helm** you can run the playbook as f
 ansible-playbook playbooks/k3s-post-install.yml --tags "helm" 
 ```
      
-### [k3s-packages-install](k3s-packages-install.yml)
+## [k3s-packages-install](k3s-packages-install.yml)
 
 Installs several packages to K3s:
 
@@ -184,6 +184,8 @@ Installs several packages to K3s:
 | [Fluentbit](../roles/opensearch-install/README.md)                        | Logs scraping            | `fluentbit`, `logstack`                       |
 | [Linkerd](../roles/linkerd-install/README.md)                             | Service Mesh             | `linkerd`                                     |
 
+### Installation
+
 ```bash
 ansible-playbook playbooks/k3s-packages-install.yml 
 ```
@@ -193,7 +195,7 @@ Packages can be individually installed with the corresponding `tag`, for example
 ansible-playbook playbooks/k3s-packages-install.yml --tags "metallb,certmanager,traefik" 
 ```
 
-### [k3s-packages-uninstall](k3s-packages-uninstall.yml)
+## [k3s-packages-uninstall](k3s-packages-uninstall.yml)
 
 Removes packages installed to K3s: 
 

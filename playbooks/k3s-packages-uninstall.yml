@@ -42,7 +42,7 @@
       when: k3s_enable_logstack
 
     - role: prometheus-uninstall
-      tags: ['prometheus']
+      tags: ['prometheus', 'monitoring']
       when: k3s_enable_monitoring
 
     - role: longhorn-uninstall

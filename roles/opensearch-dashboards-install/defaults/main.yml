@@ -13,7 +13,7 @@ opensearch_dashboards_requests_cpu: "100m"
 opensearch_cluster_name: "opensearch-cluster"
 opensearch_node_group: "master"
 
-# Last version to work with Raspberry Pi 4
+# Last version to work with Raspberry Pi 4 is 2.9.0
 opensearch_app_version: "2.9.0"
 
 # Endpoint for the OpenSearch Dashboard on the local network

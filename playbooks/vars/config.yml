@@ -225,17 +225,18 @@ log_retention_period: "5d"
 opensearch_cluster_name: "opensearch-cluster"
 opensearch_node_group: "master"
 
-# Last version to work with Raspberry Pi 4
-opensearch_app_version: "2.9.0"
+# Last version to work with Raspberry Pi 4 is 2.9.0
+opensearch_app_version: "2.19.3"
+opensearch_chart_version: "2.35.0"
 # Size of the OpenSearch cluster
 opensearch_replicas: 3
 
 # Configuration properties thatr define the resource requirements of the OpenSearch pods
-opensearch_resources_limits_memory: "6Gi"
-opensearch_resources_limits_cpu: "2000m"
+opensearch_resources_limits_memory: "8Gi"
+opensearch_resources_limits_cpu: "3000m"
 
 opensearch_resources_requests_memory: "2Gi"
-opensearch_resources_requests_cpu: "500m"
+opensearch_resources_requests_cpu: "1000m"
 
 # Configures the size of the Persistent Volume Claim (PVC) for OpenSearch data storage
 opensearch_pvc_size: "100Gi"

@@ -65,6 +65,10 @@
     name: opensearch
     repo_url: "https://opensearch-project.github.io/helm-charts"
 
+- name: Print OpenSearch app version
+  ansible.builtin.debug:
+    msg: "Installing OpenSearch v{{ opensearch_app_version }}"
+
 - name: Deploy OpenSearch Helm chart
   kubernetes.core.helm:
     name: "{{ opensearch_cluster_name }}"
@@ -141,7 +145,7 @@
     url: "https://{{ opensearch_rest_api }}/_plugins/_sql"
     method: POST
     user: "admin"
-    password: "{{ opensearch_admin_password }}"
+    password: "{{ opensearch_admin_passwd }}"
     headers:
       Content-Type: "application/json"
     body_format: json
