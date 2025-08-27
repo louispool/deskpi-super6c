@@ -170,19 +170,20 @@ ansible-playbook playbooks/k3s-post-install.yml --tags "helm"
 
 Installs several packages to K3s:
 
-| Package                                                                   | Purpose                  | Tag                                           |
-|:--------------------------------------------------------------------------|:-------------------------|:----------------------------------------------|
-| [MetalLB](../roles/metallb-install/README.md)                             | Load Balancer            | `metallb`                                     |
-| [Cert-Manager](../roles/cert-manager-install/README.md)                   | Certificate Management   | `certmanager`                                 |
-| [Route53-ddns](../roles/route53-ddns-install/README.md)                   | Dynamic DNS for Route53  | `certmanager`, `route53ddns`                  |
-| [Traefik](../roles/traefik-install/README.md)                             | Ingress Controller       | `traefik`                                     |
-| [Longhorn](../roles/longhorn-install/README.md)                           | Block Storage Controller | `longhorn`                                    |
-| [Prometheus](../roles/prometheus-install/README.md)                       | Monitoring and Alerting  | `prometheus`, `monitoring`                    |
-| [Prometheus Post-Install](../roles/prometheus-post-install/README.md)     | Monitoring and Alerting  | `prometheus`, `monitoring`, `prometheus-post` |
-| [OpenSearch](../roles/opensearch-install/README.md)                       | Search and Analytics     | `opensearch`, `logstack`                      |
-| [OpenSearch Dashboards](../roles/opensearch-dashboards-install/README.md) | Search and Analytics     | `opensearch`, `logstack`                      |
-| [Fluentbit](../roles/opensearch-install/README.md)                        | Logs scraping            | `fluentbit`, `logstack`                       |
-| [Linkerd](../roles/linkerd-install/README.md)                             | Service Mesh             | `linkerd`                                     |
+| Package                                                                   | Purpose                  | Tag                                 |
+|:--------------------------------------------------------------------------|:-------------------------|:------------------------------------|
+| [MetalLB](../roles/metallb-install/README.md)                             | Load Balancer            | `metallb`                           |
+| [Cert-Manager](../roles/cert-manager-install/README.md)                   | Certificate Management   | `certmanager`                       |
+| [Route53-ddns](../roles/route53-ddns-install/README.md)                   | Dynamic DNS for Route53  | `certmanager`, `route53ddns`        |
+| [Traefik](../roles/traefik-install/README.md)                             | Ingress Controller       | `traefik`                           |
+| [Longhorn](../roles/longhorn-install/README.md)                           | Block Storage Controller | `longhorn`                          |
+| [Prometheus](../roles/prometheus-install/README.md)                       | Monitoring and Alerting  | `prometheus`, `monitoring`          |
+| [Prometheus Post-Install](../roles/prometheus-post-install/README.md)     | Monitoring and Alerting  | `prometheus-post`, `monitoring`     |
+| [RPI Metrics Exporter](../roles/rpi-metrics-exporter/README.md)           | Hardware Telemetry       | `rpi-metrics`, `monitoring`         |
+| [OpenSearch](../roles/opensearch-install/README.md)                       | Search and Analytics     | `opensearch`, `logstack`            |
+| [OpenSearch Dashboards](../roles/opensearch-dashboards-install/README.md) | Search and Analytics     | `opensearch-dashboards`, `logstack` |
+| [Fluentbit](../roles/opensearch-install/README.md)                        | Logs scraping            | `fluentbit`, `logstack`             |
+| [Linkerd](../roles/linkerd-install/README.md)                             | Service Mesh             | `linkerd`                           |
 
 ### Installation
 

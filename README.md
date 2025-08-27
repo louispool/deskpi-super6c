@@ -255,9 +255,9 @@ Additionally, consider assigning static IPs to your CM4's in your DHCP server di
 
 ## Installation requirements
 
-- python (>= v3.6)
-- PyYAML (>= v3.11)  
-- Ansible (>= v2.13) For detailed instructions on installing Ansible see the [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html).
+- python (>= v3.11)
+- PyYAML (>= v6.00)  
+- Ansible (>= v2.18) For detailed instructions on installing Ansible see the [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html).
 
 As well as the required Ansible Collections listed in the [requirements](requirements.yml) file. You can install these with the following command:
 ```bash
@@ -550,18 +550,20 @@ Once k3s has been successfully installed, you can install additional packages to
 
 Packages for K3s are declared in the [`k3s-packages-install`](playbooks/README.md#k3s-packages-install) playbook. 
 
-| Package                                                | Purpose                  | Tag                          |
-|:-------------------------------------------------------|:-------------------------|:-----------------------------|
-| [MetalLB](./roles/metallb-install/README.md)           | Load Balancer            | `metallb`                    |
-| [Cert-Manager](./roles/cert-manager-install/README.md) | Certificate Management   | `certmanager`                |
-| [Route53-ddns](./roles/route53-ddns-install/README.md) | Dynamic DNS for Route53  | `certmanager`, `route53ddns` |
-| [Traefik](./roles/traefik-install/README.md)           | Ingress Controller       | `traefik`                    |
-| [Longhorn](./roles/longhorn-install/README.md)         | Block Storage Controller | `longhorn`                   |
-| [Prometheus](./roles/prometheus-install/README.md)     | Monitoring and Alerting  | `prometheus`, `monitoring`   |
-| [OpenSearch](./roles/opensearch-install/README.md)     | Search and Analytics     | `opensearch`, `logstack`     |
-| [Fluentbit](./roles/opensearch-install/README.md)      | Logs scraping            | `fluentbit`, `logstack`      |
-| [Linkerd](./roles/linkerd-install/README.md)           | Service Mesh             | `linkerd`                    |
-
+| Package                                                                   | Purpose                          | Tag                                 |
+|:--------------------------------------------------------------------------|:---------------------------------|:------------------------------------|
+| [MetalLB](../roles/metallb-install/README.md)                             | Load Balancer                    | `metallb`                           |
+| [Cert-Manager](../roles/cert-manager-install/README.md)                   | Certificate Management           | `certmanager`                       |
+| [Route53-ddns](../roles/route53-ddns-install/README.md)                   | Dynamic DNS for Route53          | `certmanager`, `route53ddns`        |
+| [Traefik](../roles/traefik-install/README.md)                             | Ingress Controller               | `traefik`                           |
+| [Longhorn](../roles/longhorn-install/README.md)                           | Block Storage Controller         | `longhorn`                          |
+| [Prometheus](../roles/prometheus-install/README.md)                       | Monitoring & Alerting            | `prometheus`, `monitoring`          |
+| [Prometheus Post-Install](../roles/prometheus-post-install/README.md)     | Monitoring & Alerting            | `prometheus-post`, `monitoring`     |
+| [RPI Metrics Exporter](../roles/rpi-metrics-exporter/README.md)           | Hardware Telemetry               | `rpi-metrics`, `monitoring`         |
+| [OpenSearch](../roles/opensearch-install/README.md)                       | Search & Analytics               | `opensearch`, `logstack`            |
+| [OpenSearch Dashboards](../roles/opensearch-dashboards-install/README.md) | Search & Analytics Visualization | `opensearch-dashboards`, `logstack` |
+| [Fluentbit](../roles/opensearch-install/README.md)                        | Logs scraping                    | `fluentbit`, `logstack`             |
+| [Linkerd](../roles/linkerd-install/README.md)                             | Service Mesh                     | `linkerd`                           |
 ### Installation
 ```bash
 ansible-playbook playbooks/k3s-packages-install.yml 
@@ -591,6 +593,9 @@ and can be played individually via the `--tags` argument for `ansible-playbook`.
 | [OpenSearch Dashboards](./roles/opensearch-dashboards-uninstall/README.md)[^2] | `opensearch-dashboards`      |
 | [Fluentbit](./roles/fluentbit-uninstall/README.md)                             | `fluentbit`, `logstack`      |
 | [Linkerd](./roles/linkerd-uninstall/README.md)                                 | `linkerd`                    |
+
+[^1]: Also uninstalls OpenSearch Dashboards
+[^2]: Only uninstalls OpenSearch Dashboards not OpenSearch
 
 ```bash
 ansible-playbook playbooks/k3s-packages-uninstall.yml 

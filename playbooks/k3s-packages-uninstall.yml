@@ -20,8 +20,7 @@
     - vars/config.yml
 
   environment:
-    # The location of the kubeconfig file on the master.
-    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+    K8S_AUTH_KUBECONFIG: /home/{{ ansible_user }}/.kube/config
 
   pre_tasks:
     - name: Include vault variables

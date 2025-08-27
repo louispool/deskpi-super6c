@@ -216,6 +216,9 @@ prom_storage_size: "30Gi"
 # Retention period for Prometheus data. This is the time period for which Prometheus will retain data before deleting it.
 prom_retention: "7d"
 
+# Path to the textfile collector directory for Node Exporter
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector
+
 # Size at which the log index will be rotated
 log_rollover_size: "1gb"
 # How long to keep the logs before they are deleted

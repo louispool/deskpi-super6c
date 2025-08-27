@@ -1,0 +1,54 @@
+#!/bin/bash
+
+OUT="{{ node_exporter_textfile_dir }}/vcgencmd.prom"
+TMP="$(mktemp -p "{{ node_exporter_textfile_dir }}" vcgencmd.XXXXXX)"
+
+# Throttling flags (bitmask)
+throttled_hex=$(vcgencmd get_throttled)
+# Convert hex to decimal
+flags=${throttled_hex#*=}
+
+# CPU temp
+cpu_temp=$(vcgencmd measure_temp | grep -oE '[0-9\.]+')
+
+# GPU temp (same on CM4/CM5, but included separately)
+gpu_temp=$(vcgencmd measure_temp | grep -oE '[0-9\.]+')
+
+# CPU clock
+cpu_clock=$(vcgencmd measure_clock arm | awk -F= '{print $2}')
+
+# GPU clock
+gpu_clock=$(vcgencmd measure_clock core | awk -F= '{print $2}')
+
+# Memory
+mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2 * 1024}')
+mem_free=$(grep MemFree /proc/meminfo | awk '{print $2 * 1024}')
+mem_available=$(grep MemAvailable /proc/meminfo | awk '{print $2 * 1024}')
+
+# Write all metrics to temporary file
+{
+  echo "rpi_cpu_temperature_celsius $cpu_temp"
+  echo "rpi_gpu_temperature_celsius $gpu_temp"
+
+  echo "rpi_cpu_clock_hz $cpu_clock"
+  echo "rpi_gpu_clock_hz $gpu_clock"
+
+  echo "rpi_memory_total_bytes $mem_total"
+  echo "rpi_memory_free_bytes $mem_free"
+  echo "rpi_memory_avail_bytes $mem_available"
+
+  # Decode throttled bits into separate metrics
+  echo "rpi_throttled_undervoltage $(((flags & 0x1) > 0))"
+  echo "rpi_throttled_freq_capped $(((flags & 0x2) > 0))"
+  echo "rpi_throttled_throttled $(((flags & 0x4) > 0))"
+  echo "rpi_throttled_soft_temp $(((flags & 0x8) > 0))"
+
+  echo "rpi_throttled_undervoltage_occurred $(((flags & 0x10000) > 0))"
+  echo "rpi_throttled_freq_capped_occurred $(((flags & 0x20000) > 0))"
+  echo "rpi_throttled_throttled_occurred $(((flags & 0x40000) > 0))"
+  echo "rpi_throttled_soft_temp_occurred $(((flags & 0x80000) > 0))"
+} >"$TMP"
+
+# Atomically replace the metrics file
+mv "$TMP" "$OUT"
+chmod 644 "$OUT"

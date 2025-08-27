@@ -14,6 +14,16 @@ prometheus:
             requests:
               storage: "{{ prom_storage_size | default('20Gi') }}"
 
+prometheus-node-exporter:
+  extraArgs:
+    - --collector.textfile.directory={{ node_exporter_textfile_dir}}
+  extraHostVolumeMounts:
+    - name: textfile
+      hostPath: "{{ node_exporter_textfile_dir}}"
+      mountPath: "{{ node_exporter_textfile_dir}}"
+      readOnly: false
+      type: DirectoryOrCreate
+
 grafana:
   enabled: true
 

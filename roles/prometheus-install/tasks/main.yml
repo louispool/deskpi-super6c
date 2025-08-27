@@ -21,6 +21,14 @@
         admin-user: "{{ grafana_admin_user }}"
         admin-password: "{{ grafana_admin_passwd }}"
 
+- name: Ensure node_exporter textfile directory exists
+  file:
+    path: "{{ node_exporter_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Add Prometheus Community chart repo.
   kubernetes.core.helm_repository:
     name: prometheus-community

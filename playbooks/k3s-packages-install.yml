@@ -21,8 +21,7 @@
     - vars/config.yml
 
   environment:
-    # The location of the kubeconfig file on the master.
-    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+    K8S_AUTH_KUBECONFIG: /home/{{ ansible_user }}/.kube/config
 
   pre_tasks:
     - name: Gather facts
@@ -38,6 +37,10 @@
       tags: ['longhorn']
       when: k3s_enable_block_storage
 
+    - role: rpi-metrics-exporter
+      tags: ['rpi-metrics', 'monitoring']
+      when: k3s_enable_monitoring
+
 - name: Install various packages to k3s (via the control plane).
   hosts: control_plane
 
@@ -51,8 +54,7 @@
     - vars/config.yml
 
   environment:
-    # The location of the kubeconfig file on the master.
-    K8S_AUTH_KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+    K8S_AUTH_KUBECONFIG: /home/{{ ansible_user }}/.kube/config
 
   pre_tasks:
     - name: Gather facts
@@ -95,7 +97,7 @@
       when: k3s_enable_monitoring
 
     - role: prometheus-post-install
-      tags: ['prometheus-post', 'prometheus', 'monitoring']
+      tags: ['prometheus-post', 'monitoring']
       when: k3s_enable_monitoring
 
     - role: opensearch-install
@@ -103,7 +105,7 @@
       when: k3s_enable_logstack
 
     - role: opensearch-dashboards-install
-      tags: ['opensearch-dashboards', 'opensearch', 'logstack']
+      tags: ['opensearch-dashboards', 'logstack']
       when: k3s_enable_logstack
 
     - role: fluentbit-install

@@ -146,6 +146,11 @@ Configure whether to enable the public Grafana dashboard via the variable `enabl
 enable_public_grafana_dashboard: true
 ```
 
+Configure the Textfile Collector directory for the Node Exporter via the variable `node_exporter_textfile_directory`:
+```yaml
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector
+```
+
 ## Scrape Targets
 
 To scrape metrics from services running in the cluster you define a `ServiceMonitor` resource.
@@ -206,6 +211,34 @@ spec:
 ```
 This rule triggers a `HighCpuUsage` alert if the `my-app` pod exceeds 80% CPU usage for 2 minutes. Make sure the **release label matches your Prometheus installation** for proper rule discovery.
 
+## Node Exporter's [Textfile Collector](https://github.com/prometheus/node_exporter?tab=readme-ov-file#textfile-collector)
+
+The Node Exporter includes a ["textfile collector"](https://github.com/prometheus/node_exporter?tab=readme-ov-file#textfile-collector) that allows you to expose custom metrics by writing them to 
+files in a specific directory. The Node Exporter will read these files and expose the metrics - this is handy for monitoring machine-level cronjobs or services.
+
+The Helm values template [`prometheus-helm-values.yml.j2`](templates/prometheus-helm-values.yml.j2) configures the Node Exporter to enable the Textfile Collector, reading `.prom` files from 
+`node_exporter_textfile_dir` (default: `/var/lib/node_exporter/textfile_collector`) on the machine host. 
+       
+To test whether the Textfile Collector is working, pick the pod that is running on the node you want to check:
+```bash
+kubectl -n monitoring get pods -o wide
+````
+
+SSH into the node and create a sample metric file in the Textfile Collector directory (the exampl below assumes the default directory at `/var/lib/node_exporter/textfile_collector`):
+```bash
+echo 'test_metric{label="foo"} 42' | sudo tee /var/lib/node_exporter/textfile_collector/test.prom
+```
+    
+Then query the metric service inside the pod you identified earlier:
+```bash
+kubectl -n monitoring exec -it kube-prometheus-stack-prometheus-node-exporter-<pod-identifier> -- wget -qO- http://127.0.0.1:9100/metrics | grep test_metric
+```
+
+You should see the output:
+```
+test_metric{label="foo"} 42
+```
+     @
 ## Importing Grafana Dashboards
 
 Grafana dashboards can be provisioned declaratively by storing them in Kubernetes `ConfigMaps`. 

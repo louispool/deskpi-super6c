@@ -1,0 +1,7 @@
+[Unit]
+Description=Export Raspberry Pi vcgencmd metrics to Prometheus textfile
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart={{ rpi_metrics_exporter_script }}

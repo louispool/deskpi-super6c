@@ -1,0 +1,11 @@
+[Unit]
+Description=Run vcgencmd_exporter every {{ rpi_metrics_exporter_interval }}
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec={{ rpi_metrics_exporter_interval }}
+AccuracySec=1s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

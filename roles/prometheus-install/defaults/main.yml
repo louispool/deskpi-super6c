@@ -38,3 +38,6 @@ prom_node_exporter_enabled: true
 # Whether to enable the Kube State Metrics
 prom_kube_state_metrics_enabled: true
 
+# Path to the textfile collector directory for Node Exporter
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector
+
