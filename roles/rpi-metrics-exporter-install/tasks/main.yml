@@ -3,18 +3,6 @@
 # and makes them available to Prometheus via Node Exporter's textfile collector.
 # This role deploys a script that runs at regular intervals using a systemd timer.
 ---
-- name: Check that the Monitoring namespace exists
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Namespace
-    name: "{{ k3s_monitoring_namespace }}"
-  register: ns_info
-
-- name: Fail if namespace does not exist
-  fail:
-    msg: "Namespace '{{ k3s_monitoring_namespace }}' does not exist."
-  when: ns_info.resources | length == 0
-
 - name: Ensure textfile collector directory exists
   ansible.builtin.file:
     path: "{{ node_exporter_textfile_dir }}"
@@ -34,13 +22,13 @@
 - name: Deploy systemd service unit
   ansible.builtin.template:
     src: vcgencmd_exporter.service.j2
-    dest: /etc/systemd/system/vcgencmd_exporter.service
+    dest: "/etc/systemd/system/{{ rpi_metrics_exporter_service | default('vcgencmd_exporter.service') }}"
     mode: '0644'
 
 - name: Deploy systemd timer unit
   ansible.builtin.template:
     src: vcgencmd_exporter.timer.j2
-    dest: /etc/systemd/system/vcgencmd_exporter.timer
+    dest: "/etc/systemd/system/{{ rpi_metrics_exporter_timer | default('vcgencmd_exporter.timer') }}"
     mode: '0644'
 
 - name: Reload systemd daemon
@@ -48,6 +36,6 @@
 
 - name: Enable and start timer
   systemd:
-    name: vcgencmd_exporter.timer
+    name: "{{ rpi_metrics_exporter_timer | default('vcgencmd_exporter.timer') }}"
     enabled: true
     state: started

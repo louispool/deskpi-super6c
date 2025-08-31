@@ -376,22 +376,20 @@ accessing or parsing the `vault.yml` file.
 To verify this, you can try the following:
 
 1. Ensure that you are able to view and decrypt the `vault.yml` file by running the following command:
-
-```shell
-ansible-vault view playbooks/vars/vault.yml
-```
+    ```shell
+    ansible-vault view playbooks/vars/vault.yml
+    ```
 
 2. Dump the contents of the `vault.yml` file to a temporary file and parse it using `yamllint` or `yq`:
-
-```shell
-ansible-vault view playbooks/vars/vault.yml > /tmp/vault.yml
-yamllint /tmp/vault.yml
-````
+    ```shell
+    ansible-vault view playbooks/vars/vault.yml > /tmp/vault.yml
+    yamllint /tmp/vault.yml
+    ````
 
 It should reveal any syntax errors in the `vault.yml` file, such as missing colons, incorrect indentation, or other YAML syntax issues.
 
-As an example, in one case I personally experienced, one of the passwords in the `vault.yml` had a backslash (`\`) in it, which is a special character in YAML (and should be escaped with another
-backslash, i.e. `\\`) which is why in this particular instance the "Include vault variables" task failed.
+In one case I personally experienced, one of the passwords in the `vault.yml` had a backslash (`\`) in it - which is a special character in YAML and should be escaped with another
+backslash, i.e. `\\` - this caused the parsing to fail and resulted in the above error.
 
 # [Cluster Provisioning](playbooks/README.md) 
 
@@ -550,20 +548,21 @@ Once k3s has been successfully installed, you can install additional packages to
 
 Packages for K3s are declared in the [`k3s-packages-install`](playbooks/README.md#k3s-packages-install) playbook. 
 
-| Package                                                                   | Purpose                          | Tag                                 |
-|:--------------------------------------------------------------------------|:---------------------------------|:------------------------------------|
-| [MetalLB](../roles/metallb-install/README.md)                             | Load Balancer                    | `metallb`                           |
-| [Cert-Manager](../roles/cert-manager-install/README.md)                   | Certificate Management           | `certmanager`                       |
-| [Route53-ddns](../roles/route53-ddns-install/README.md)                   | Dynamic DNS for Route53          | `certmanager`, `route53ddns`        |
-| [Traefik](../roles/traefik-install/README.md)                             | Ingress Controller               | `traefik`                           |
-| [Longhorn](../roles/longhorn-install/README.md)                           | Block Storage Controller         | `longhorn`                          |
-| [Prometheus](../roles/prometheus-install/README.md)                       | Monitoring & Alerting            | `prometheus`, `monitoring`          |
-| [Prometheus Post-Install](../roles/prometheus-post-install/README.md)     | Monitoring & Alerting            | `prometheus-post`, `monitoring`     |
-| [RPI Metrics Exporter](../roles/rpi-metrics-exporter/README.md)           | Hardware Telemetry               | `rpi-metrics`, `monitoring`         |
-| [OpenSearch](../roles/opensearch-install/README.md)                       | Search & Analytics               | `opensearch`, `logstack`            |
-| [OpenSearch Dashboards](../roles/opensearch-dashboards-install/README.md) | Search & Analytics Visualization | `opensearch-dashboards`, `logstack` |
-| [Fluentbit](../roles/opensearch-install/README.md)                        | Logs scraping                    | `fluentbit`, `logstack`             |
-| [Linkerd](../roles/linkerd-install/README.md)                             | Service Mesh                     | `linkerd`                           |
+| Package                                                                  | Purpose                          | Tag                                 |
+|:-------------------------------------------------------------------------|:---------------------------------|:------------------------------------|
+| [MetalLB](./roles/metallb-install/README.md)                             | Load Balancer                    | `metallb`                           |
+| [Cert-Manager](./roles/cert-manager-install/README.md)                   | Certificate Management           | `certmanager`                       |
+| [Route53-ddns](./roles/route53-ddns-install/README.md)                   | Dynamic DNS for Route53          | `certmanager`, `route53ddns`        |
+| [Traefik](./roles/traefik-install/README.md)                             | Ingress Controller               | `traefik`                           |
+| [Longhorn](./roles/longhorn-install/README.md)                           | Block Storage Controller         | `longhorn`                          |
+| [Prometheus](./roles/prometheus-install/README.md)                       | Monitoring & Alerting            | `prometheus`, `monitoring`          |
+| [Prometheus Post-Install](./roles/prometheus-post-install/README.md)     | Monitoring & Alerting            | `prometheus-post`, `monitoring`     |
+| [RPI Metrics Exporter](roles/rpi-metrics-exporter-install/README.md)     | Hardware Telemetry               | `rpi-metrics`, `monitoring`         |
+| [OpenSearch](./roles/opensearch-install/README.md)                       | Search & Analytics               | `opensearch`, `logstack`            |
+| [OpenSearch Dashboards](./roles/opensearch-dashboards-install/README.md) | Search & Analytics Visualization | `opensearch-dashboards`, `logstack` |
+| [Fluentbit](./roles/opensearch-install/README.md)                        | Logs scraping                    | `fluentbit`, `logstack`             |
+| [Linkerd](./roles/linkerd-install/README.md)                             | Service Mesh                     | `linkerd`                           |
+
 ### Installation
 ```bash
 ansible-playbook playbooks/k3s-packages-install.yml 
@@ -588,7 +587,8 @@ and can be played individually via the `--tags` argument for `ansible-playbook`.
 | [Route53-DDNS](./roles/route53-ddns-uninstall/README.md)                       | `certmanager`, `route53ddns` |
 | [Traefik](./roles/traefik-uninstall/README.md)                                 | `traefik`                    |
 | [Longhorn](./roles/longhorn-uninstall/README.md)                               | `longhorn`                   |
-| [Prometheus](./roles/prometheus-uninstall/README.md)                           | `prometheus`                 |
+| [Prometheus](./roles/prometheus-uninstall/README.md)                           | `prometheus`, `monitoring`   |
+| [RPI Metrics Exporter](./roles/rpi-metrics-exporter-uninstall/README.md)       | `prometheus`, `monitoring`   |
 | [OpenSearch](./roles/opensearch-uninstall/README.md)[^1]                       | `opensearch`, `logstack`     |
 | [OpenSearch Dashboards](./roles/opensearch-dashboards-uninstall/README.md)[^2] | `opensearch-dashboards`      |
 | [Fluentbit](./roles/fluentbit-uninstall/README.md)                             | `fluentbit`, `logstack`      |
@@ -624,7 +624,6 @@ Updates the software on all the Pi's in the cluster. Reboots them if required.
 ```bash
 ansible-playbook playbooks/update-deskpis.yml
 ```
-
 (Run from the project root directory)
 
 ### [reboot-deskpis.yml](playbooks/reboot-deskpis.yml)
@@ -634,7 +633,6 @@ Reboots all the Pi's in the cluster.
 ```bash
 ansible-playbook playbooks/reboot-deskpis.yml
 ```
-
 (Run from the project root directory)
 
 ### [shutdown-deskpis.yml](playbooks/shutdown-deskpis.yml)
@@ -644,7 +642,6 @@ Shuts down all the Pi's in the cluster.
 ```bash
 ansible-playbook playbooks/shutdown-deskpis.yml
 ```
-
 (Run from the project root directory)
 
 ### [update-route53-ddns.yml](playbooks/update-route53-ddns.yml)
@@ -653,6 +650,15 @@ Updates the DDNS records for the Pi's in the cluster using the [Route53 DDNS scr
 
 ```bash
 ansible-playbook playbooks/update-route53-ddns.yml
+```
+(Run from the project root directory)
+
+### [upload-grafana-dashboards.yml](upload-grafana-dashboards.yml)
+
+(Re)Uploads several pre-configured dashboards to Grafana using the [Grafana Dashboards Role](../roles/grafana-dashboards/README.md).
+
+```bash
+ansible-playbook playbooks/upload-grafana-dashboards.yml
 ```
 
 (Run from the project root directory)

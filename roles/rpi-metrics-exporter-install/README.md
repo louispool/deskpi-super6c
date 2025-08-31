@@ -22,7 +22,8 @@ and makes them available to Prometheus via Node Exporter's ["textfile collector"
 This role does the following:
 
 1. Ensures the textfile collector directory exists on the host.
-2. Deploys vcgencmd exporter script as well as the corresponding systemd service and timer unit files.
+2. Deploys the `vcgencmd` exporter script 
+3. As well as the corresponding systemd service and timer unit files.
 
-This role assumes that Prometheus and Node Exporter is already installed and running on the host, it will fail if the `monitoring` namespace is not found.
+This role assumes that Prometheus and Node Exporter is already installed and running on the host.
 

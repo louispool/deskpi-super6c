@@ -26,22 +26,6 @@
     state: present
   when: k3s_traefik_namespace is defined
 
-- name: Upload Traefik Grafana dashboard
-  uri:
-    url: "https://{{ grafana_dashboard }}/api/dashboards/db"
-    method: POST
-    user: "{{ grafana_admin_user }}"
-    password: "{{ grafana_admin_passwd }}"
-    force_basic_auth: true
-    headers:
-      Content-Type: "application/json"
-    body_format: json
-    body:
-      dashboard: "{{ lookup('file', 'files/traefik-grafana-dashboard.json') | from_json }}"
-      overwrite: true
-    validate_certs: false
-  when: k3s_traefik_namespace is defined
-
 - name: Configure Service Monitor for Longhorn
   kubernetes.core.k8s:
     definition: "{{ lookup('template', 'templates/longhorn-service-monitor.yml.j2') | from_yaml_all }}"
@@ -54,18 +38,6 @@
     state: present
   when: k3s_enable_block_storage and k3s_longhorn_namespace is defined
 
-- name: Upload Longhorn Grafana dashboard
-  uri:
-    url: "https://{{ grafana_dashboard }}/api/dashboards/db"
-    method: POST
-    user: "{{ grafana_admin_user }}"
-    password: "{{ grafana_admin_passwd }}"
-    force_basic_auth: true
-    headers:
-      Content-Type: "application/json"
-    body_format: json
-    body:
-      dashboard: "{{ lookup('file', 'files/longhorn-grafana-dashboard.json') | from_json }}"
-      overwrite: true
-    validate_certs: false
-  when: k3s_enable_block_storage and k3s_longhorn_namespace is defined
+- name: Upload Grafana Dashboards
+  include_role:
+    name: grafana-dashboards

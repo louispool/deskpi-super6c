@@ -1,6 +1,6 @@
-# Ansible playbook to update Route53 DNS records for a domain using DDNS
+# Ansible playbook to upload pre-configured Grafana dashboards to the Grafana instance in the cluster
 ---
-- name: Setup Route53 DDNS
+- name: Upload pre-configured dashboards to the Grafana instance in the cluster.
   hosts: control_plane
 
   gather_facts: true
@@ -21,4 +21,4 @@
       tags: ["always"]
 
   roles:
-    - role: route53-ddns-install
+    - role: grafana-dashboards

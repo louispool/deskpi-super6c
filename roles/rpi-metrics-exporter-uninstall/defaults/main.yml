@@ -1,0 +1,8 @@
+# Default variables for rpi-metrics-exporter-uninstall role
+---
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector
+
+rpi_metrics_exporter_script: /usr/local/bin/vcgencmd_exporter.sh
+
+rpi_metrics_exporter_timer: vcgencmd_exporter.timer
+rpi_metrics_exporter_service: vcgencmd_exporter.service

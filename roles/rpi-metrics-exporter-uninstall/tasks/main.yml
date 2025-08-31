@@ -1,0 +1,44 @@
+# Uninstallation tasks forthe  rpi-metrics-exporter role
+---
+- name: Stop and disable rpi-metrics-exporter timer
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ rpi_metrics_exporter_timer | default('vcgencmd_exporter.timer') }}"
+    state: stopped
+    enabled: false
+    daemon_reload: true
+  failed_when: false
+
+- name: Stop and disable rpi-metrics-exporter service
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ rpi_metrics_exporter_service | default('vcgencmd_exporter.service') }}"
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: Remove rpi-metrics-exporter systemd unit files
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/etc/systemd/system/{{ rpi_metrics_exporter_timer | default('vcgencmd_exporter.timer') }}"
+    - "/etc/systemd/system/{{ rpi_metrics_exporter_service | default('vcgencmd_exporter.service') }}"
+
+- name: Remove rpi-metrics-exporter script
+  become: true
+  ansible.builtin.file:
+    path: "{{ rpi_metrics_exporter_script}}"
+    state: absent
+
+- name: Remove Node Exporter textfile collector output
+  become: true
+  ansible.builtin.file:
+    path: "{{ node_exporter_textfile_dir }}/vcgencmd.prom"
+    state: absent
+
+- name: Reload systemd after unit removals
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true

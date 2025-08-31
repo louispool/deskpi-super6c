@@ -80,6 +80,10 @@ k3s_enable_block_storage: true
 k3s_enable_monitoring: true
 # Whether to install OpenSearch and FluentBit for logging
 k3s_enable_logstack: true
+# Whether to set up Route 53 Dynamic DNS for public domain names
+k3s_enable_route53_ddns: true
+# Whether to enable RPI hardware monitoring via Node Exporter
+k3s_enable_rpi_metrics_exporter: true
 
 # IP address of the NTP Server
 ntp_server: "{{ master_node_ip }}"

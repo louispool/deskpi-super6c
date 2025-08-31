@@ -1,0 +1,8 @@
+# Defaults for the Grafana Dashboards role
+---
+# URL of the Grafana instance to use for monitoring dashboards.
+grafana_dashboard: "dashboard.grafana.localnet"
+
+# Admin credentials for Grafana. Override with Ansible Vault variable.
+grafana_admin_user: 'admin'
+grafana_admin_passwd: '!s3cr3t'

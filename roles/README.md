@@ -43,7 +43,7 @@ This structure houses the roles used by the [Ansible Playbooks](../playbooks/REA
 - [Installation of OpenSearch Dashboards](./opensearch-dashboards-install/README.md) (Logging)
 - [Uninstallation of OpenSearch Dashboards](./opensearch-dashboards-uninstall/README.md) (Logging)
 - [Installation of FluentBit](./fluentbit-install/README.md) (Logging)
-- [Uninstallation of fluentbit](./fluentbit-uninstall/README.md) (Logging)
+- [Uninstallation of FluentBit](./fluentbit-uninstall/README.md) (Logging)
 - [Installation of Minio](./minio-install/README.md) (S3 Object Storage)
 - [Uninstallation of Minio](./minio-uninstall/README.md) (S3 Object Storage)
 - [Installation of Linkerd](./linkerd-install/README.md) (Service Mesh)
@@ -58,5 +58,8 @@ This structure houses the roles used by the [Ansible Playbooks](../playbooks/REA
 - [Traefik Basic Auth Middleware](./traefik-basic-auth/README.md)
 - [Setting up Route53 DDNS](./route53-ddns-install/README.md)
 - [Undoing Route53 DDNS](./route53-ddns-uninstall/README.md)
+- [Raspberry Pi Metrics Exporter installation](./rpi-metrics-exporter-install/README.md)
+- [Raspberry Pi Metrics Exporter uninstallation](./rpi-metrics-exporter-uninstall/README.md)
+- [(Re)Upload Grafana Dashboards](./grafana-dashboards/README.md)
 
  

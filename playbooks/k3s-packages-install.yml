@@ -37,9 +37,9 @@
       tags: ['longhorn']
       when: k3s_enable_block_storage
 
-    - role: rpi-metrics-exporter
+    - role: rpi-metrics-exporter-install
       tags: ['rpi-metrics', 'monitoring']
-      when: k3s_enable_monitoring
+      when: k3s_enable_monitoring and k3s_enable_rpi_metrics_exporter
 
 - name: Install various packages to k3s (via the control plane).
   hosts: control_plane
@@ -77,6 +77,7 @@
 
     - role: route53-ddns-install
       tags: ['certmanager', 'route53ddns']
+      when: k3s_enable_route53_ddns
 
     - role: cert-manager-install
       tags: ['certmanager']

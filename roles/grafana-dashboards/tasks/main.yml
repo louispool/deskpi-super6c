@@ -1,0 +1,89 @@
+# Uploads Grafana Dashboards for various services like Traefik and Longhorn
+---
+- name: Verify Grafana API is reachable and healthy
+  uri:
+    url: "https://{{ grafana_dashboard }}/api/health"
+    method: GET
+    validate_certs: false
+    timeout: 5
+  register: grafana_health
+  until: grafana_health.status is defined and
+         grafana_health.status == 200 and
+         grafana_health.json is defined and
+         grafana_health.json.database is defined and
+         grafana_health.json.database == "ok"
+  retries: 20
+  delay: 3
+  failed_when: false
+  changed_when: false
+
+- name: Upload Traefik Grafana dashboard
+  uri:
+    url: "https://{{ grafana_dashboard }}/api/dashboards/db"
+    method: POST
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_passwd }}"
+    force_basic_auth: true
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      dashboard: "{{ lookup('file', 'files/traefik-grafana-dashboard.json') | from_json }}"
+      overwrite: true
+    validate_certs: false
+  when: k3s_traefik_namespace is defined
+
+- name: Upload Longhorn Grafana dashboard
+  uri:
+    url: "https://{{ grafana_dashboard }}/api/dashboards/db"
+    method: POST
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_passwd }}"
+    force_basic_auth: true
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      dashboard: "{{ lookup('file', 'files/longhorn-grafana-dashboard.json') | from_json }}"
+      overwrite: true
+    validate_certs: false
+  when: k3s_enable_block_storage and k3s_longhorn_namespace is defined
+
+- name: Upload RPI Metrics Grafana dashboard
+  uri:
+    url: "https://{{ grafana_dashboard }}/api/dashboards/db"
+    method: POST
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_passwd }}"
+    force_basic_auth: true
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      dashboard: "{{ lookup('file', 'files/rpi-metrics-grafana-dashboard.json') | from_json }}"
+      overwrite: true
+    validate_certs: false
+  when: k3s_enable_monitoring and k3s_enable_rpi_metrics_exporter
+
+- name: Check that the Logging namespace exists
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ k3s_logging_namespace }}"
+  register: logging_namespace_info
+
+- name: Upload OpenSearch Grafana dashboard
+  uri:
+    url: "https://{{ grafana_dashboard }}/api/dashboards/db"
+    method: POST
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_passwd }}"
+    force_basic_auth: true
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      dashboard: "{{ lookup('file', '../opensearch-install/files/opensearch-grafana-dashboard.json') | from_json }}"
+      overwrite: true
+    validate_certs: false
+  when: k3s_enable_logstack and logging_namespace_info.resources | length > 0

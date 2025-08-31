@@ -179,7 +179,7 @@ Installs several packages to K3s:
 | [Longhorn](../roles/longhorn-install/README.md)                           | Block Storage Controller | `longhorn`                          |
 | [Prometheus](../roles/prometheus-install/README.md)                       | Monitoring and Alerting  | `prometheus`, `monitoring`          |
 | [Prometheus Post-Install](../roles/prometheus-post-install/README.md)     | Monitoring and Alerting  | `prometheus-post`, `monitoring`     |
-| [RPI Metrics Exporter](../roles/rpi-metrics-exporter/README.md)           | Hardware Telemetry       | `rpi-metrics`, `monitoring`         |
+| [RPI Metrics Exporter](../roles/rpi-metrics-exporter-install/README.md)   | Hardware Telemetry       | `rpi-metrics`, `monitoring`         |
 | [OpenSearch](../roles/opensearch-install/README.md)                       | Search and Analytics     | `opensearch`, `logstack`            |
 | [OpenSearch Dashboards](../roles/opensearch-dashboards-install/README.md) | Search and Analytics     | `opensearch-dashboards`, `logstack` |
 | [Fluentbit](../roles/opensearch-install/README.md)                        | Logs scraping            | `fluentbit`, `logstack`             |
@@ -208,6 +208,7 @@ Removes packages installed to K3s:
 | [Traefik](../roles/traefik-uninstall/README.md)                                 | `traefik`                    |
 | [Longhorn](../roles/longhorn-uninstall/README.md)                               | `longhorn`                   |
 | [Prometheus](../roles/prometheus-uninstall/README.md)                           | `prometheus`                 |
+| [RPI Metrics Exporter](../roles/rpi-metrics-exporter-uninstall/README.md)       | `rpi-metrics`, `monitoring`  |
 | [OpenSearch](../roles/opensearch-uninstall/README.md)[^1]                       | `opensearch`, `logstack`     |
 | [OpenSearch Dashboards](../roles/opensearch-dashboards-uninstall/README.md)[^2] | `opensearch-dashboards`      |
 | [Fluentbit](../roles/fluentbit-uninstall/README.md)                             | `fluentbit`, `logstack`      |
@@ -263,4 +264,14 @@ Updates the DDNS records for the CMs in the cluster using the [Route53 DDNS scri
 ansible-playbook playbooks/update-route53-ddns.yml
 ```
 (Run from the project root directory)
+
+### [upload-grafana-dashboards.yml](upload-grafana-dashboards.yml)
+
+(Re)Uploads several pre-configured dashboards to Grafana using the [Grafana Dashboards Role](../roles/grafana-dashboards/README.md).
+
+```bash
+ansible-playbook playbooks/upload-grafana-dashboards.yml
+```
+(Run from the project root directory)
+
 

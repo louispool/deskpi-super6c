@@ -10,7 +10,33 @@
 #
 # Assumes 'k3s-install.yml' and 'k3s-post-install.yml' were run previously.
 ---
-- name: Remove packages from k3s.
+- name: Remove packages from k3s (affects all hosts in the cluster)
+  hosts: cluster
+
+  gather_facts: false # Do not gather facts here, as we will do it in the pre_tasks
+  become: true
+
+  vars_files:
+    - vars/config.yml
+
+  environment:
+    K8S_AUTH_KUBECONFIG: /home/{{ ansible_user }}/.kube/config
+
+  pre_tasks:
+    - name: Gather facts
+      ansible.builtin.setup:
+      tags: ["always"]
+
+    - name: Include vault variables
+      include_vars: "vars/vault.yml"
+      tags: ["always"]
+
+  roles:
+    - role: rpi-metrics-exporter-uninstall
+      tags: ['rpi-metrics', 'monitoring']
+      when: k3s_enable_monitoring and k3s_enable_rpi_metrics_exporter
+
+- name: Remove packages from k3s (via the control plane).
   hosts: control_plane
 
   gather_facts: true
@@ -60,6 +86,7 @@
 
     - role: route53-ddns-uninstall
       tags: ['certmanager', 'route53ddns']
+      when: k3s_enable_route53_ddns
 
     - role: metallb-uninstall
       tags: ['metallb']
